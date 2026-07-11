@@ -43,5 +43,11 @@ class ActionResponse(ActionBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
+
+    """
+    est la **clé magique** : il permet à FastAPI de convertir automatiquement un objet SQLAlchemy
+    (ex: `Utilisateur(id=1, nom="...")`)
+    en JSON sans que tu aies à le faire à la main.
+    """
     class Config:
         from_attributes = True
