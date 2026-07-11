@@ -18,7 +18,7 @@ class Alerte(Base):
 
     # ─── Identite ───
     id = Column(Integer, primary_key=True)
-    type = Column(String(30), nullable=False)
+    type_alerte = Column("type", String(30), nullable=False)
     """Ex: 'co2_eleve', 'temp_haute', 'reservoir_vide'"""
 
     # ─── Contexte ───
@@ -56,12 +56,12 @@ class Alerte(Base):
 
     # ─── Methodes ───
     def __repr__(self):
-        return f"<Alerte(id={self.id}, type='{self.type}', etat='{self.etat}')>"
+        return f"<Alerte(id={self.id}, type='{self.type_alerte}', etat='{self.etat}')>"
 
     def to_dict(self):
         return {
             "id": self.id,
-            "type": self.type,
+            "type_alerte": self.type_alerte,
             "valeur": self.valeur,
             "seuil": self.seuil,
             "severite": self.severite,
@@ -87,6 +87,5 @@ class Alerte(Base):
 
     def resoudre(self):
         """Marque l'alerte comme resolue."""
-        from datetime import datetime
         self.etat = "resolue"
-        self.date_fin = datetime.utcnow()
+        self.date_fin = func.now()

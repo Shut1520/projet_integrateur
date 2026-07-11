@@ -66,7 +66,8 @@ class Action(Base):
         }
 
     def calculer_duree(self):
-        """Calcule la duree entre debut et fin (en secondes)."""
+        """Calcule la duree entre debut et fin (en secondes) et la stocke."""
         if self.date_debut and self.date_fin:
-            return int((self.date_fin - self.date_debut).total_seconds())
+            self.duree = int((self.date_fin - self.date_debut).total_seconds())
+            return self.duree
         return None

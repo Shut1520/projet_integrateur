@@ -58,6 +58,13 @@ class Parcelle(Base):
     Liste des seuils definis pour cette parcelle (COMPOSITION).
     """
 
+    alertes = relationship("Alerte", back_populates="parcelle")
+    """
+    Alertes liees a cette parcelle.
+    Pas de cascade : une alerte est declenchee par une mesure/action,
+    pas directement par la suppression de la parcelle.
+    """
+
     # ─── Methodes ───
     def __repr__(self):
         return f"<Parcelle(id={self.id}, nom='{self.nom}')>"
