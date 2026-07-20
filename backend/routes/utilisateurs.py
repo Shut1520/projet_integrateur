@@ -11,7 +11,7 @@ Endpoints :
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
+from werkzeug.security import generate_password_hash
 
 from database import get_db
 from models.utilisateur import Utilisateur
@@ -25,8 +25,7 @@ from schemas.utilisateur import (
 # # Toutes les routes de ce fichier commenceront par `/api/utilisateurs`.
 router = APIRouter(prefix="/api/utilisateurs", tags=["Utilisateurs"])
 
-# ─── Contexte de hashage des mots de passe ───
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 
 # ─── Helper : récupérer un utilisateur ou lever une erreur 404 ───
@@ -83,7 +82,7 @@ def creer_utilisateur(data: UtilisateurCreate, db: Session = Depends(get_db)):
         )
 
     # Hacher le mot de passe
-    password_hash = pwd_context.hash(data.password)
+    password_hash = generate_password_hash(data.password)
 
     # Creer l'objet SQLAlchemy
     utilisateur = Utilisateur(
@@ -116,7 +115,7 @@ def modifier_utilisateur(id: int, data: UtilisateurUpdate, db: Session = Depends
 
     if "password" in update_data:
         # Transformer le mot de passe en hash
-        update_data["password_hash"] = pwd_context.hash(update_data.pop("password"))
+        update_data["password_hash"] = generate_password_hash(update_data.pop("password"))
 
     for champ, valeur in update_data.items():
         setattr(utilisateur, champ, valeur)

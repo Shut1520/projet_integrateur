@@ -12,19 +12,25 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from database import get_db
 from models.utilisateur import Utilisateur
 from schemas.utilisateur import UtilisateurCreate, UtilisateurResponse
+from pydantic import BaseModel, EmailStr
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
 
 # ─── Configuration JWT ───
 SECRET_KEY = "sai_secret_key_changez_en_production"  # TODO: mettre dans .env
 ALGORITHME = "HS256"
 DUREE_TOKEN = 24  # heures
 
-# ─── Contexte de hashage ───
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 router = APIRouter(prefix="/api/auth", tags=["Authentification"])
 
@@ -81,7 +87,7 @@ def register(data: UtilisateurCreate, db: Session = Depends(get_db)):
         nom=data.nom,
         email=data.email,
         role=data.role,
-        password_hash=pwd_context.hash(data.password),
+        password_hash=generate_password_hash(data.password),
     )
     db.add(utilisateur)
     db.commit()
@@ -94,8 +100,7 @@ def register(data: UtilisateurCreate, db: Session = Depends(get_db)):
 # ====================================================================
 @router.post("/login")
 def login(
-    email: str,
-    password: str,
+    data: LoginRequest,
     db: Session = Depends(get_db),
 ):
     """
@@ -116,7 +121,7 @@ def login(
     }
     """
     # Chercher l'utilisateur par email
-    utilisateur = db.query(Utilisateur).filter(Utilisateur.email == email).first()
+    utilisateur = db.query(Utilisateur).filter(Utilisateur.email == data.email).first()
     if not utilisateur:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -124,7 +129,7 @@ def login(
         )
 
     # Verifier le mot de passe
-    if not pwd_context.verify(password, utilisateur.password_hash):
+    if not check_password_hash(utilisateur.password_hash, data.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email ou mot de passe incorrect",
