@@ -198,6 +198,27 @@ Pour respecter les FK, il faut créer les tables **dans cet ordre** :
 | Clé étrangère | `id_` + nom de la table référencée | `id_parcelle` → `parcelles.id` |
 | Timestamp | `created_at`, `updated_at`, `timestamp` | Convention PostgreSQL |
 
+## 📊 Traçabilité UC ↔ Tables
+
+| UC | Intitulé | Table(s) principale(s) | Opération |
+|----|----------|------------------------|-----------|
+| UC1 | S'authentifier | `utilisateurs`, `tokens` | SELECT + INSERT (token) |
+| UC2 | Consulter le tableau de bord | `mesures`, `alertes`, `capteurs`, `actionneurs`, `parcelles` | SELECT (dernières valeurs) |
+| UC3 | Visualiser l'historique | `mesures` | SELECT avec filtres |
+| UC4 | Commander actionneur (web) | `commandes`, `actions` | INSERT commande → INSERT action |
+| UC5 | Commander actionneur (CLI) | `tokens`, `commandes`, `actions` | SELECT token → INSERT commande |
+| UC6 | Exécuter automatisation | `mesures`, `seuils`, `commandes`, `alertes` | SELECT mesures/seuils → INSERT commande/alerte |
+| UC7 | Configurer les seuils | `seuils` | INSERT / UPDATE |
+| UC8 | Gérer les utilisateurs | `utilisateurs` | CRUD complet |
+| UC9 | Collecter données capteurs | `mesures` | INSERT (gros volume) |
+| UC10 | Recevoir et exécuter commande | `commandes`, `actions`, `actionneurs` | UPDATE statut commande |
+| UC11 | Gérer la connexion réseau | *(aucune table)* | Interne ESP32 |
+| UC12 | **Gérer les capteurs** | **`capteurs`** | **CRUD complet** |
+| UC13 | **Gérer les actionneurs** | **`actionneurs`** | **CRUD complet** |
+| UC14 | **Gérer les parcelles** | **`parcelles`** | **CRUD complet** |
+
+> **Aucune modification du MLD n'est nécessaire** pour UC12-14. Les tables `capteurs`, `actionneurs` et `parcelles` existent déjà avec toutes les colonnes et FK nécessaires.
+
 ---
 
-*Document MLD expliqué — Projet SAI — 02/07/2026*
+*Document MLD expliqué — Projet SAI — 02/07/2026 — Mis à jour 20/07/2026 (harmonisation UC12-14)*

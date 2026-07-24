@@ -4,6 +4,8 @@
 -- Script SQL PostgreSQL complet
 -- ============================================================
 -- Généré depuis le MLD et le diagramme de classes validés
+-- Couvre les 14 cas d'utilisation (UC1 à UC14)
+-- UC12-14 : Gérer capteurs/actionneurs/parcelles (CRUD)
 --
 -- Commandes d'initialisation (à exécuter en tant que superuser) :
 --   CREATE DATABASE sai_db;

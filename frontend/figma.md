@@ -722,30 +722,36 @@
 
 ---
 
-### 5.5 Actionneurs (Contrôle manuel)
+### 5.5 Actionneurs (Contrôle manuel + Gestion CRUD)
+
+L'administrateur peut **consulter, commander, programmer, ajouter, modifier et supprimer** les actionneurs. L'agriculteur peut seulement consulter et commander.
 
 ```
 ┌──────────────────────────────────────────────┐
-│  🔧 Actionneurs · Serre A                    │
+│  🔧 Actionneurs · Serre A     [+ Ajouter]   │
 │                                              │
 │  ┌────────────────────┐ ┌────────────────┐   │
 │  │  💧 Pompe           │ │ 🌬️ Ventilation │   │
-│  │                     │ │                │   │
+│  │  GPIO 26            │ │ GPIO 27        │   │
 │  │  ● EN MARCHE       │ │ ○ ARRÊTÉ      │   │
 │  │  Depuis 2h30       │ │                │   │
 │  │                     │ │                │   │
 │  │ [   Arrêter    ]   │ │ [ Démarrer  ]  │   │
 │  │ [ Programmer ▼ ]   │ │ [ Programmer]  │   │
+│  │                     │ │                │   │
+│  │ ✏️ Modifier  🗑️     │ │ ✏️ Modifier 🗑️ │   │
 │  └────────────────────┘ └────────────────┘   │
 │                                              │
 │  ┌────────────────────┐                      │
 │  │  💡 Éclairage       │                      │
-│  │                     │                      │
+│  │  GPIO 25            │                      │
 │  │  ● EN MARCHE       │                      │
 │  │  (Programmé 12s)   │                      │
 │  │                     │                      │
 │  │ [   Arrêter    ]   │                      │
 │  │ [ Programmer ▼ ]   │                      │
+│  │                     │                      │
+│  │ ✏️ Modifier  🗑️     │                      │
 │  └────────────────────┘                      │
 └──────────────────────────────────────────────┘
 ```
@@ -753,18 +759,233 @@
 **Figma frame** : 1440×900
 
 **Éléments** :
-- Selecteur de parcelle en haut (dropdown)
-- **Grille de cartes** d'actionneurs (3 col)
-- Chaque carte :
+- Sélecteur de parcelle en haut (dropdown)
+- **Bouton "+ Ajouter"** (visible admin uniquement) → ouvre le modal de création
+- **Grille de cartes** d'actionneurs (3 col) avec pour chaque carte :
   - Icône + nom
+  - GPIO (label discret en gris)
   - Indicateur d'état (pastille verte/grise/rouge + texte)
   - Durée si actif
   - Bouton principal (Arrêter si ON, Démarrer si OFF)
-  - Bouton "Programmer" → modal avec durée
-- **Modal de programmation** :
-  - Durée (input number + unité secondes/minutes)
-  - Bouton "Confirmer" / "Annuler"
+  - Bouton "Programmer" → modal durée
+  - **Liens "Modifier" (✏️) et "Supprimer" (🗑️)** (visible admin uniquement, en bas de carte, texte gris)
 - **Timeline** des dernières commandes en bas de page
+
+---
+
+#### Modal de création / modification d'un actionneur
+
+```
+┌─────────────────────────────────────────┐
+│  ✏️  [Nouvel actionneur / Modifier]     │
+│                                         │
+│  ┌─────────────────────────────────────┐│
+│  │ 🏷️ Nom de l'actionneur *           ││
+│  │  Ex: pompe, ventilation, eclairage ││
+│  └─────────────────────────────────────┘│
+│                                         │
+│  ┌─────────────────────────────────────┐│
+│  │ 🔖 Référence (optionnel)           ││
+│  │  Ex: Pompe 12V, LED 50W          ││
+│  └─────────────────────────────────────┘│
+│                                         │
+│  ┌─────────────────────────────────────┐│
+│  │ 🔌 Broche GPIO *                   ││
+│  │  [  26  ]     (0-39)              ││
+│  └─────────────────────────────────────┘│
+│                                         │
+│  ┌─────────────────────────────────────┐│
+│  │ 🏠 Parcelle de rattachement *      ││
+│  │  [  Serre A  ▼  ]                 ││
+│  │  ├ Serre A                         ││
+│  │  ├ Champ Nord                      ││
+│  │  └ Serre B                         ││
+│  └─────────────────────────────────────┘│
+│                                         │
+│  ┌─────────────────────────────────────┐│
+│  │ ⚡ État initial                     ││
+│  │  ○ Actif  ● Inactif                ││
+│  └─────────────────────────────────────┘│
+│                                         │
+│  [  Annuler  ]    [  💾 Enregistrer  ] │
+└─────────────────────────────────────────┘
+```
+
+**Champs du formulaire :**
+
+| # | Champ | Type Figma | Requis | Contraintes |
+|---|-------|-----------|:------:|-------------|
+| 1 | **Nom** | `Input text` | ✅ | 1 à 20 caractères, minuscules conseillées. Placeholder: `Ex: pompe, ventilation, eclairage` |
+| 2 | **Référence** | `Input text` | ❌ | Max 50 caractères. Placeholder: `Ex: Pompe 12V, LED 50W` |
+| 3 | **GPIO** | `Input number` | ✅ | Valeur entre 0 et 39 (broches ESP32). Afficher la plage `(0-39)` à droite. Validation : entier uniquement |
+| 4 | **Parcelle** | `Select` | ✅ | Liste des parcelles chargée depuis l'API. La parcelle courante est pré-sélectionnée |
+| 5 | **État initial** | `Radio group` | ❌ | Par défaut "Inactif". Deux options : Actif / Inactif |
+
+**Champs exclus (générés automatiquement) :**
+- `id` — SERIAL PK
+- `created_at` / `updated_at` — horodatage automatique
+- `commandes` — relation ORM, remplie via les commandes
+
+**États du modal :**
+
+| État | Rendu |
+|------|-------|
+| **Création** | Titre "Nouvel actionneur", tous les champs vides (ou defaults) |
+| **Modification** | Titre "Modifier l'actionneur", champs pré-remplis avec les données existantes |
+| **Nom vide** | Validation inline : `⚠️ Le nom est requis (max 20 car.)` |
+| **GPIO invalide** | `⚠️ La broche GPIO doit être entre 0 et 39` |
+| **GPIO déjà utilisé** | `⚠️ Cette broche GPIO est déjà utilisée par un autre actionneur` (vérification côté API) |
+| **Parcelle non sélectionnée** | `⚠️ Veuillez sélectionner une parcelle` |
+| **Soumission réussie** | Toast vert `✅ Actionneur "Pompe" créé` + fermeture du modal + refresh de la grille |
+| **Erreur API** | Toast rouge avec le message d'erreur |
+
+---
+
+#### Modal de suppression d'un actionneur
+
+```
+┌─────────────────────────────────────────┐
+│  🗑️ Supprimer l'actionneur              │
+│                                         │
+│  Es-tu sûr de vouloir supprimer         │
+│  l'actionneur **💧 Pompe (GPIO 26)**     │
+│  de la parcelle **Serre A** ?           │
+│                                         │
+│  ⚠️ Cette action est irréversible.      │
+│  Toutes les commandes et actions liées   │
+│  seront également supprimées.           │
+│                                         │
+│  [  Annuler  ]    [  🗑️ Supprimer  ]    │
+└─────────────────────────────────────────┘
+```
+
+- Le bouton "Supprimer" est en **rouge** (bouton danger)
+- Texte explicatif des conséquences (cascade delete)
+- Modal de confirmation obligatoire avant suppression
+
+---
+
+#### Modal de programmation (existant)
+
+```
+┌─────────────────────────────────────────┐
+│  ⏱ Programmer · 💧 Pompe               │
+│                                         │
+│  Activer la pompe pendant :             │
+│                                         │
+│  ┌─────┐ ┌──────────┐                  │
+│  │  30 │ │ [secondes]▼│                │
+│  └─────┘ └──────────┘                  │
+│                                         │
+│  [  Annuler  ]    [  ✅ Programmer  ]   │
+└─────────────────────────────────────────┘
+```
+
+- Input numérique + select d'unité (secondes/minutes/heures)
+- Valeur par défaut : 30 secondes
+- Le bouton principal change de texte selon l'action : "Démarrer", "Programmer" (témoin des actions)
+
+---
+
+#### Modal : Ajouter / Modifier un actionneur
+
+```
+┌─────────────────────────────────────────┐
+│  ➕ NOUVEL ACTIONNEUR                    │
+│                                         │
+│  ┌─────────────────────────────────────┐│
+│  │ 🔧 Nom de l'actionneur *           ││
+│  │  Ex: pompe, ventilation, eclairage ││
+│  └─────────────────────────────────────┘│
+│                                         │
+│  ┌─────────────────────────────────────┐│
+│  │ 🏷️ Référence fabricant (optionnel) ││
+│  │  Ex: Pompe 12V, Ventilateur 120mm ││
+│  └─────────────────────────────────────┘│
+│                                         │
+│  ┌─────────────────────────────────────┐│
+│  │ 🔌 Broche GPIO ESP32 *             ││
+│  │  [  26  ]  (0-39)                  ││
+│  └─────────────────────────────────────┘│
+│                                         │
+│  ┌─────────────────────────────────────┐│
+│  │ 📍 Parcelle de rattachement *      ││
+│  │  [  Serre A  ▼  ]                  ││
+│  └─────────────────────────────────────┘│
+│                                         │
+│  ┌─────────────────────────────────────┐│
+│  │ ⚡ État initial                     ││
+│  │  ○ Actif  ● Inactif                ││
+│  └─────────────────────────────────────┘│
+│                                         │
+│  [  Annuler  ]    [  ✅ Enregistrer  ]  │
+└─────────────────────────────────────────┘
+```
+
+**Champs du formulaire :**
+
+| # | Champ | Type Figma | Requis | Contraintes |
+|---|-------|-----------|:------:|-------------|
+| 1 | **Nom** | `Input text` | ✅ | 1 à 20 caractères. Placeholder "pompe, ventilation, eclairage" |
+| 2 | **Référence** | `Input text` | ❌ | Max 50 caractères. Placeholder "Pompe 12V, Ventilateur 120mm" |
+| 3 | **Broche GPIO** | `Input number` | ✅ | 0 à 39. Afficher la plage autorisée en helper text. Step 1 |
+| 4 | **Parcelle** | `Select / Dropdown` | ✅ | Liste des parcelles chargée depuis l'API. Affiche le nom de la parcelle |
+| 5 | **État initial** | `Radio group` | ❌ | Par défaut "Inactif". Deux options : Actif / Inactif |
+
+**Comportements :**
+
+| État | Rendu |
+|------|-------|
+| **Ouverture du modal (création)** | Titre "➕ Nouvel actionneur", champs vides, "État initial" par défaut sur Inactif |
+| **Ouverture du modal (modification)** | Titre "✏️ Modifier {nom}", champs pré-remplis avec les données actuelles |
+| **Nom vide** | Validation inline : `⚠️ Le nom est requis (1-20 caractères)` |
+| **GPIO invalide** | Validation inline : `⚠️ La broche GPIO doit être entre 0 et 39` |
+| **Parcelle non sélectionnée** | Bordure rouge + `⚠️ Veuillez sélectionner une parcelle` |
+| **GPIO déjà utilisé** | Message d'erreur (vérification côté API) : `❌ La broche GPIO 26 est déjà utilisée par "Pompe"` |
+| **Soumission réussie** | Toast vert `✅ Actionneur "Pompe" créé` + fermeture du modal + refresh grille |
+| **Erreur API** | Toast rouge `❌ Erreur : {message}` |
+| **Édition : même GPIO** | Toléré si c'est le même actionneur qu'on modifie |
+
+---
+
+#### Modal : Confirmation de suppression
+
+```
+┌─────────────────────────────────────────┐
+│  🗑️ Supprimer l'actionneur ?           │
+│                                         │
+│  💧 Pompe                               │
+│  Parcelle : Serre A                     │
+│  GPIO 26                                │
+│                                         │
+│  ⚠️ Cette action est irréversible.      │
+│  L'actionneur sera retiré du système.   │
+│                                         │
+│  [  Annuler  ]    [  Supprimer  (rouge) ]│
+└─────────────────────────────────────────┘
+```
+
+| Élément | Valeur |
+|---------|--------|
+| Type | Modal destructif (bouton supprimer en rouge `#E53935`) |
+| Contenu | Résumé de l'actionneur (icône, nom, parcelle, GPIO) |
+| Message | "Cette action est irréversible." |
+| Confirmation | L'utilisateur doit cliquer "Supprimer" explicitement |
+| Succès | Toast `✅ Actionneur "Pompe" supprimé` + retrait de la grille |
+
+---
+
+#### Modèle de données (backend) pour référence
+
+```python
+# backend/models/actionneur.py
+class Actionneur(Base):
+    nom = Column(String(20), nullable=False)        # 'pompe', 'ventilation', 'eclairage'
+    reference = Column(String(50), nullable=True)    # Référence fabricant
+    gpio = Column(Integer, nullable=False)           # Broche GPIO ESP32 (0-39)
+    etat = Column(String(10), nullable=False, default="inactif")  # 'actif', 'inactif'
+    id_parcelle = Column(Integer, ForeignKey("parcelles.id"), nullable=False)
+```
 
 ---
 

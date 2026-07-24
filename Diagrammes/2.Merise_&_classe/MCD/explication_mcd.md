@@ -204,15 +204,50 @@ Option B : COMMANDE → ACTION (échec)
 
 ---
 
+## 📊 Traçabilité UC ↔ Entités
+
+Chaque cas d'utilisation manipule une ou plusieurs entités du MCD. Cette table montre le lien entre les 14 UC et les 10 entités.
+
+| UC | Intitulé | Entité(s) concernée(s) | Action principale |
+|----|----------|------------------------|------------------|
+| UC1 | S'authentifier | UTILISATEUR, TOKEN | Vérifier identifiants, générer JWT |
+| UC2 | Consulter le tableau de bord | PARCELLE, CAPTEUR, MESURE, ACTIONNEUR, ALERTE | Lecture des dernières données |
+| UC3 | Visualiser l'historique | MESURE | Lecture filtrée |
+| UC4 | Commander actionneur (web) | COMMANDE, ACTIONNEUR, ACTION | Créer commande → provoquer action |
+| UC5 | Commander actionneur (CLI) | COMMANDE, ACTIONNEUR, ACTION, TOKEN | Auth via clé API + commande |
+| UC6 | Exécuter automatisation | MESURE, SEUIL, COMMANDE, ACTIONNEUR, ALERTE | Lire mesures → comparer seuils → agir |
+| UC7 | Configurer les seuils | SEUIL | Créer/modifier des seuils |
+| UC8 | Gérer les utilisateurs | UTILISATEUR | CRUD comptes |
+| UC9 | Collecter données capteurs | CAPTEUR, MESURE | Lire capteurs → insérer mesures |
+| UC10 | Recevoir et exécuter commande | ACTIONNEUR, COMMANDE, ACTION | Lire commande → activer GPIO |
+| UC11 | Gérer la connexion réseau | *(aucune entité)* | Interne ESP32 |
+| UC12 | **Gérer les capteurs** | **CAPTEUR, PARCELLE** | **CRUD capteurs + affectation parcelle** |
+| UC13 | **Gérer les actionneurs** | **ACTIONNEUR, PARCELLE** | **CRUD actionneurs + affectation parcelle** |
+| UC14 | **Gérer les parcelles** | **PARCELLE, UTILISATEUR** | **CRUD parcelles + gestion propriétaire** |
+
+> Les 3 nouveaux UC (UC12-14) sont ajoutés en harmonisation avec le diagramme de cas d'utilisation. Les entités correspondantes existaient déjà dans le MCD.
+
+### Impact des nouveaux UC sur le MCD
+
+| Nouvel UC | Entité existante | Nouveau besoin | Ajustement MCD |
+|-----------|------------------|----------------|----------------|
+| UC12 | CAPTEUR | Création/suppression par Admin | Aucun (déjà lié à PARCELLE) |
+| UC13 | ACTIONNEUR | Création/suppression par Admin | Aucun (déjà lié à PARCELLE) |
+| UC14 | PARCELLE | Création par Agriculteur ET Admin | Aucun (déjà lié à UTILISATEUR) |
+
+**Conclusion** : Le MCD n'a pas besoin d'être modifié. Les 10 entités et 13 relations couvrent déjà les besoins des 14 UC.
+
+---
+
 ## ✅ Validation
 
 Ce MCD a été conçu en respectant :
 - Les règles de **gestion métier** du SAI
-- Les **cas d'utilisation** et **diagrammes de séquence** déjà modélisés
+- Les **14 cas d'utilisation** et les **6 diagrammes de séquence** déjà modélisés
 - Les **choix technologiques** (MQTT, FastAPI, PostgreSQL)
 
 **Prochaine étape** : MLD (Modèle Logique de Données) — transformation des entités en tables relationnelles avec clés primaires et étrangères explicites.
 
 ---
 
-*Document créé le 30/06/2026 — Projet SAI (Système Agricole Intelligent)*
+*Document créé le 30/06/2026 — Projet SAI — Mis à jour le 20/07/2026 (harmonisation UC12-14)*
