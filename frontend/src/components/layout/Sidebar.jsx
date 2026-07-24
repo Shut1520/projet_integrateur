@@ -1,0 +1,148 @@
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import {
+  LayoutDashboard,
+  Sprout,
+  Zap,
+  History,
+  Sliders,
+  Users,
+  User,
+  LogOut,
+  Leaf,
+  X,
+  Cpu,
+} from 'lucide-react';
+
+export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
+  const { user, logout } = useAuth();
+
+  const navigation = [
+    { name: 'Tableau de Bord', to: '/dashboard', icon: LayoutDashboard },
+    { name: 'Parcelles', to: '/parcelles', icon: Sprout },
+    { name: 'Actionneurs', to: '/actionneurs', icon: Zap },
+    { name: 'Historique', to: '/history', icon: History },
+    { name: 'Seuils d\'Automate', to: '/thresholds', icon: Sliders },
+  ];
+
+  if (user?.role === 'admin') {
+    navigation.push({ name: 'Capteurs', to: '/capteurs', icon: Cpu });
+    navigation.push({ name: 'Utilisateurs', to: '/users', icon: Users });
+  }
+
+  return (
+    <>
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          onClick={onCloseMobile}
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-xs transition-opacity"
+        />
+      )}
+
+      {/* Sidebar container */}
+      <aside
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#161B22] border-r border-[#E0E0E0] dark:border-[#30363D] flex flex-col justify-between transform transition-transform duration-300 ease-in-out ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
+        <div>
+          {/* Brand Logo Header */}
+          <div className="h-16 px-6 border-b border-[#E0E0E0] dark:border-[#30363D] flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#2E7D32] flex items-center justify-center text-white shadow-md shadow-[#2E7D32]/20">
+                <Leaf className="w-5 h-5 fill-current" />
+              </div>
+              <div>
+                <span className="font-extrabold text-base text-[#1A1A1A] dark:text-white tracking-tight">
+                  SAI <span className="text-[#2E7D32] font-mono text-xs">v1.0</span>
+                </span>
+                <p className="text-[10px] text-[#5A5A5A] dark:text-[#8B949E] font-medium leading-none">
+                  Agri-Intelligent
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={onCloseMobile}
+              className="lg:hidden text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#1A1A1A] dark:hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="p-4 space-y-1.5">
+            <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-[#5A5A5A] dark:text-[#8B949E] mb-2">
+              Menu Principal
+            </p>
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={onCloseMobile}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                      isActive
+                        ? 'bg-[#2E7D32] text-white shadow-sm shadow-[#2E7D32]/30'
+                        : 'text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e] hover:text-[#1A1A1A] dark:hover:text-white'
+                    }`
+                  }
+                >
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span>{item.name}</span>
+                </NavLink>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* User Profile & Logout Bottom Section */}
+        <div className="p-4 border-t border-[#E0E0E0] dark:border-[#30363D] space-y-2">
+          <NavLink
+            to="/profile"
+            onClick={onCloseMobile}
+            className={({ isActive }) =>
+              `flex items-center gap-3 p-2.5 rounded-xl transition-all ${
+                isActive
+                  ? 'bg-[#f2f4ef] dark:bg-[#22272e] border border-[#2E7D32]/30'
+                  : 'hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]'
+              }`
+            }
+          >
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.nom}
+                className="w-8 h-8 rounded-full object-cover border border-[#E0E0E0]"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-[#2E7D32]/10 text-[#2E7D32] flex items-center justify-center font-bold text-xs">
+                <User className="w-4 h-4" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-[#1A1A1A] dark:text-white truncate">
+                {user?.nom}
+              </p>
+              <span className="text-[10px] font-semibold text-[#2E7D32] dark:text-[#66BB6A] block truncate">
+                {user?.role === 'admin' ? 'Administrateur' : user?.role === 'agriculteur' ? 'Agriculteur' : user?.role}
+              </span>
+            </div>
+          </NavLink>
+
+          <button
+            onClick={logout}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold text-[#E53935] hover:bg-[#E53935]/10 rounded-xl transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Déconnexion</span>
+          </button>
+        </div>
+      </aside>
+    </>
+  );
+};
