@@ -1,6 +1,6 @@
 <mxfile host="Electron">
   <diagram name="Page-1" id="VK8CDkuvSMbzUDuLXvOe">
-    <mxGraphModel dx="1298" dy="802" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1876" dy="1158" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -178,10 +178,7 @@
           <mxGeometry height="70" width="140" x="220" y="850" as="geometry" />
         </mxCell>
         <mxCell id="X1pMD-SIItlf4HQwl_s3-61" parent="X1pMD-SIItlf4HQwl_s3-2" style="ellipse;whiteSpace=wrap;html=1;" value="configurer les paramètres" vertex="1">
-          <mxGeometry height="70" width="140" x="35" y="1030" as="geometry" />
-        </mxCell>
-        <mxCell id="HY5C0sK9O10KemJSsSH3-1" parent="X1pMD-SIItlf4HQwl_s3-2" style="ellipse;whiteSpace=wrap;html=1;" value="gérer les composants (capteurs, actionneurs, parcelles" vertex="1">
-          <mxGeometry height="70" width="140" x="30" y="950" as="geometry" />
+          <mxGeometry height="70" width="140" x="35" y="950" as="geometry" />
         </mxCell>
         <mxCell id="X1pMD-SIItlf4HQwl_s3-8" edge="1" parent="1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;" target="X1pMD-SIItlf4HQwl_s3-4">
           <mxGeometry relative="1" as="geometry">
@@ -219,9 +216,6 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="X1pMD-SIItlf4HQwl_s3-63" edge="1" parent="1" source="X1pMD-SIItlf4HQwl_s3-52" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.3333333333333333;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;" target="X1pMD-SIItlf4HQwl_s3-56">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="HY5C0sK9O10KemJSsSH3-3" edge="1" parent="1" source="X1pMD-SIItlf4HQwl_s3-52" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.3333333333333333;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;" target="HY5C0sK9O10KemJSsSH3-1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="X1pMD-SIItlf4HQwl_s3-52" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" value="Administrateur/Technicien" vertex="1">

@@ -106,10 +106,22 @@ Cette fonction est appelée automatiquement avant chaque `UPDATE` sur les tables
 
 ---
 
+## 🔗 Traçabilité UC ↔ MPD
+
+Le script SQL du MPD couvre l'ensemble des 14 UC. Les UC12-14 n'ont nécessité aucune modification des tables SQL.
+
+| UC | Intitulé | Tables SQL concernées | Contrainte MPD clé |
+|----|----------|----------------------|-------------------|
+| UC12 | Gérer les capteurs | `capteurs` | `FK → parcelles ON DELETE CASCADE` |
+| UC13 | Gérer les actionneurs | `actionneurs` | `FK → parcelles ON DELETE CASCADE` |
+| UC14 | Gérer les parcelles | `parcelles` | `FK → utilisateurs ON DELETE RESTRICT` |
+
+> Les contraintes `ON DELETE` assurent l'intégrité : supprimer une parcelle supprime ses capteurs/actionneurs (CASCADE), mais on ne peut pas supprimer un utilisateur qui a des parcelles (RESTRICT).
+
 ## 📁 Fichier
 
-- **Script SQL** : `mpd_create_tables.sql` (exécutable directement dans PostgreSQL)
+- **Script SQL** : `mpd.sql` (exécutable directement dans PostgreSQL)
 
 ---
 
-*Document créé le 05/07/2026 — Projet SAI — MPD terminé*
+*Document créé le 05/07/2026 — Projet SAI — MPD terminé — Mis à jour 20/07/2026 (harmonisation UC12-14)*

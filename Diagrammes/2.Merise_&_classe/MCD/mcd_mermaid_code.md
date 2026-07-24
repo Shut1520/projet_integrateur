@@ -1,5 +1,12 @@
+---
+# MCD — Code Mermaid
+# Projet SAI — 10 entités, 13 relations
+# Harmonisé avec les 14 UC (UC12-14 ajoutés sans modification du schéma)
+# Dernière mise à jour : 20/07/2026
+---
+
 erDiagram
-    %% Relations
+    %% Relations — couvrent UC1 à UC14
     UTILISATEUR ||--o{ COMMANDE : soumet
     UTILISATEUR ||--o{ TOKEN : possede
     UTILISATEUR ||--o{ SEUIL : configure

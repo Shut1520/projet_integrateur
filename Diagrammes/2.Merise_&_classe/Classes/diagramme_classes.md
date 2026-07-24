@@ -377,6 +377,29 @@ Tu as demandé pourquoi ce n'est pas une composition. Voici le raisonnement :
 
 ---
 
+## 📊 Traçabilité UC ↔ Classes
+
+| UC | Intitulé | Classe(s) concernée(s) | Méthodes utilisées |
+|----|----------|------------------------|--------------------|
+| UC1 | S'authentifier | `Utilisateur`, `Token` | `verifier_mot_de_passe()`, `est_utilisable()` |
+| UC2 | Consulter le tableau de bord | `Parcelle`, `Capteur`, `Mesure`, `Actionneur`, `Alerte` | `est_actif()`, `est_active()` |
+| UC3 | Visualiser l'historique | `Mesure` | `to_dict()` |
+| UC4 | Commander actionneur (web) | `Commande`, `Action`, `Actionneur` | `activer()`, `est_actif()` |
+| UC5 | Commander actionneur (CLI) | `Token`, `Commande`, `Action` | `est_utilisable()` |
+| UC6 | Exécuter automatisation | `Mesure`, `Seuil`, `Commande`, `Alerte` | `est_depasse()`, `est_auto()` |
+| UC7 | Configurer les seuils | `Seuil` | CRUD |
+| UC8 | Gérer les utilisateurs | `Utilisateur` | `est_admin()` |
+| UC9 | Collecter données capteurs | `Capteur`, `Mesure` | `est_actif()` |
+| UC10 | Recevoir et exécuter commande | `Actionneur`, `Commande`, `Action` | `activer()`, `desactiver()`, `calculer_duree()` |
+| UC11 | Gérer la connexion réseau | *(aucune classe)* | Interne ESP32 |
+| UC12 | **Gérer les capteurs** | **`Capteur`** | **CRUD + `est_actif()`** |
+| UC13 | **Gérer les actionneurs** | **`Actionneur`** | **CRUD + `est_actif()`** |
+| UC14 | **Gérer les parcelles** | **`Parcelle`** | **CRUD + `obtenir_nombre_capteurs_actifs()`** |
+
+> **Aucune nouvelle classe ni méthode n'est nécessaire** pour UC12-14. Les classes `Capteur`, `Actionneur` et `Parcelle` existent déjà avec leurs méthodes métier.
+
+---
+
 ## ➡️ Prochaine étape
 
 Une fois ce diagramme validé, on écrira les 10 fichiers Python correspondants dans `backend/models/` avec SQLAlchemy.
@@ -384,4 +407,4 @@ Une fois ce diagramme validé, on écrira les 10 fichiers Python correspondants 
 ---
 
 *Document créé le 05/07/2026 — Projet SAI*
-*Dernières mises à jour : visibilité UML corrigée, types de relations ajoutés (composition/agrégation/association)*
+*Dernières mises à jour : visibilité UML corrigée, types de relations ajoutés (composition/agrégation/association), harmonisation UC12-14 (20/07/2026)*

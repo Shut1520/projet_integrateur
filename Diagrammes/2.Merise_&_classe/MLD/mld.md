@@ -238,4 +238,25 @@ CHECK alertes : id_mesure IS NOT NULL OR id_action IS NOT NULL
 
 ---
 
-*Document MLD — Projet SAI — Terminé le 02/07/2026*
+## 🔗 Traçabilité UC ↔ Tables
+
+Les 14 UC du système opèrent sur les 10 tables du MLD. Les UC12-14 (Gérer capteurs, actionneurs, parcelles) sont des CRUD standards qui utilisent les tables existantes sans aucune modification.
+
+| Table | UC liées | Type d'accès |
+|-------|----------|-------------|
+| `utilisateurs` | UC1, UC8 | Authentification + CRUD |
+| `parcelles` | UC2, UC14 | Lecture + CRUD |
+| `capteurs` | UC2, UC9, UC12 | Lecture + CRUD |
+| `actionneurs` | UC2, UC4, UC5, UC10, UC13 | Lecture + CRUD |
+| `mesures` | UC2, UC3, UC6, UC9 | INSERT (IoT) + SELECT (dashboard) |
+| `commandes` | UC4, UC5, UC6, UC10 | INSERT + UPDATE statut |
+| `actions` | UC4, UC5, UC10 | INSERT + UPDATE |
+| `alertes` | UC2, UC6 | INSERT + UPDATE (reconnaître/résoudre) |
+| `seuils` | UC6, UC7 | CRUD |
+| `tokens` | UC1, UC5 | Authentification CLI |
+
+> **Conclusion** : Le MLD est complet et couvre les 14 UC sans modification.
+
+---
+
+*Document MLD — Projet SAI — Terminé le 02/07/2026 — Mis à jour 20/07/2026 (harmonisation UC12-14)*
