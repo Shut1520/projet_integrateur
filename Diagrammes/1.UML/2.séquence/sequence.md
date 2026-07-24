@@ -55,6 +55,8 @@ sequenceDiagram
 
 ## 📋 Liste des scénarios
 
+Les **6 scénarios** ci-dessous couvrent les **UC1 à UC11** (ceux qui impliquent des interactions complexes). Les **UC12 à UC14** (Gérer les capteurs, actionneurs, parcelles) sont des **CRUD classiques** qui suivent le même pattern standard (Admin → API → BD) et ne nécessitent pas de diagramme de séquence dédié.
+
 | # | Scénario | Cas d'utilisation | Acteur principal | Statut |
 |---|----------|-------------------|------------------|--------|
 | **1** | Irrigation automatique | UC6 : Règles d'automatisation | Horloge Système | ✅ Fichiers mis à jour dans `scenario_1/` |
@@ -63,6 +65,27 @@ sequenceDiagram
 | **4** | Authentification | UC1 : S'authentifier | Agriculteur | ✅ Fichiers créés dans `scenario_4/` |
 | **5** | Collecte de données capteurs | UC9 : Collecter données | ESP32 | ✅ Fichiers créés dans `scenario_5/` |
 | **6** | Alerte critique | UC6_ext1 : Déclencher alerte | Système | ✅ Fichiers créés dans `scenario_6/` |
+
+> **🔗 Traçabilité UC12-14** : Ces UC sont des CRUD standards. Leur séquence type est : Utilisateur → API → BD → Réponse. Voir les sections traçabilité dans les documents Merise pour le mapping UC ↔ tables.
+
+### Tableau de couverture UC ↔ Scénarios
+
+| UC | Intitulé | Couvert par |
+|----|----------|-------------|
+| UC1 | S'authentifier | ✅ Scénario 4 |
+| UC2 | Consulter le tableau de bord | ❌ Pas de séquence (affichage statique) |
+| UC3 | Visualiser l'historique | ❌ Pas de séquence (affichage statique) |
+| UC4 | Commander actionneur (web) | ✅ Scénario 2 |
+| UC5 | Commander actionneur (CLI) | ✅ Scénario 3 |
+| UC6 | Exécuter les règles d'automatisation | ✅ Scénarios 1 et 6 |
+| UC7 | Configurer les seuils | ❌ Pas de séquence (CRUD simple) |
+| UC8 | Gérer les utilisateurs | ❌ Pas de séquence (CRUD simple) |
+| UC9 | Collecter les données capteurs | ✅ Scénario 5 |
+| UC10 | Recevoir et exécuter une commande | ✅ Intégré dans scénarios 1-3 |
+| UC11 | Gérer la connexion réseau | ❌ Pas de séquence (interne ESP32) |
+| UC12 | Gérer les capteurs | ❌ CRUD standard (pas de séquence dédiée) |
+| UC13 | Gérer les actionneurs | ❌ CRUD standard (pas de séquence dédiée) |
+| UC14 | Gérer les parcelles | ❌ CRUD standard (pas de séquence dédiée) |
 
 ---
 

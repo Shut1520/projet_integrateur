@@ -156,8 +156,10 @@ Ce paquet regroupe les deux interfaces par lesquelles l'utilisateur peut command
 
 ### Paquet 5 : Configuration & Administration
 
+Ce paquet regroupe toutes les fonctionnalités de configuration du système et de gestion des ressources. L'Administrateur a accès à l'ensemble de ces fonctionnalités, tandis que l'Agriculteur peut configurer les seuils et gérer ses parcelles.
+
 #### UC7 — Configurer les seuils d'alerte
-- **Acteur** : Agriculteur (et Admin)
+- **Acteur** : Agriculteur (et Admin par héritage)
 - **Description** : L'utilisateur définit ou modifie les valeurs seuils qui déclenchent les alertes et l'automatisation
 - **Déclencheur** : Navigation vers la page Paramètres
 - **Précondition** : Authentifié
@@ -187,6 +189,43 @@ Ce paquet regroupe les deux interfaces par lesquelles l'utilisateur peut command
 - `<<include>>` → **Créer un compte utilisateur** : Obligatoire pour ajouter un utilisateur
 - `<<include>>` → **Attribuer un rôle** : Obligatoire. Chaque utilisateur doit avoir un rôle (agriculteur, admin, consultatif)
 - `<<include>>` → **Supprimer un compte** : Obligatoire pour retirer un accès
+
+#### UC12 — Gérer les capteurs
+- **Acteur** : Administrateur
+- **Description** : L'administrateur enregistre, modifie ou supprime les capteurs installés sur les parcelles. Cela inclut l'ajout d'un nouveau capteur après installation physique par un technicien, la modification de ses paramètres (nom, référence, seuils associés) ou sa suppression lors d'un retrait.
+- **Déclencheur** : Installation d'un nouveau capteur, remplacement, panne, ou réorganisation des équipements
+- **Précondition** : Authentifié avec le rôle Administrateur
+- **Postcondition** : La base de données des capteurs est mise à jour. L'ajout d'un capteur le rend disponible pour la collecte de mesures et l'automatisation.
+
+**Relations** :
+- `<<include>>` → **Associer le capteur à une parcelle** : Obligatoire. Un capteur doit être lié à une parcelle existante pour que ses mesures soient contextualisées
+- `<<include>>` → **Configurer le type et la référence** : Obligatoire. L'administrateur renseigne le nom (DHT22, YL-69, BH1750, SEN0159, niveau d'eau), la référence constructeur et la position GPS/descriptive du capteur
+- `<<extend>>` → **Étalonner le capteur** : Optionnel. Permet d'appliquer un offset ou un facteur de correction si le capteur dérive dans le temps
+
+#### UC13 — Gérer les actionneurs
+- **Acteur** : Administrateur
+- **Description** : L'administrateur enregistre, modifie ou supprime les actionneurs installés (pompe, ventilation, éclairage). L'enregistrement permet au système de savoir quel actionneur est disponible sur quelle parcelle et quels sont ses paramètres de fonctionnement.
+- **Déclencheur** : Installation d'un nouvel actionneur, remplacement, ou retrait
+- **Précondition** : Authentifié avec le rôle Administrateur
+- **Postcondition** : La base de données des actionneurs est mise à jour. L'actionneur devient disponible pour les commandes manuelles (UC4, UC5) et l'automatisation (UC6).
+
+**Relations** :
+- `<<include>>` → **Associer l'actionneur à une parcelle** : Obligatoire. Un actionneur est toujours lié à une parcelle spécifique
+- `<<include>>` → **Configurer le type et la référence** : Obligatoire. L'administrateur précise le nom (pompe, ventilation, éclairage), la référence constructeur et les caractéristiques techniques
+- `<<include>>` → **Définir les paramètres par défaut** : Obligatoire. Durée d'activation par défaut, mode de fonctionnement (automatique/manuel), GPIO ESP32 associé
+
+#### UC14 — Gérer les parcelles
+- **Acteur** : Administrateur, Agriculteur
+- **Description** : L'utilisateur crée, modifie ou supprime les parcelles agricoles. Une parcelle est une unité de culture physique qui regroupe des capteurs, des actionneurs et des seuils. L'Agriculteur peut ajouter une parcelle après un rachat de terrain, l'Administrateur peut en créer pour organiser le système.
+- **Déclencheur** : Acquisition d'un nouveau terrain, division d'une parcelle existante, ou réorganisation
+- **Précondition** : Authentifié
+- **Postcondition** : La base de données des parcelles est mise à jour. Une nouvelle parcelle est prête à recevoir des capteurs et actionneurs.
+
+**Relations** :
+- `<<include>>` → **Ajouter une parcelle avec ses informations** : Obligatoire. Nom, superficie (m²), type de culture, localisation (GPS ou adresse)
+- `<<include>>` → **Modifier les informations de la parcelle** : Obligatoire pour mettre à jour les données (changement de culture, superficie ajustée)
+- `<<include>>` → **Supprimer une parcelle** : Obligatoire avec confirmation. La suppression archive les mesures associées (pas de perte d'historique)
+- `<<extend>>` → **Transférer la parcelle à un autre utilisateur** : Optionnel. Permet de changer le propriétaire/exploitant de la parcelle.
 
 ---
 
@@ -254,8 +293,8 @@ Ces cas d'utilisation sont exécutés par l'ESP32. Il s'agit du **firmware embar
 
 ## 📊 Tableau Récapitulatif des Cas d'Utilisation
 
-| ID | Intitulé | Acteur | Type | Relations |
-|----|----------|--------|------|-----------|
+| ID | Intitulé | Acteur(s) | Type | Relations |
+|----|----------|-----------|------|-----------|
 | UC1 | S'authentifier | Agriculteur | Principal | include (2), extend (2) |
 | UC2 | Consulter le tableau de bord | Agriculteur | Principal | — |
 | UC3 | Visualiser l'historique | Agriculteur | Principal | extend (2) |
@@ -267,6 +306,9 @@ Ces cas d'utilisation sont exécutés par l'ESP32. Il s'agit du **firmware embar
 | UC9 | Collecter les données capteurs | ESP32 | Système | include (2) |
 | UC10 | Recevoir et exécuter une commande | ESP32 | Système | include (2), extend (1) |
 | UC11 | Gérer la connexion réseau | ESP32 | Système | extend (2) |
+| UC12 | Gérer les capteurs | Administrateur | Principal | include (2), extend (1) |
+| UC13 | Gérer les actionneurs | Administrateur | Principal | include (3) |
+| UC14 | Gérer les parcelles | Agriculteur, Admin | Principal | include (3), extend (1) |
 
 ---
 
@@ -330,6 +372,22 @@ graph TB
         UC8_inc1[Créer un compte utilisateur]
         UC8_inc2[Attribuer un rôle<br/>agriculteur / admin / consultatif]
         UC8_inc3[Supprimer un compte]
+
+        UC12[Gérer les capteurs<br/>enregistrer / modifier / supprimer]
+        UC12_inc1[Associer le capteur à une parcelle]
+        UC12_inc2[Configurer le type et la référence]
+        UC12_ext[Étalonner le capteur<br/>offset / facteur correction]
+
+        UC13[Gérer les actionneurs<br/>enregistrer / modifier / supprimer]
+        UC13_inc1[Associer l'actionneur à une parcelle]
+        UC13_inc2[Configurer le type et la référence]
+        UC13_inc3[Définir les paramètres par défaut<br/>durée / GPIO / mode]
+
+        UC14[Gérer les parcelles<br/>créer / modifier / supprimer]
+        UC14_inc1[Ajouter une parcelle<br/>nom / superficie / culture]
+        UC14_inc2[Modifier les informations]
+        UC14_inc3[Supprimer une parcelle<br/>avec confirmation]
+        UC14_ext[Transférer la parcelle<br/>à un autre utilisateur]
     end
 
     %% Paquet 6
@@ -357,6 +415,11 @@ graph TB
     Agriculteur --- UC7
 
     Administrateur --- UC8
+    Administrateur --- UC12
+    Administrateur --- UC13
+    Administrateur --- UC14
+
+    Agriculteur --- UC14
 
     ESP32 --- UC9
     ESP32 --- UC10
@@ -377,6 +440,14 @@ graph TB
     UC8 --> UC8_inc1
     UC8 --> UC8_inc2
     UC8 --> UC8_inc3
+    UC12 --> UC12_inc1
+    UC12 --> UC12_inc2
+    UC13 --> UC13_inc1
+    UC13 --> UC13_inc2
+    UC13 --> UC13_inc3
+    UC14 --> UC14_inc1
+    UC14 --> UC14_inc2
+    UC14 --> UC14_inc3
     UC9 --> UC9_inc1
     UC9 --> UC9_inc2
     UC10 --> UC10_inc1
@@ -394,6 +465,8 @@ graph TB
     UC10_ext -.->|<<extend>>| UC10
     UC11_ext1 -.->|<<extend>>| UC11
     UC11_ext2 -.->|<<extend>>| UC11
+    UC12_ext -.->|<<extend>>| UC12
+    UC14_ext -.->|<<extend>>| UC14
 ```
 
 ---
@@ -406,4 +479,4 @@ Ce diagramme de cas d'utilisation a été conçu en suivant :
 - Les **choix technologiques** validés (MQTT, ESP32, FastAPI, React, CLI)
 - La **conception préliminaire** (architecture 3 couches)
 
-**Prochaine étape** : Diagramme de séquence pour le scénario "Irrigation automatique déclenchée par seuil d'humidité".
+**Prochaine étape** : Diagrammes de séquence pour les 6 scénarios.
