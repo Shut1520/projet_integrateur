@@ -10,3 +10,6 @@ coverage/
 yarn.lock
 bun.lock
 pnpm-lock.yaml
+
+figma.md
+todo.md

@@ -102,7 +102,7 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
                     `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                       isActive
                         ? 'bg-[#2E7D32] text-white shadow-sm shadow-[#2E7D32]/30'
-                        : 'text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e] hover:text-[#1A1A1A] dark:hover:text-white'
+                        : 'text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#E8F5E9] dark:hover:bg-[#22272e] hover:text-[#1A1A1A] dark:hover:text-white'
                     }`
                   }
                 >
@@ -122,8 +122,8 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
             className={({ isActive }) =>
               `flex items-center gap-3 p-2.5 rounded-xl transition-all ${
                 isActive
-                  ? 'bg-[#f2f4ef] dark:bg-[#22272e] border border-[#2E7D32]/30'
-                  : 'hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]'
+                  ? 'bg-[#E8F5E9] dark:bg-[#22272e] border border-[#2E7D32]/30'
+                  : 'hover:bg-[#E8F5E9] dark:hover:bg-[#22272e]'
               }`
             }
           >

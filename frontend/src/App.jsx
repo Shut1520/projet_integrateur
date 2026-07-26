@@ -30,7 +30,7 @@ const ProtectedRoute = ({ children }) => {
   // Afficher un spinner pendant la vérification initiale du token JWT
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8faf5] dark:bg-[#0D1117] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-surface)] dark:bg-[#0D1117] flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-[#2E7D32] border-t-transparent rounded-full animate-spin" />
       </div>
     );

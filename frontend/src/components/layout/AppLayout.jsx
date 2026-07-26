@@ -18,7 +18,7 @@ export const AppLayout = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#f8faf5] dark:bg-[#0D1117] text-[#1A1A1A] dark:text-[#F0F0F0] flex flex-col font-sans transition-colors duration-200">
+    <div className="min-h-screen bg-[#F5F7F2] dark:bg-[#0D1117] text-[#1A1A1A] dark:text-[#F0F0F0] flex flex-col font-sans transition-colors duration-200">
       <div className="flex flex-1 min-h-0">
         {/* Desktop & Mobile Sidebar */}
         <Sidebar

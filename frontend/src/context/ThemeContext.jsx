@@ -22,9 +22,9 @@ export const ThemeProvider = ({ children }) => {
   // Synchronise la classe 'dark' sur l'élément racine à chaque changement de thème
   useEffect(() => {
     if (theme === 'dark') {
-      root.classList.add('dark');
+      document.documentElement.classList.add('dark');
     } else {
-      root.classList.remove('dark');
+      document.documentElement.classList.remove('dark');
     }
     localStorage.setItem('sai_theme', theme);
   }, [theme]);

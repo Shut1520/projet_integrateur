@@ -63,7 +63,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
       <div className="flex items-center gap-3 flex-1 max-w-xl">
         <button
           onClick={onToggleMobileMenu}
-          className="lg:hidden p-2 rounded-xl text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"
+          className="lg:hidden p-2 rounded-xl text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#E8F5E9] dark:hover:bg-[#22272e]"
           aria-label="Menu"
         >
           <Menu className="w-5 h-5" />
@@ -76,7 +76,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Rechercher parcelle, capteur, actionneur..."
-            className="w-full pl-10 pr-4 py-2 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white placeholder-[#5A5A5A] dark:placeholder-[#8B949E] focus:outline-none transition-all"
+            className="w-full pl-10 pr-4 py-2 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white placeholder-[#5A5A5A] dark:placeholder-[#8B949E] focus:outline-none transition-all"
           />
         </div>
       </div>
@@ -87,7 +87,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
         <button
           onClick={toggleTheme}
           title={theme === 'dark' ? 'Passer au mode clair' : 'Passer au mode sombre'}
-          className="p-2 rounded-xl text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e] transition-colors"
+          className="p-2 rounded-xl text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#E8F5E9] dark:hover:bg-[#22272e] transition-colors"
         >
           {theme === 'dark' ? (
             <Sun className="w-5 h-5 text-amber-400" />
@@ -100,7 +100,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
         <div className="relative">
           <button
             onClick={() => setShowAlertModal(!showAlertModal)}
-            className="p-2 rounded-xl text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e] transition-colors relative"
+            className="p-2 rounded-xl text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#E8F5E9] dark:hover:bg-[#22272e] transition-colors relative"
             title="Alertes actives"
           >
             <Bell className="w-5 h-5" />
