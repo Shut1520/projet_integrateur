@@ -1,12 +1,27 @@
+/**
+ * Contexte de notifications toast pour l'application SAI.
+ * Permet d'afficher des messages éphémères (succès, erreur, info)
+ * en bas à droite de l'écran avec fermeture automatique.
+ */
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
 
 const ToastContext = createContext(undefined);
 
+/**
+ * Fournisseur de toasts — gère la file d'attente des notifications.
+ * Chaque toast possède un identifiant unique et une durée de vie
+ * configurable (4 secondes par défaut).
+ */
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
+  /**
+   * Ajoute un toast à la file et planifie sa suppression automatique.
+   * @param {Object} toast - { type: 'success'|'error'|'info', title: string, message: string, duration?: number }
+   */
   const addToast = useCallback((toast) => {
+    // Génération d'un identifiant unique basé sur le timestamp et un aléatoire
     const id = 'toast_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
     const duration = toast.duration || 4000;
 
@@ -67,6 +82,10 @@ export const ToastProvider = ({ children }) => {
   );
 };
 
+/**
+ * Hook pour accéder au contexte des toasts.
+ * Doit être utilisé à l'intérieur d'un <ToastProvider>.
+ */
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {

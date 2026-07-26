@@ -1,3 +1,8 @@
+/**
+ * Composant racine de l'application SAI (Système Agricole Intelligent).
+ * Définit l'arborescence de routes, les providers globaux (auth, thème, toasts)
+ * et protège les routes nécessitant une authentification.
+ */
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -16,8 +21,13 @@ import { UsersPage } from './pages/Users';
 import { Capteurs } from './pages/Capteurs';
 import { Profile } from './pages/Profile';
 
+/**
+ * Route protégée : redirige vers /login si l'utilisateur n'est pas authentifié.
+ * Affiche un indicateur de chargement pendant la vérification du token.
+ */
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
+  // Afficher un spinner pendant la vérification initiale du token JWT
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f8faf5] dark:bg-[#0D1117] flex items-center justify-center">
@@ -25,6 +35,7 @@ const ProtectedRoute = ({ children }) => {
       </div>
     );
   }
+  // Redirection vers la page de connexion si non authentifié
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }

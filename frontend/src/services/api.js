@@ -1,3 +1,9 @@
+/**
+ * Service d'accès à l'API SAI (Frontend).
+ * Encapsule toutes les requêtes HTTP vers le backend FastAPI via Axios.
+ * Gère automatiquement : l'ajout du token JWT, la déconnexion sur 401,
+ * et la normalisation des réponses (tableau ou objet).
+ */
 import axios from 'axios';
 import { storage } from './storage';
 
@@ -143,9 +149,9 @@ export const apiService = {
 
   /**
    * Commande manuelle d'un actionneur (UC4 / UC5).
-   * @param {number} id
-   * @param {string} typeAction 'on' | 'off' | 'programmer'
-   * @param {string|number} valeurParametre
+   * @param {number} id - Identifiant de l'actionneur
+   * @param {string} typeAction - 'on' | 'off' | 'programmer'
+   * @param {string|number} valeurParametre - Durée en secondes (si typeAction = 'programmer')
    */
   async commanderActionneur(id, typeAction, valeurParametre = null) {
     const payload = { type_action: typeAction };

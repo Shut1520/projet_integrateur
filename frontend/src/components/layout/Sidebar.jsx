@@ -1,3 +1,8 @@
+/**
+ * Barre latérale de navigation (sidebar).
+ * Affiche le logo, les liens de navigation adaptés au rôle,
+ * et les informations de l'utilisateur connecté avec déconnexion.
+ */
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -15,9 +20,16 @@ import {
   Cpu,
 } from 'lucide-react';
 
+/**
+ * Composant sidebar responsive.
+ * - Sur desktop : affichée en permanence à gauche.
+ * - Sur mobile : superposée en overlay avec animation slide-in.
+ * Les liens Capteurs et Utilisateurs ne sont visibles que pour les admins.
+ */
 export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
   const { user, logout } = useAuth();
 
+  // Définition des liens de navigation de base (accessibles à tous les rôles)
   const navigation = [
     { name: 'Tableau de Bord', to: '/dashboard', icon: LayoutDashboard },
     { name: 'Parcelles', to: '/parcelles', icon: Sprout },
@@ -26,6 +38,7 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
     { name: 'Seuils d\'Automate', to: '/thresholds', icon: Sliders },
   ];
 
+  // Les sections admin sont ajoutées uniquement pour les utilisateurs avec le rôle 'admin'
   if (user?.role === 'admin') {
     navigation.push({ name: 'Capteurs', to: '/capteurs', icon: Cpu });
     navigation.push({ name: 'Utilisateurs', to: '/users', icon: Users });
@@ -52,11 +65,12 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
           <div className="h-16 px-6 border-b border-[#E0E0E0] dark:border-[#30363D] flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-[#2E7D32] flex items-center justify-center text-white shadow-md shadow-[#2E7D32]/20">
+                {/* logo*/}
                 <Leaf className="w-5 h-5 fill-current" />
               </div>
               <div>
                 <span className="font-extrabold text-base text-[#1A1A1A] dark:text-white tracking-tight">
-                  SAI <span className="text-[#2E7D32] font-mono text-xs">v1.0</span>
+                  SAI
                 </span>
                 <p className="text-[10px] text-[#5A5A5A] dark:text-[#8B949E] font-medium leading-none">
                   Agri-Intelligent

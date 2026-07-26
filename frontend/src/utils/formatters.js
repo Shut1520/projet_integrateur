@@ -1,7 +1,15 @@
 /**
- * Format helper functions for SAI Frontend (JS)
+ * Fonctions utilitaires de formatage pour l'interface SAI.
+ * - formatDate : date complète en format français
+ * - formatTimeAgo : temps relatif lisible ("Il y a 5 min")
+ * - exportMesuresToCSV : export de données vers un fichier CSV téléchargeable
  */
 
+/**
+ * Formate une date ISO en format français lisible (jj/mm/aaaa hh:mm).
+ * @param {string} dateString - Chaîne de date ISO ou timestamp
+ * @returns {string} Date formatée, ou chaîne vide si invalide
+ */
 export function formatDate(dateString) {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -14,6 +22,10 @@ export function formatDate(dateString) {
   }).format(date);
 }
 
+/**
+ * Convertit un nombre de secondes en une chaîne de temps relatif.
+ * Exemples : "À l'instant", "Il y a 30s", "Il y a 5 min", "Il y a 2 h"
+ */
 export function formatTimeAgo(secondsAgo) {
   if (secondsAgo < 5) return 'À l\'instant';
   if (secondsAgo < 60) return `Il y a ${secondsAgo}s`;
@@ -23,6 +35,11 @@ export function formatTimeAgo(secondsAgo) {
   return `Il y a ${hours} h`;
 }
 
+/**
+ * Exporte un tableau de mesures au format CSV et déclenche le téléchargement.
+ * @param {Array} mesures - Tableau d'objets mesures
+ * @param {string} filename - Nom du fichier à télécharger
+ */
 export function exportMesuresToCSV(mesures, filename = 'sai_export.csv') {
   const headers = ['ID', 'Capteur Code', 'Nom Capteur', 'Parcelle', 'Valeur', 'Unité', 'Statut', 'Date/Heure'];
   const rows = mesures.map((m) => [

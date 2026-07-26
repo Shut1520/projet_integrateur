@@ -1,3 +1,8 @@
+/**
+ * Page d'historique des mesures.
+ * Affiche un graphique d'évolution temporelle et un tableau paginé
+ * des relevés de capteurs avec filtrage, recherche et export CSV.
+ */
 import React, { useState, useEffect, useMemo } from 'react';
 import { apiService } from '../services/api';
 import { exportMesuresToCSV, formatDate } from '../utils/formatters';
@@ -28,8 +33,14 @@ import { Line } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
+// Nombre de mesures affichées par page dans le tableau
 const ITEMS_PER_PAGE = 8;
 
+/**
+ * Page Historique des Mesures.
+ * Charge jusqu'à 500 mesures, les enrichit avec les noms de capteurs
+ * et parcelles, puis offre filtrage, pagination et graphique.
+ */
 export const History = () => {
   const { addToast } = useToast();
   const { theme } = useTheme();
@@ -61,7 +72,7 @@ export const History = () => {
     fetchAll();
   }, []);
 
-  // Index pour résolution des noms à partir des ids
+  // Index de résolution rapide : ID capteur → objet capteur complet
   const capteurById = useMemo(
     () => Object.fromEntries(capteurs.map((c) => [c.id, c])),
     [capteurs]
@@ -71,6 +82,9 @@ export const History = () => {
     [parcelles]
   );
 
+  /**
+   * Enrichit une mesure brute avec les noms résolus de capteur et parcelle.
+   */
   const enrichMesure = (m) => {
     const cap = capteurById[m.id_capteur];
     const parc = cap ? parcelleById[cap.id_parcelle] : null;
@@ -85,6 +99,7 @@ export const History = () => {
 
   const enriched = useMemo(() => mesures.map(enrichMesure), [mesures, capteurById, parcelleById]);
 
+  // Application combinée des filtres (recherche texte, capteur, parcelle)
   const filtered = useMemo(() => {
     return enriched.filter((m) => {
       const matchSearch =
@@ -103,7 +118,8 @@ export const History = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
-  // Construction du graphique : on prend les 20 dernières mesures, regroupées par capteur
+  // Construction du jeu de données pour le graphique Chart.js
+  // On prend les 50 mesures les plus récentes, groupées par unité
   const chartData = useMemo(() => {
     const recent = [...enriched]
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
@@ -132,6 +148,7 @@ export const History = () => {
     };
   }, [enriched]);
 
+  // Options du graphique adaptées au thème clair/sombre
   const isDark = theme === 'dark';
   const chartOptions = {
     responsive: true,
@@ -157,8 +174,11 @@ export const History = () => {
     },
   };
 
+  /**
+   * Exporte les données filtrées en CSV et déclenche le téléchargement.
+   */
   const handleExportCSV = () => {
-    // On exporte au format plat pour Excel
+    // Formatage plat pour compatibilité Excel
     const flat = filtered.map((m) => ({
       id: m.id,
       capteur: m.capteur_nom,

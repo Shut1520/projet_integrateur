@@ -1,3 +1,8 @@
+/**
+ * Page de gestion des utilisateurs (UC8 - Admin).
+ * Permet de lister, créer, modifier et supprimer des comptes.
+ * Affiche des statistiques (total, admins, agriculteurs) et un tableau filtrable.
+ */
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 import { Modal } from '../components/ui/Modal';
@@ -14,6 +19,10 @@ import {
   Clock,
 } from 'lucide-react';
 
+/**
+ * Page Gestion des Utilisateurs.
+ * Réservée aux administrateurs.
+ */
 export const UsersPage = () => {
   const { addToast } = useToast();
   const [users, setUsers] = useState([]);
@@ -30,6 +39,9 @@ export const UsersPage = () => {
   const [role, setRole] = useState('agriculteur');
   const [password, setPassword] = useState('');
 
+  /**
+   * Récupère la liste complète des utilisateurs depuis le backend.
+   */
   const loadUsers = async () => {
     try {
       const data = await apiService.getUsers();
@@ -44,6 +56,9 @@ export const UsersPage = () => {
     loadUsers();
   }, []);
 
+  /**
+   * Ouvre la modale en mode création (champs vides).
+   */
   const handleOpenAddModal = () => {
     setEditingUser(null);
     setNom('');
@@ -53,6 +68,9 @@ export const UsersPage = () => {
     setIsModalOpen(true);
   };
 
+  /**
+   * Ouvre la modale en mode édition avec les données de l'utilisateur sélectionné.
+   */
   const handleOpenEditModal = (u) => {
     setEditingUser(u);
     setNom(u.nom);
@@ -62,6 +80,11 @@ export const UsersPage = () => {
     setIsModalOpen(true);
   };
 
+  /**
+   * Soumission du formulaire utilisateur.
+   * Crée un nouvel utilisateur ou met à jour l'existant.
+   * Le mot de passe est obligatoire à la création, optionnel à la modification.
+   */
   const handleSaveUser = async (e) => {
     e.preventDefault();
     if (!nom || !email) {
@@ -96,6 +119,10 @@ export const UsersPage = () => {
     }
   };
 
+  /**
+   * Supprime un utilisateur après confirmation.
+   * Échoue si des ressources lui sont rattachées (parcelles, commandes).
+   */
   const handleDeleteUser = async (id) => {
     if (!window.confirm('Voulez-vous vraiment supprimer cet utilisateur ?')) return;
     try {
@@ -111,10 +138,12 @@ export const UsersPage = () => {
     }
   };
 
+  // Libellé français du rôle
   const roleLabel = (r) => (r === 'admin' ? 'Administrateur' : r === 'agriculteur' ? 'Agriculteur' : r);
 
   const safeUsers = Array.isArray(users) ? users : [];
 
+  // Filtrage combiné par recherche texte et par rôle
   const filteredUsers = safeUsers.filter((u) => {
     const matchSearch =
       (u.nom || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -123,6 +152,7 @@ export const UsersPage = () => {
     return matchSearch && matchRole;
   });
 
+  // Statistiques pour les cartes de résumé en haut de page
   const adminsCount = safeUsers.filter((u) => u.role === 'admin').length;
   const agriculteursCount = safeUsers.filter((u) => u.role === 'agriculteur').length;
 

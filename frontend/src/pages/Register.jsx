@@ -1,9 +1,19 @@
+/**
+ * Page d'inscription (Register).
+ * Permet de créer un nouveau compte utilisateur avec choix du rôle,
+ * validation du mot de passe (longueur + confirmation) et inscription automatique.
+ */
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Leaf, Mail, Lock, User as UserIcon, Shield, ArrowRight } from 'lucide-react';
 
+/**
+ * Composant page d'inscription.
+ * Valide les champs côté client (nom, email, mot de passe, confirmation)
+ * avant d'appeler register() qui enchaîne inscription + connexion automatique.
+ */
 export const Register = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
@@ -16,6 +26,11 @@ export const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  /**
+   * Soumission du formulaire d'inscription.
+   * Vérifie la cohérence des mots de passe et la longueur minimale
+   * avant d'appeler l'API register().
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nom || !email || !password) {

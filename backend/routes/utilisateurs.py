@@ -117,6 +117,7 @@ def modifier_utilisateur(id: int, data: UtilisateurUpdate, db: Session = Depends
         # Transformer le mot de passe en hash
         update_data["password_hash"] = generate_password_hash(update_data.pop("password"))
 
+    # Appliquer les modifications sur l'objet ORM
     for champ, valeur in update_data.items():
         setattr(utilisateur, champ, valeur)
 

@@ -1,3 +1,9 @@
+/**
+ * Page Tableau de Bord (Dashboard).
+ * Affiche en temps réel : jauges de capteurs, graphique d'évolution,
+ * panneau d'alertes actives et contrôle rapide des actionneurs.
+ * Données chargées depuis l'API backend via apiService.
+ */
 import React, { useState, useEffect } from 'react';
 import { GaugeCard } from '../components/ui/GaugeCard';
 import { apiService } from '../services/api';
@@ -27,6 +33,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
+// Enregistrement des composants Chart.js nécessaires pour les graphiques
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -38,6 +45,11 @@ ChartJS.register(
   Filler
 );
 
+/**
+ * Composant principal du tableau de bord.
+ * Charge les mesures de tous les types de capteurs, les actionneurs
+ * et les alertes au montage, puis les affiche dans une grille responsive.
+ */
 export const Dashboard = () => {
   const { user } = useAuth();
   const { addToast } = useToast();
@@ -63,6 +75,7 @@ export const Dashboard = () => {
   /**
    * Récupère la dernière mesure d'un capteur par son nom.
    */
+  // Requête API : récupère toutes les mesures puis filtre la plus récente par capteur
   const getLatestMesure = async (capteurNom) => {
     try {
       const mesures = await apiService.getMesures();
@@ -78,6 +91,10 @@ export const Dashboard = () => {
     }
   };
 
+  /**
+   * Chargement complet des données du dashboard.
+   * Récupère en parallèle les actionneurs, alertes et dernière mesure de chaque capteur.
+   */
   const loadData = async () => {
     try {
       const [acts, alts, mTemp, mHum, mLux, mCo2, mEau] = await Promise.all([
@@ -106,6 +123,7 @@ export const Dashboard = () => {
     }
   };
 
+  // Initialisation : chargement des données + minuteur pour "dernière MAJ"
   useEffect(() => {
     loadData();
     const interval = setInterval(() => {
@@ -114,6 +132,10 @@ export const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  /**
+   * Rafraîchissement manuel des données avec spin animation.
+   * Affiche un toast de confirmation une fois les données rechargées.
+   */
   const handleManualRefresh = async () => {
     setRefreshing(true);
     await loadData();
@@ -123,6 +145,9 @@ export const Dashboard = () => {
     }, 400);
   };
 
+  /**
+   * Envoie une commande ON/OFF à un actionneur depuis le tableau de bord.
+   */
   const handleToggleActuator = async (act) => {
     const nextAction = act.etat === 'actif' ? 'off' : 'on';
     try {
@@ -138,6 +163,10 @@ export const Dashboard = () => {
     }
   };
 
+  /**
+   * Marque une alerte comme résolue côté backend
+   * et la retire de la liste affichée.
+   */
   const handleResolveAlerte = async (id) => {
     try {
       await apiService.resoudreAlerte(id);
@@ -148,7 +177,7 @@ export const Dashboard = () => {
     }
   };
 
-  // Chart config
+  // Configuration du graphique Chart.js selon le thème actuel
   const isDark = theme === 'dark';
   const labels24h = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
   const labels7d = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];

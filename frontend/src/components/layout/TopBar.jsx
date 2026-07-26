@@ -1,3 +1,8 @@
+/**
+ * Barre supérieure (TopBar) de l'application.
+ * Contient la barre de recherche, le bouton de bascule thème clair/sombre,
+ * le panneau de notifications (alertes actives) et le lien vers le profil.
+ */
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -15,6 +20,11 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+/**
+ * Composant TopBar — barre d'en-tête sticky.
+ * Récupère les alertes non résolues toutes les 5 secondes
+ * et affiche un badge animé quand des alertes sont présentes.
+ */
 export const TopBar = ({ onToggleMobileMenu }) => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -22,6 +32,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Récupération des alertes actives avec polling toutes les 5 secondes
   useEffect(() => {
     async function fetchAlertes() {
       try {
@@ -37,6 +48,10 @@ export const TopBar = ({ onToggleMobileMenu }) => {
     return () => clearInterval(interval);
   }, []);
 
+  /**
+   * Marque une alerte comme résolue côté backend
+   * et la retire immédiatement de l'affichage local.
+   */
   const handleDismiss = async (id) => {
     await apiService.dismissAlerte(id);
     setAlertes((prev) => prev.filter((a) => a.id !== id));

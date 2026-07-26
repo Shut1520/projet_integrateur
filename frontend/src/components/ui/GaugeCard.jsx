@@ -1,6 +1,22 @@
+/**
+ * Composant GaugeCard — carte jauge pour afficher une valeur de capteur.
+ * Associe une icône, une couleur et un statut (Normal/Alerte/Critique)
+ * selon le type de mesure (température, humidité, luminosité, CO₂, eau).
+ */
 import React from 'react';
 import { Thermometer, Droplets, Sun, Wind, Waves } from 'lucide-react';
 
+/**
+ * Carte de mesure avec barre de progression.
+ * @param {string} title - Libellé du capteur
+ * @param {number|string} value - Dernière valeur mesurée
+ * @param {string} unit - Unité d'affichage (°C, %, lx, ppm…)
+ * @param {number} min - Valeur minimale de la plage
+ * @param {number} max - Valeur maximale de la plage
+ * @param {string} iconType - Clé du type d'icône (temp, hum, lux, co2, water)
+ * @param {string} status - Statut visuel (Normal, Alerte, Critique)
+ * @param {string} parcelleNom - Nom du capteur ou de la parcelle associée
+ */
 export const GaugeCard = ({
   title,
   value,
@@ -11,6 +27,7 @@ export const GaugeCard = ({
   status = 'Normal',
   parcelleNom,
 }) => {
+  // Sélection de l'icône et de la palette de couleurs selon le type de capteur
   let Icon = Thermometer;
   let colorClass = 'text-[#2E7D32] bg-[#2E7D32]/10';
   let gaugeColor = '#2E7D32';
@@ -37,6 +54,7 @@ export const GaugeCard = ({
     gaugeColor = '#0891B2';
   }
 
+  // Calcul du pourcentage de remplissage de la barre de progression
   const percentage = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
 
   return (

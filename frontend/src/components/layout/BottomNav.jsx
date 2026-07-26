@@ -1,3 +1,8 @@
+/**
+ * Barre de navigation inférieure pour mobile.
+ * Affiche les raccourcis vers les pages principales en bas de l'écran.
+ * Visible uniquement sur les écrans < lg ( responsive mobile).
+ */
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -8,6 +13,11 @@ import {
   Sliders,
 } from 'lucide-react';
 
+/**
+ * Navigation inférieure sticky — réservée aux petits écrans.
+ * Utilise NavLink de react-router-router pour la surbrillance
+ * automatique de l'onglet actif.
+ */
 export const BottomNav = () => {
   const navItems = [
     { to: '/dashboard', label: 'Bord', icon: LayoutDashboard },

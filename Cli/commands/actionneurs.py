@@ -1,12 +1,20 @@
 """
-Commande : actionneurs — Liste les actionneurs.
+Commande : actionneurs — Liste les actionneurs du système.
+
+Récupère la liste complète des actionneurs via l'API et l'affiche
+sous forme de tableau dans le terminal.
 """
 
 from client import APIClient
 
 
 def lister(api: APIClient):
-    """Liste tous les actionneurs du systeme."""
+    """
+    Liste tous les actionneurs du système.
+
+    Args:
+        api: Client API authentifié.
+    """
     actionneurs = api.get("/api/actionneurs")
 
     if not actionneurs:
@@ -18,6 +26,7 @@ def lister(api: APIClient):
     print(f"{'ID':<4} {'Nom':<14} {'GPIO':<6} {'Etat':<12} {'Parcelle':<10}")
     print("-" * 50)
 
+    # Construction d'un tableau aligné avec les colonnes ID, Nom, GPIO, Etat, Parcelle
     for a in actionneurs:
         nom = a.get("nom", "?")
         gpio = a.get("gpio", "?")

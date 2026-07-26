@@ -1,3 +1,11 @@
+/**
+ * Page Profil (UC2 partiel + gestion tokens API).
+ * Permet à l'utilisateur de :
+ *  - Modifier ses informations (nom, email)
+ *  - Voir et gérer ses tokens API (génération / révocation)
+ *  - Activer/désactiver la 2FA (UI seulement, simulation)
+ *  - Se déconnecter
+ */
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiService } from '../services/api';
@@ -34,16 +42,16 @@ export const Profile = () => {
   const [email, setEmail] = useState(user?.email || '');
   const [savingProfile, setSavingProfile] = useState(false);
 
-  // Tokens API
+  // Tokens API (clé pour le CLI ou intégrations externes)
   const [tokens, setTokens] = useState([]);
   const [loadingTokens, setLoadingTokens] = useState(true);
 
-  // Modals
+  // États pour la modale de génération de clé API
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const [keyName, setKeyName] = useState('');
   const [generatedKey, setGeneratedKey] = useState(null);
 
-  // 2FA (simulation)
+  // Authentification à deux facteurs (simulation côté frontend)
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
   // Charger les tokens de l'utilisateur courant
@@ -127,6 +135,9 @@ export const Profile = () => {
     }
   };
 
+  /**
+   * Copie un texte dans le presse-papier avec notification toast.
+   */
   const handleCopyKey = (text) => {
     if (!text) return;
     navigator.clipboard.writeText(text).then(
@@ -135,12 +146,19 @@ export const Profile = () => {
     );
   };
 
+  /**
+   * Révoque (supprime) une clé API après confirmation.
+   */
   const handleDeleteApiKey = (id) => {
     if (!window.confirm('Révoquer cette clé API ?')) return;
     setTokens((prev) => prev.filter((k) => k.id !== id));
     addToast({ type: 'success', title: 'Clé révoquée', message: 'La clé a été supprimée.' });
   };
 
+  /**
+   * Bascule l'état de la 2FA (simulation).
+   * La vraie implémentation nécessitera un endpoint backend dédié.
+   */
   const handleToggle2FA = () => {
     setTwoFactorEnabled((v) => !v);
     addToast({
@@ -150,6 +168,7 @@ export const Profile = () => {
     });
   };
 
+  // Libellé du rôle utilisateur pour l'affichage
   const roleLabel = user?.role === 'admin' ? 'Administrateur' : user?.role === 'agriculteur' ? 'Agriculteur' : user?.role;
 
   return (

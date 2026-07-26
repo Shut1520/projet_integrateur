@@ -1,8 +1,15 @@
+/**
+ * Page Seuils (UC7 - Configurer les seuils d'alerte).
+ * Permet de définir les valeurs min/max par type de mesure
+ * pour déclencher automatiquement les alertes.
+ * Les seuils sont alignés sur le backend : type_mesure, valeur_min, valeur_max.
+ */
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { Sliders, Save, Thermometer, Droplets, Wind, Sun, Waves } from 'lucide-react';
 
+// Correspondance type_mesure → icône et couleur pour l'affichage
 const TYPE_ICONS = {
   temperature: { Icon: Thermometer, color: 'text-amber-600 bg-amber-500/10' },
   humidite_sol: { Icon: Droplets, color: 'text-blue-600 bg-blue-500/10' },
@@ -11,6 +18,7 @@ const TYPE_ICONS = {
   niveau_eau: { Icon: Waves, color: 'text-cyan-600 bg-cyan-500/10' },
 };
 
+// Libellés français pour chaque type de mesure
 const TYPE_LABELS = {
   temperature: 'Température',
   humidite_sol: 'Humidité du sol',
@@ -51,6 +59,10 @@ export const Thresholds = () => {
     loadData();
   }, []);
 
+  /**
+   * Met à jour la valeur minimale d'un seuil.
+   * S'assure que min reste inférieur à max - 1.
+   */
   const handleMinChange = (id, val) => {
     setSeuils((prev) =>
       prev.map((s) =>
@@ -61,6 +73,10 @@ export const Thresholds = () => {
     );
   };
 
+  /**
+   * Met à jour la valeur maximale d'un seuil.
+   * S'assure que max reste supérieur à min + 1.
+   */
   const handleMaxChange = (id, val) => {
     setSeuils((prev) =>
       prev.map((s) =>
@@ -71,6 +87,9 @@ export const Thresholds = () => {
     );
   };
 
+  /**
+   * Sauvegarde tous les seuils modifiés en parallèle vers le backend.
+   */
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -99,6 +118,7 @@ export const Thresholds = () => {
     }
   };
 
+  // Résolution du nom de parcelle à partir de son ID
   const getParcelleName = (id) => {
     const p = parcelles.find((x) => x.id === id);
     return p?.nom || '—';
@@ -141,6 +161,7 @@ export const Thresholds = () => {
             const visual = TYPE_ICONS[s.type_mesure] || TYPE_ICONS.temperature;
             const { Icon, color } = visual;
             const unit = s.unite || '';
+            // Paramètres de plage adaptés au type de mesure
             const step =
               s.type_mesure === 'co2' ? 50 :
               s.type_mesure === 'luminosite' ? 50 :

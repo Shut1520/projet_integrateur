@@ -1,9 +1,19 @@
+/**
+ * Mise en page principale de l'application.
+ * Compose la sidebar (desktop + mobile), la barre du haut, le contenu principal
+ * et la barre de navigation inférieure (mobile uniquement).
+ */
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { BottomNav } from './BottomNav';
 
+/**
+ * Composant de mise en page globale.
+ * Gère l'état d'ouverture du menu mobile et orchestre
+ * les zones latérales, supérieure et le contenu principal via <Outlet />.
+ */
 export const AppLayout = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 

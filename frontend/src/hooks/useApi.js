@@ -1,3 +1,8 @@
+/**
+ * Hook personnalisé useApi — abstraction des appels API avec gestion d'état.
+ * Gère le chargement, les erreurs (avec toasts automatiques),
+ * et permet un re-fetch manuel ou automatique au montage.
+ */
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../context/ToastContext';
 import { getApiErrorMessage } from '../utils/errors';
@@ -32,6 +37,7 @@ export function useApi(apiFn, deps = [], options = {}) {
       setError(msg);
       addToast({ type: 'error', title: 'Erreur', message: msg });
       return null;
+    // Le finally s'exécute toujours, qu'il y ait eu succès ou erreur
     } finally {
       setLoading(false);
     }

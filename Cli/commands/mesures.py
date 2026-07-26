@@ -1,5 +1,8 @@
 """
-Commande : mesures — Dernieres mesures d'un capteur.
+Commande : mesures — Dernières mesures d'un capteur.
+
+Récupère les N dernières mesures d'un capteur donné via l'API
+et les affiche dans un tableau avec valeur, unité, source et date.
 """
 
 from datetime import datetime
@@ -7,7 +10,14 @@ from client import APIClient
 
 
 def lister(api: APIClient, capteur_id: int, nb: int = 10):
-    """Affiche les N dernieres mesures d'un capteur."""
+    """
+    Affiche les N dernières mesures d'un capteur.
+
+    Args:
+        api: Client API authentifié.
+        capteur_id: Identifiant du capteur cible.
+        nb: Nombre de mesures à récupérer (défaut : 10).
+    """
     mesures = api.get(f"/api/mesures/dernieres/{capteur_id}", params={"nb": nb})
 
     if not mesures:
@@ -25,6 +35,7 @@ def lister(api: APIClient, capteur_id: int, nb: int = 10):
         source = m.get("source", "?")
         timestamp = m.get("timestamp", "?")
 
+        # Conversion du timestamp ISO en format lisible (YYYY-MM-DD HH:MM:SS)
         if timestamp and timestamp != "?":
             try:
                 dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))

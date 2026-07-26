@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api/commandes", tags=["Commandes"])
 
 
 def _get_ou_404(db: Session, id: int) -> Commande:
+    """Recupere une commande par son ID ou lève une 404."""
     commande = db.query(Commande).get(id)
     if not commande:
         raise HTTPException(status_code=404, detail=f"Commande id={id} introuvable")
@@ -30,6 +31,7 @@ def lister_commandes(db: Session = Depends(get_db)):
 
 @router.get("/{id}", response_model=CommandeResponse)
 def lire_commande(id: int, db: Session = Depends(get_db)):
+    """Retourne une commande specifique par son ID."""
     return _get_ou_404(db, id)
 
 
@@ -67,7 +69,8 @@ def modifier_commande(id: int, data: CommandeUpdate, db: Session = Depends(get_d
 
 @router.delete("/{id}", status_code=204)
 def supprimer_commande(id: int, db: Session = Depends(get_db)):
+    """Supprime une commande et son action associee (CASCADE)."""
     commande = _get_ou_404(db, id)
     db.delete(commande)
     db.commit()
-    return None
+    return None  # 204 = pas de contenu dans la reponse

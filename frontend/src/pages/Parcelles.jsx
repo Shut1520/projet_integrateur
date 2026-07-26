@@ -1,3 +1,8 @@
+/**
+ * Page de gestion des parcelles (UC14 - Admin + Agriculteur).
+ * Permet de créer, modifier et supprimer des parcelles agricoles.
+ * Les admins peuvent assigner un propriétaire ; les agriculteurs voient les leurs.
+ */
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 import { Modal } from '../components/ui/Modal';
@@ -12,6 +17,7 @@ import {
   Edit,
 } from 'lucide-react';
 
+// Types de culture disponibles pour le formulaire de création/édition
 const TYPES_CULTURE = [
   'Tomate', 'Poivron', 'Laitue', 'Maïs', 'Blé', 'Pomme', 'Vigne',
   'Concombre', 'Courgette', 'Aubergine', 'Fraise', 'Carotte', 'Autre',
@@ -29,7 +35,7 @@ export const Parcelles = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingParcelle, setEditingParcelle] = useState(null);
 
-  // Form
+  // États locaux du formulaire
   const [nom, setNom] = useState('');
   const [localisation, setLocalisation] = useState('');
   const [superficie, setSuperficie] = useState('');
@@ -38,6 +44,10 @@ export const Parcelles = () => {
 
   const isAdmin = hasRole('admin');
 
+  /**
+   * Charge les parcelles. Les admins récupèrent aussi la liste des utilisateurs
+   * pour le sélecteur de propriétaire.
+   */
   const loadData = async () => {
     try {
       const [p, u] = await Promise.all([
@@ -60,6 +70,9 @@ export const Parcelles = () => {
     loadData();
   }, []);
 
+  /**
+   * Ouvre la modale en mode création avec des champs vides.
+   */
   const openCreate = () => {
     setEditingParcelle(null);
     setNom('');
@@ -70,6 +83,9 @@ export const Parcelles = () => {
     setIsModalOpen(true);
   };
 
+  /**
+   * Ouvre la modale en mode édition pré-remplie avec les données existantes.
+   */
   const openEdit = (p) => {
     setEditingParcelle(p);
     setNom(p.nom || '');
@@ -80,6 +96,10 @@ export const Parcelles = () => {
     setIsModalOpen(true);
   };
 
+  /**
+   * Soumission du formulaire : crée ou met à jour une parcelle.
+   * Gère les erreurs 409 (nom dupliqué) et 422 (validation).
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nom || !localisation) {
@@ -116,6 +136,10 @@ export const Parcelles = () => {
     }
   };
 
+  /**
+   * Supprime une parcelle après confirmation.
+   * Échoue si des capteurs ou actionneurs y sont rattachés.
+   */
   const handleDelete = async (p) => {
     if (!window.confirm(`Supprimer la parcelle "${p.nom}" ?`)) return;
     try {
@@ -131,6 +155,7 @@ export const Parcelles = () => {
     }
   };
 
+  // Résolution du nom du propriétaire à partir de son ID
   const getOwnerName = (id) => {
     const u = utilisateurs.find((x) => x.id === id);
     return u?.nom || `Utilisateur #${id}`;

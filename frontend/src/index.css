@@ -1,3 +1,9 @@
+/**
+ * Styles globaux de l'application SAI.
+ * - Variables CSS pour les thèmes clair/sombre (palette verte agricole)
+ * - Police principale Inter avec fallback système
+ * - Classes utilitaires : focus-halo, curseur personnalisé, scrollbar
+ */
 @import "tailwindcss";
 
 @layer base {

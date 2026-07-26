@@ -1,3 +1,8 @@
+/**
+ * Contexte d'authentification SAI.
+ * Gère la session utilisateur : connexion, déconnexion, inscription,
+ * persistance du token JWT dans localStorage, et vérification des rôles.
+ */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { storage } from '../services/storage';
 import { apiClient } from '../services/api';
@@ -103,6 +108,10 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+/**
+ * Hook personnalisé pour accéder au contexte d'authentification.
+ * Doit impérativement être utilisé à l'intérieur d'un <AuthProvider>.
+ */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

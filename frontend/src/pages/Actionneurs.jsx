@@ -1,3 +1,8 @@
+/**
+ * Page de gestion des actionneurs (UC4, UC5, UC13).
+ * Permet d'activer/désactiver les actionneurs, de programmer une durée
+ * d'activation, et aux admins de créer/supprimer des actionneurs.
+ */
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 import { Modal } from '../components/ui/Modal';
@@ -11,8 +16,14 @@ import {
   Power,
 } from 'lucide-react';
 
+// Liste des types d'actionneurs disponibles
 const TYPES_ACTIONNEUR = ['pompe', 'ventilation', 'eclairage'];
 
+/**
+ * Page Contrôle des Actionneurs.
+ * Affiche la liste des actionneurs sous forme de cartes avec
+ * boutons d'activation, programmation et suppression (admin).
+ */
 export const Actionneurs = () => {
   const { user, hasRole } = useAuth();
   const { addToast } = useToast();
@@ -27,7 +38,7 @@ export const Actionneurs = () => {
   const [selectedForSchedule, setSelectedForSchedule] = useState(null);
   const [scheduleDuration, setScheduleDuration] = useState(30);
 
-  // Form de création
+  // États du formulaire de création
   const [nom, setNom] = useState('');
   const [type, setType] = useState('pompe');
   const [reference, setReference] = useState('');
@@ -36,6 +47,7 @@ export const Actionneurs = () => {
 
   const isAdmin = hasRole('admin');
 
+  // Chargement initial des actionneurs et parcelles
   const loadData = async () => {
     try {
       const [acts, parcs] = await Promise.all([
@@ -80,6 +92,9 @@ export const Actionneurs = () => {
     }
   };
 
+  /**
+   * Prépare et ouvre la modale de programmation pour un actionneur donné.
+   */
   const handleOpenSchedule = (act) => {
     setSelectedForSchedule(act);
     setScheduleDuration(30);
@@ -114,6 +129,9 @@ export const Actionneurs = () => {
     }
   };
 
+  /**
+   * Ouvre la modale de création en réinitialisant tous les champs du formulaire.
+   */
   const openCreate = () => {
     setNom('');
     setType('pompe');
@@ -170,6 +188,7 @@ export const Actionneurs = () => {
     return p?.nom || '—';
   };
 
+  // Filtrage des actionneurs par parcelle sélectionnée
   const filteredActionneurs =
     parcelleFilter === 'Toutes'
       ? actionneurs

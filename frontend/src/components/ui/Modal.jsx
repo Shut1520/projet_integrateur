@@ -1,6 +1,19 @@
+/**
+ * Composant Modal réutilisable.
+ * Superposition modale avec en-tête titre, bouton de fermeture,
+ * scroll interne et fermeture par la touche Échap.
+ */
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
+/**
+ * Modale générique.
+ * @param {boolean} isOpen - Contrôle l'affichage
+ * @param {Function} onClose - Callback de fermeture
+ * @param {string} title - Titre affiché dans l'en-tête
+ * @param {ReactNode} children - Contenu du corps de la modale
+ * @param {string} maxWidth - Classe Tailwind de largeur maximale (défaut : max-w-lg)
+ */
 export const Modal = ({
   isOpen,
   onClose,
@@ -8,6 +21,7 @@ export const Modal = ({
   children,
   maxWidth = 'max-w-lg',
 }) => {
+  // Fermeture par la touche Échap et blocage du scroll body quand ouverte
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();

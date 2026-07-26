@@ -1,9 +1,19 @@
+/**
+ * Page de connexion (Login).
+ * Formulaire email/mot de passe avec validation côté client,
+ * gestion des erreurs HTTP spécifiques et redirection vers le dashboard.
+ */
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Leaf, Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react';
 
+/**
+ * Composant page de connexion.
+ * Utilise le contexte Auth pour la mutation login()
+ * et le contexte Toast pour les notifications.
+ */
 export const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -14,6 +24,11 @@ export const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  /**
+   * Soumission du formulaire de connexion.
+   * Valide les champs, appelle login() du contexte auth,
+   * et redirige vers /dashboard en cas de succès.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
@@ -26,6 +41,7 @@ export const Login = () => {
       addToast({ type: 'success', title: 'Connexion réussie', message: 'Bienvenue sur SAI !' });
       navigate('/dashboard');
     } catch (err) {
+      // Messages d'erreur spécifiques selon le code HTTP retourné
       const message =
         err.response?.status === 401
           ? 'Email ou mot de passe incorrect.'

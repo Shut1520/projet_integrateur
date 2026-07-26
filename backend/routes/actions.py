@@ -17,6 +17,7 @@ router = APIRouter(prefix="/api/actions", tags=["Actions"])
 
 
 def _get_ou_404(db: Session, id: int) -> Action:
+    """Recupere une action par son ID ou lève une 404."""
     action = db.query(Action).get(id)
     if not action:
         raise HTTPException(status_code=404, detail=f"Action id={id} introuvable")
@@ -37,6 +38,7 @@ def lister_actions(
 
 @router.get("/{id}", response_model=ActionResponse)
 def lire_action(id: int, db: Session = Depends(get_db)):
+    """Retourne une action specifique par son ID."""
     return _get_ou_404(db, id)
 
 
@@ -64,7 +66,7 @@ def modifier_action(id: int, data: ActionUpdate, db: Session = Depends(get_db)):
     for champ, valeur in data.model_dump(exclude_unset=True).items():
         setattr(action, champ, valeur)
 
-    # Si date_fin est fournie, calculer la duree automatiquement
+    # Calcul automatique de la duree si date_fin est fournie
     if data.date_fin is not None and data.date_debut is not None:
         action.calculer_duree()
     elif data.date_fin is not None and action.date_debut is not None:

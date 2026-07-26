@@ -1,3 +1,8 @@
+/**
+ * Page de gestion des capteurs (UC12 - Admin).
+ * CRUD complet sur les capteurs d'une parcelle avec
+ * formulaire de création/édition et suppression.
+ */
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 import { Modal } from '../components/ui/Modal';
@@ -23,9 +28,13 @@ export const Capteurs = () => {
   const [etat, setEtat] = useState('actif');
   const [idParcelle, setIdParcelle] = useState('');
 
+  // Constantes des choix possibles pour les selects du formulaire
   const PROTOCOLES = ['digital', 'analog', 'i2c'];
   const ETATS = ['actif', 'inactif', 'defaillant'];
 
+/**
+ * Charge les listes de capteurs et de parcelles en parallèle.
+ */
   const loadData = async () => {
     try {
       const [caps, parcs] = await Promise.all([
@@ -45,6 +54,9 @@ export const Capteurs = () => {
     loadData();
   }, []);
 
+  /**
+   * Réinitialise le formulaire en mode création et ouvre la modale.
+   */
   const openCreate = () => {
     setEditingCapteur(null);
     setNom('');
@@ -56,6 +68,10 @@ export const Capteurs = () => {
     setIsModalOpen(true);
   };
 
+  /**
+   * Pré-remplit le formulaire avec les données d'un capteur existant
+   * et ouvre la modale en mode édition.
+   */
   const openEdit = (cap) => {
     setEditingCapteur(cap);
     setNom(cap.nom || '');
@@ -67,6 +83,10 @@ export const Capteurs = () => {
     setIsModalOpen(true);
   };
 
+  /**
+   * Soumission du formulaire : crée ou met à jour un capteur selon le mode.
+   * Gère les erreurs 409 (doublon) et 422 (validation).
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     const payload = {
@@ -99,6 +119,9 @@ export const Capteurs = () => {
     }
   };
 
+  /**
+   * Supprime un capteur après confirmation de l'utilisateur.
+   */
   const handleDelete = async (cap) => {
     if (!window.confirm(`Supprimer le capteur "${cap.nom}" ?`)) return;
     try {
@@ -110,6 +133,7 @@ export const Capteurs = () => {
     }
   };
 
+  // Résolution du nom de parcelle à partir de son ID
   const getParcelleName = (id) => {
     const p = parcelles.find((x) => x.id === id);
     return p?.nom || '—';
