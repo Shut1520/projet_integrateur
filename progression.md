@@ -62,8 +62,9 @@
 | ThemeContext (clair/sombre) | ✅ | Dark mode figé, light mode refondu |
 | 10 pages fonctionnelles | ✅ | Dashboard, Login, Register, Parcelles, Actionneurs, Seuils, Historique, Capteurs, Utilisateurs, Profil |
 | API service + interceptors | ✅ | Axios, proxy `/api` |
-| Design system light mode | ✅ | Charte exacte `#2E7D32`, `#E8F5E9`, `#1B5E20`, `#F5F7F2` |
+| Design system light mode | ✅ | Charte exacte `#2E7D32`, `#E8F5E9`, `#1B5E20`, `#F5F7F2`. Bug `@custom-variant dark` Tailwind v4 corrigé |
 | Design system dark mode | ✅ | Conservé strictement inchangé |
+| Dashboard détails | ✅ | Bordure rouge alertes, icônes variées actionneurs, titre graphique, barres jauge améliorées |
 
 ---
 

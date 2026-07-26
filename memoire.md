@@ -33,6 +33,7 @@ projet_integrateur/
 - **Windows UNICODE** : pas d'émojis dans les prints console (cp1252).
 - **Bcrypt** : incompatible paslib → backend utilise `werkzeug.security`.
 - **npm overrides** : `react-router@^8.3.0` forcé pour patcher le CVE.
+- **Tailwind v4 dark mode** : sans `@custom-variant dark (&:where(.dark, .dark *))` dans `index.css`, les variantes `dark:` ne réagissent qu'à la media query `prefers-color-scheme`, PAS à la classe `.dark`. Le toggle sombre/clair ne fonctionne donc pas sans cette ligne.
 
 ## Où nous en sommes (dernière action)
 Phase 5 (Frontend) **TERMINÉE**.
@@ -40,7 +41,9 @@ Phase 5 (Frontend) **TERMINÉE**.
 - Sidebar blanche, fond global `#F5F7F2`, cartes blanches avec ombres subtiles.
 - Dashboard épurer : "Vue d'ensemble", cartes métriques avec barres colorées fines, graphique + alertes + actionneurs.
 - **Dark mode conservé strictement inchangé**.
-- Build Vite : 12.9s, 0 erreur, 0 vulnerability.
+- Bug Tailwind v4 corrigé (manquait `@custom-variant dark`).
+- Dashboard détails : bordure rouge alertes, icônes actionneurs variées (Droplets, Wind, Lightbulb), titre "Température (24h)", barre jauge `h-1.5` avec fond gris pâle.
+- Build Vite : 17.15s, 0 erreur, 0 vulnerability.
 
 ## Prochaines étapes (à venir)
 1. Déploiement & architecture réseau (diagramme de déploiement, schéma réseau)

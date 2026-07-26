@@ -42,6 +42,7 @@ Ce fichier liste les notions enseignées et apprises au fil de la conception du 
 ## 8. Frontend — React 19 + Vite + Tailwind CSS 4
 - **Variables CSS** : thème clair/sombre via `:root` et `.dark`, pas de duplication de classes.
 - **Tailwind 4** : `@import "tailwindcss"`, arbitrary values `bg-[#F5F7F2]`.
+- **`@custom-variant dark`** : directive obligatoire en Tailwind v4 pour lier les variantes `dark:` à la classe CSS `.dark` et non à la media query système. Syntaxe : `@custom-variant dark (&:where(.dark, .dark *))`. Sans ça, le toggle clair/sombre est inopérant.
 - **Context React** : `createContext`, `useContext`, providers (Auth, Theme, Toast).
 - **Routing** : `react-router-dom` v6+, `BrowserRouter`, `Routes`, `Route`, `Navigate`, `Outlet`, `NavLink`.
 - **Axios** : interceptors (injecter token, gérer 401), proxy Vite.
@@ -53,6 +54,7 @@ Ce fichier liste les notions enseignées et apprises au fil de la conception du 
 - **Charte graphique** : primary/secondary/tertiary/neutral + états (success, warning, error, info).
 - **Hiérarchie visuelle** : fond > surface > carte > élément.
 - **Dark mode** : ne jamais casser le thème sombre en modifiant le thème clair ; vérifier chaque classe `dark:`.
+- **Diagnostic dark mode** : si l'app reste sombre malgré le toggle → vérifier `@custom-variant dark` dans `index.css`, puis vider le `localStorage`.
 - **Cartes de métriques** : label uppercase + valeur bold + barre colorée fine = pattern dashboard agricole.
 
 ## 10. Notions transverses
