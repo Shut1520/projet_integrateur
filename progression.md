@@ -65,6 +65,9 @@
 | Design system light mode | ✅ | Charte exacte `#2E7D32`, `#E8F5E9`, `#1B5E20`, `#F5F7F2`. Bug `@custom-variant dark` Tailwind v4 corrigé |
 | Design system dark mode | ✅ | Conservé strictement inchangé |
 | Dashboard détails | ✅ | Bordure rouge alertes, icônes variées actionneurs, titre graphique, barres jauge améliorées |
+| KPIs interactives | ✅ | Clic sur KPI → navigation `/history?capteur=xxx`, filtre auto côté History |
+| Toggle actionneurs | ✅ | Button toggle fonctionnel, champ API `etat` corrigé (pas `statut`), commande `on`/`off` |
+| Cohérence API frontend/backend | ✅ | Champs corrigés : `a.type` (pas `a.titre`), `a.etat` (pas `a.resolu`), `m.id_capteur` (pas `m.capteur_nom`) |
 
 ---
 

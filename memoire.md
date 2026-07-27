@@ -25,7 +25,11 @@ projet_integrateur/
 └── Diagrammes/       # UML, Merise, classes, séquences, activité
 ```
 
-## Points d'attention mémorisés
+## Points d'attention mémorisés (bugs corrigés)
+- **Champ Actionneur** : le champ API est `etat` ("actif"/"inactif"), PAS `statut` ("EN MARCHE"). Voir `backend/models/actionneur.py`.
+- **Champ Alerte** : le champ API est `etat` ("active"/"reconnue"/"resolue") et `type` (alias de `type_alerte`). PAS `titre` ni `resolu` ni `timestamp` (c'est `date_debut`). Voir `backend/schemas/alerte.py`.
+- **Champ Mesure** : le schéma ne renvoie que `id_capteur`, PAS `capteur_nom`. Pour filtrer par nom de capteur, il faut d'abord charger les capteurs et construire une map `nom→id`. Voir `backend/schemas/mesure.py`.
+- **API Alertes** : la méthode de résolution est `resoudreAlerte(id)`, PAS `dismissAlerte()`.
 - **Auth** : JWT stocké dans `localStorage` (clé `sai_current_user_v1`). Interceptors Axios injectent le token.
 - **Proxy** : Vite redirige `/api` → `localhost:8000`.
 - **Rôles** : `agriculteur` et `admin`. L'admin gère les capteurs, utilisateurs, seuils, parcelles. L'agriculteur consulte et contrôle.
@@ -43,6 +47,10 @@ Phase 5 (Frontend) **TERMINÉE**.
 - **Dark mode conservé strictement inchangé**.
 - Bug Tailwind v4 corrigé (manquait `@custom-variant dark`).
 - Dashboard détails : bordure rouge alertes, icônes actionneurs variées (Droplets, Wind, Lightbulb), titre "Température (24h)", barre jauge `h-1.5` avec fond gris pâle.
+- Dashboard interactif : KPIs cliquables → redirigent vers `/history?capteur=xxx` (résolution nom→id côté frontend).
+- Toggle actionneurs fonctionnel : `<button>` toggle vert/gris, commande API `on`/`off` via `commanderActionneur`.
+- Données jauges corrigées : fetch capteurs d'abord, map nom→id, puis filtre mesures par `id_capteur`.
+- TopBar corrigée : filtres alertes (`etat !== 'resolue'`), affichage `a.type` + `a.date_debut`, API `resoudreAlerte`.
 - Build Vite : 17.15s, 0 erreur, 0 vulnerability.
 
 ## Prochaines étapes (à venir)

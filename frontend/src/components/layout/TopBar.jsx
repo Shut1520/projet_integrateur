@@ -38,7 +38,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
       try {
         const data = await apiService.getAlertes();
         const list = Array.isArray(data) ? data : [];
-        setAlertes(list.filter((a) => !a.resolu));
+        setAlertes(list.filter((a) => a.etat !== 'resolue'));
       } catch (err) {
         console.error(err);
       }
@@ -53,7 +53,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
    * et la retire immédiatement de l'affichage local.
    */
   const handleDismiss = async (id) => {
-    await apiService.dismissAlerte(id);
+    await apiService.resoudreAlerte(id);
     setAlertes((prev) => prev.filter((a) => a.id !== id));
   };
 
@@ -142,9 +142,9 @@ export const TopBar = ({ onToggleMobileMenu }) => {
                       <AlertTriangle className="w-4 h-4 text-[#E53935] shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className="text-xs font-bold text-[#E53935]">{a.titre}</p>
+                          <p className="text-xs font-bold text-[#E53935]">{a.type}</p>
                           <span className="text-[10px] text-[#5A5A5A] dark:text-[#8B949E]">
-                            {a.timestamp}
+                            {a.date_debut}
                           </span>
                         </div>
                         <p className="text-xs text-[#1A1A1A] dark:text-gray-200 mt-1 leading-snug">

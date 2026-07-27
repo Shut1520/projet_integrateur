@@ -62,3 +62,9 @@ Ce fichier liste les notions enseignées et apprises au fil de la conception du 
 - **JWT** : header.payload.signature, `Bearer`, expiration, refresh (non implémenté pour l'instant).
 - **Migration Alembic** (théorie) : versionnement incrémental du schéma DB, `alembic revision --autogenerate`, `upgrade head`.
 - **Sécurité** : mots de passe hashés (`werkzeug.security`), CORS, rate limiting (à venir).
+
+## 11. Debugging frontend-backend
+- **Champs API** : toujours vérifier les schemas Pydantic (`schemas/*.py`) pour connaître les noms exacts renvoyés par l'API. Les alias Pydantic (`alias="type"`) changent le nom du champ dans la réponse JSON.
+- **Filter par relation** : si le schéma mesure ne renvoie que `id_capteur`, il faut charger les capteurs séparément pour construire une map `nom→id` avant de filtrer.
+- **Toggle switch** : un bouton toggle fonctionne en comparant l'état actuel (`etat === 'actif'`) pour envoyer l'inverse (`'off'` ou `'on'`).
+- **Références croisées** : comparer systématiquement le frontend (`*.jsx`) avec le backend (`schemas/*.py`, `models/*.py`) pour détecter les incohérences de noms de champs.

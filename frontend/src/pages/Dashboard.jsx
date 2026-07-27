@@ -10,6 +10,7 @@ import { apiService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
+import { useNavigate } from 'react-router-dom';
 import { formatTimeAgo } from '../utils/formatters';
 import {
   RefreshCw,
@@ -54,6 +55,7 @@ export const Dashboard = () => {
   const { user } = useAuth();
   const { addToast } = useToast();
   const { theme } = useTheme();
+  const navigate = useNavigate();
 
   const [lastUpdateSecs, setLastUpdateSecs] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -74,15 +76,16 @@ export const Dashboard = () => {
 
   /**
    * Récupère la dernière mesure d'un capteur par son nom.
+   * D'abord résout le nom → id via la liste des capteurs, puis filtre par id_capteur.
    */
-  // Requête API : récupère toutes les mesures puis filtre la plus récente par capteur
-  const getLatestMesure = async (capteurNom) => {
+  const getLatestMesure = async (capteurNom, capteurMap) => {
     try {
+      const capteurId = capteurMap[capteurNom];
+      if (!capteurId) return null;
       const mesures = await apiService.getMesures();
       if (!Array.isArray(mesures)) return null;
-      // On cherche la mesure la plus récente pour ce capteur
       const filtered = mesures
-        .filter((m) => m.capteur_nom === capteurNom)
+        .filter((m) => m.id_capteur === capteurId)
         .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       return filtered[0] || null;
     } catch (err) {
@@ -93,18 +96,27 @@ export const Dashboard = () => {
 
   /**
    * Chargement complet des données du dashboard.
-   * Récupère en parallèle les actionneurs, alertes et dernière mesure de chaque capteur.
+   * Récupère capteurs → actionneurs → alertes → dernières mesures par type.
    */
   const loadData = async () => {
     try {
-      const [acts, alts, mTemp, mHum, mLux, mCo2, mEau] = await Promise.all([
+      const [capteurs, acts, alts] = await Promise.all([
+        apiService.getCapteurs(),
         apiService.getActionneurs(),
         apiService.getAlertes(),
-        getLatestMesure('dht22'),
-        getLatestMesure('yl-69'),
-        getLatestMesure('bh1750'),
-        getLatestMesure('sen0159'),
-        getLatestMesure('niveau_eau'),
+      ]);
+      // Construire la map nom → id pour résoudre les filtres
+      const capteurMap = {};
+      (Array.isArray(capteurs) ? capteurs : []).forEach((c) => {
+        capteurMap[c.nom] = c.id;
+      });
+      // Charger les dernières mesures en parallèle
+      const [mTemp, mHum, mLux, mCo2, mEau] = await Promise.all([
+        getLatestMesure('dht22', capteurMap),
+        getLatestMesure('yl-69', capteurMap),
+        getLatestMesure('bh1750', capteurMap),
+        getLatestMesure('sen0159', capteurMap),
+        getLatestMesure('niveau_eau', capteurMap),
       ]);
       setActionneurs(Array.isArray(acts) ? acts : []);
       setAlertes(Array.isArray(alts) ? alts.filter((a) => a.etat !== 'resolue') : []);
@@ -262,6 +274,7 @@ export const Dashboard = () => {
           iconType="temp"
           status={gauges.temp == null ? 'Inconnu' : gauges.temp > 28 ? 'Alerte' : 'Normal'}
           parcelleNom="DHT22"
+          onClick={() => navigate('/history?capteur=dht22')}
         />
         <GaugeCard
           title="Humidité du Sol"
@@ -272,6 +285,7 @@ export const Dashboard = () => {
           iconType="hum"
           status={gauges.humSol == null ? 'Inconnu' : gauges.humSol < 30 ? 'Alerte' : 'Normal'}
           parcelleNom="YL-69"
+          onClick={() => navigate('/history?capteur=yl-69')}
         />
         <GaugeCard
           title="Luminosité"
@@ -282,6 +296,7 @@ export const Dashboard = () => {
           iconType="lux"
           status={gauges.lux == null ? 'Inconnu' : 'Normal'}
           parcelleNom="BH1750"
+          onClick={() => navigate('/history?capteur=bh1750')}
         />
         <GaugeCard
           title="Taux de CO2"
@@ -292,6 +307,7 @@ export const Dashboard = () => {
           iconType="co2"
           status={gauges.co2 == null ? 'Inconnu' : gauges.co2 > 800 ? 'Critique' : 'Normal'}
           parcelleNom="SEN0159"
+          onClick={() => navigate('/history?capteur=sen0159')}
         />
         <GaugeCard
           title="Niveau d'Eau"
@@ -302,6 +318,7 @@ export const Dashboard = () => {
           iconType="water"
           status={gauges.eau == null ? 'Inconnu' : gauges.eau < 20 ? 'Critique' : 'Normal'}
           parcelleNom="Capteur niveau"
+          onClick={() => navigate('/history?capteur=niveau_eau')}
         />
       </div>
 
@@ -364,7 +381,7 @@ export const Dashboard = () => {
                   >
                     <AlertTriangle className="w-4 h-4 text-[#E53935] shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-[#E53935]">{a.titre}</p>
+                      <p className="text-xs font-bold text-[#E53935]">{a.type}</p>
                       <p className="text-xs text-[#1A1A1A] dark:text-gray-200 mt-1 leading-snug">
                         {a.message}
                       </p>
@@ -390,7 +407,7 @@ export const Dashboard = () => {
 
             <div className="space-y-3">
               {actionneurs.map((act) => {
-                const isOn = act.statut === 'EN MARCHÉ';
+                const isOn = act.etat === 'actif';
                 const nomLower = (act.nom || '').toLowerCase();
                 let ActIcon = Zap;
                 if (nomLower.includes('pompe')) ActIcon = Droplets;
@@ -410,20 +427,23 @@ export const Dashboard = () => {
                           {act.nom}
                         </h4>
                         <p className="text-[10px] text-[#5A5A5A] dark:text-[#8B949E]">
-                          GPIO {act.gpio} • {act.dureeActivite || act.statut}
+                          GPIO {act.gpio} • {act.etat}
                         </p>
                       </div>
                     </div>
 
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        isOn
-                          ? 'bg-[#2E7D32]/10 text-[#2E7D32]'
-                          : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                    <button
+                      onClick={() => handleToggleActuator(act)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        isOn ? 'bg-[#2E7D32]' : 'bg-gray-300 dark:bg-gray-700'
                       }`}
                     >
-                      {act.statut}
-                    </span>
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                          isOn ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
                   </div>
                 );
               })}

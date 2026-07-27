@@ -10,6 +10,7 @@ export const GaugeCard = ({
   iconType,
   status = 'Normal',
   parcelleNom,
+  onClick,
 }) => {
   let Icon = Thermometer;
   let iconColor = 'text-amber-600';
@@ -40,7 +41,10 @@ export const GaugeCard = ({
   const percentage = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
 
   return (
-    <div className="bg-white dark:bg-[#161B22] p-4 rounded-xl border border-[#E0E0E0] dark:border-[#30363D] shadow-sm flex flex-col justify-between">
+    <div
+      onClick={onClick}
+      className={`bg-white dark:bg-[#161B22] p-4 rounded-xl border border-[#E0E0E0] dark:border-[#30363D] shadow-sm flex flex-col justify-between transition-all ${onClick ? 'cursor-pointer hover:border-[#2E7D32]/50 hover:shadow-md' : ''}`}
+    >
       <div className="flex items-start justify-between mb-2">
         <div className="flex flex-col">
           <span className="text-[10px] font-bold uppercase tracking-wider text-[#5A5A5A] dark:text-[#8B949E]">

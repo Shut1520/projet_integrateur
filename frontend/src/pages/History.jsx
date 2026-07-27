@@ -8,6 +8,7 @@ import { apiService } from '../services/api';
 import { exportMesuresToCSV, formatDate } from '../utils/formatters';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSearchParams } from 'react-router-dom';
 import {
   Download,
   Filter,
@@ -49,6 +50,9 @@ export const History = () => {
   const [capteurs, setCapteurs] = useState([]);
   const [parcelles, setParcelles] = useState([]);
 
+  const [searchParams] = useSearchParams();
+  const initialSensor = searchParams.get('capteur') || '';
+
   const [search, setSearch] = useState('');
   const [selectedCapteur, setSelectedCapteur] = useState('Tous');
   const [selectedParcelle, setSelectedParcelle] = useState('Toutes');
@@ -65,6 +69,13 @@ export const History = () => {
         setMesures(Array.isArray(m) ? m : []);
         setCapteurs(Array.isArray(c) ? c : []);
         setParcelles(Array.isArray(p) ? p : []);
+
+        if (initialSensor) {
+          const match = (Array.isArray(c) ? c : []).find(
+            (cap) => cap.nom && cap.nom.toLowerCase() === initialSensor.toLowerCase()
+          );
+          if (match) setSelectedCapteur(match.id);
+        }
       } catch (err) {
         console.error('Erreur History:', err);
       }
@@ -226,7 +237,7 @@ export const History = () => {
         <select
           value={selectedCapteur}
           onChange={(e) => { setSelectedCapteur(e.target.value); setCurrentPage(1); }}
-          className="px-3 py-2 text-xs rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
+          className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
         >
           <option value="Tous">Tous les capteurs</option>
           {capteurs.map((c) => (
@@ -237,7 +248,7 @@ export const History = () => {
         <select
           value={selectedParcelle}
           onChange={(e) => { setSelectedParcelle(e.target.value); setCurrentPage(1); }}
-          className="px-3 py-2 text-xs rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
+          className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
         >
           <option value="Toutes">Toutes les parcelles</option>
           {parcelles.map((p) => (
