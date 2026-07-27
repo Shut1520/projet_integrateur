@@ -339,7 +339,7 @@ export const Actionneurs = () => {
               max="3600"
               value={scheduleDuration}
               onChange={(e) => setScheduleDuration(parseInt(e.target.value, 10) || 1)}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
             />
             <p className="text-[10px] text-[#5A5A5A] dark:text-[#8B949E] mt-1">
               1s minimum • 1h maximum
@@ -375,7 +375,7 @@ export const Actionneurs = () => {
               onChange={(e) => setNom(e.target.value)}
               required
               placeholder="Ex: Pompe principale"
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
             />
           </div>
 
@@ -385,7 +385,7 @@ export const Actionneurs = () => {
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
               >
                 {TYPES_ACTIONNEUR.map((t) => (
                   <option key={t} value={t}>{t}</option>
@@ -401,7 +401,7 @@ export const Actionneurs = () => {
                 required
                 min="0"
                 placeholder="Ex: 26"
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
               />
             </div>
           </div>
@@ -413,7 +413,7 @@ export const Actionneurs = () => {
               value={reference}
               onChange={(e) => setReference(e.target.value)}
               placeholder="Ex: SKU-POMP-26"
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
             />
           </div>
 
@@ -423,7 +423,7 @@ export const Actionneurs = () => {
               value={idParcelle}
               onChange={(e) => setIdParcelle(e.target.value)}
               required
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
             >
               <option value="">Sélectionner...</option>
               {parcelles.map((p) => (

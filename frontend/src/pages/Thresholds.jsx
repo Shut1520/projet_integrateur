@@ -193,7 +193,7 @@ export const Thresholds = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+                  <div className="p-4 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-xs font-bold text-[#5A5A5A] dark:text-[#8B949E]">
                         Seuil minimal
@@ -221,7 +221,7 @@ export const Thresholds = () => {
                     />
                   </div>
 
-                  <div className="p-4 rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+                  <div className="p-4 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-xs font-bold text-[#5A5A5A] dark:text-[#8B949E]">
                         Seuil maximal

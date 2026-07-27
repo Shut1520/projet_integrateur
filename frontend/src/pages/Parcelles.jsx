@@ -269,7 +269,7 @@ export const Parcelles = () => {
               onChange={(e) => setNom(e.target.value)}
               required
               placeholder="Ex: Serre A"
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
             />
           </div>
 
@@ -281,7 +281,7 @@ export const Parcelles = () => {
               onChange={(e) => setLocalisation(e.target.value)}
               required
               placeholder="Ex: Secteur Nord - Zone 1"
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
             />
           </div>
 
@@ -294,7 +294,7 @@ export const Parcelles = () => {
                 value={superficie}
                 onChange={(e) => setSuperficie(e.target.value)}
                 placeholder="Ex: 250"
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
               />
             </div>
             <div>
@@ -302,7 +302,7 @@ export const Parcelles = () => {
               <select
                 value={typeCulture}
                 onChange={(e) => setTypeCulture(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
               >
                 {TYPES_CULTURE.map((t) => (
                   <option key={t} value={t}>{t}</option>
@@ -318,7 +318,7 @@ export const Parcelles = () => {
                 value={idUtilisateur}
                 onChange={(e) => setIdUtilisateur(e.target.value)}
                 required
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
               >
                 <option value="">Sélectionner...</option>
                 {utilisateurs.map((u) => (

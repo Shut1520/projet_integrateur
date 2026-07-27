@@ -232,14 +232,14 @@ export const UsersPage = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher par nom ou email..."
-              className="w-full pl-10 pr-4 py-2 text-xs rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
+              className="w-full pl-10 pr-4 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
             />
           </div>
 
           <select
             value={selectedRoleFilter}
             onChange={(e) => setSelectedRoleFilter(e.target.value)}
-            className="px-3.5 py-2 text-xs rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none font-medium"
+            className="px-3.5 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none font-medium"
           >
             <option value="Tous">Tous les rôles</option>
             <option value="admin">Administrateur</option>
@@ -250,7 +250,7 @@ export const UsersPage = () => {
         {/* Users Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#f8faf5] dark:bg-[#0D1117] text-[#5A5A5A] dark:text-[#8B949E] font-bold uppercase tracking-wider border-b border-[#E0E0E0] dark:border-[#30363D]">
+            <thead className="bg-[#F5F7F2] dark:bg-[#0D1117] text-[#5A5A5A] dark:text-[#8B949E] font-bold uppercase tracking-wider border-b border-[#E0E0E0] dark:border-[#30363D]">
               <tr>
                 <th className="px-5 py-3">Utilisateur</th>
                 <th className="px-5 py-3">Rôle</th>
@@ -263,7 +263,7 @@ export const UsersPage = () => {
               {filteredUsers.map((u) => (
                 <tr
                   key={u.id}
-                  className="hover:bg-[#f8faf5]/60 dark:hover:bg-[#22272e]/50 transition-colors"
+                  className="hover:bg-[#F5F7F2]/60 dark:hover:bg-[#22272e]/50 transition-colors"
                 >
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
@@ -341,7 +341,7 @@ export const UsersPage = () => {
               onChange={(e) => setNom(e.target.value)}
               placeholder="Ex: Alain Lemaire"
               required
-              className="w-full px-3.5 py-2 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
+              className="w-full px-3.5 py-2 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
             />
           </div>
 
@@ -355,7 +355,7 @@ export const UsersPage = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="alain.l@sai.agri"
               required
-              className="w-full px-3.5 py-2 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
+              className="w-full px-3.5 py-2 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
             />
           </div>
 
@@ -366,7 +366,7 @@ export const UsersPage = () => {
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full px-3.5 py-2 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
+              className="w-full px-3.5 py-2 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
             >
               <option value="agriculteur">Agriculteur</option>
               <option value="admin">Administrateur</option>
@@ -382,7 +382,7 @@ export const UsersPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={editingUser ? 'Laisser vide pour ne pas changer' : 'Minimum 6 caractères'}
-              className="w-full px-3.5 py-2 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
+              className="w-full px-3.5 py-2 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
             />
           </div>
 

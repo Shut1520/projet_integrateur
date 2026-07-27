@@ -1,9 +1,9 @@
 # Progression — Projet SAI
 
-## Légende
-- ✅ Terminé
-- 🔄 En cours
-- ⬜ Non démarré
+## Legende
+- Termine
+- En cours
+- Non demarre
 
 ---
 
@@ -11,45 +11,45 @@
 | Livrable | Statut | Fichiers / Notes |
 |----------|--------|------------------|
 | Diagramme de cas d'utilisation | ✅ | 14 UC (inclus extensions : afficher message d'erreur, etc.) |
-| Diagrammes de séquence | ✅ | 6 scénarios (irrigation auto, manuelle, alertes, auth, etc.) |
-| Diagramme d'activité | ✅ | Version complète + 3 versions modulaires (init, boucle, extinction) |
-| MCD | ✅ | 10 entités, cardinalités validées |
+| Diagrammes de sequence | ✅ | 6 scenarios (irrigation auto, manuelle, alertes, auth, etc.) |
+| Diagramme d'activite | ✅ | Version complete + 3 versions modulaires (init, boucle, extinction) |
+| MCD | ✅ | 10 entites, cardinalites validees |
 | MLD | ✅ | Tables relationnelles avec PK/FK |
-| Diagramme de classe POO | ✅ | 10 classes SQLAlchemy avec attributs/méthodes |
-| MPD | ✅ | Script SQL de création + modèles Python |
+| Diagramme de classe POO | ✅ | 10 classes SQLAlchemy avec attributs/methodes |
+| MPD | ✅ | Script SQL de creation + modeles Python |
 
 ---
 
-## Phase 2 — Base de Données ✅
+## Phase 2 — Base de Donnees ✅
 | Livrable | Statut | Notes |
 |----------|--------|-------|
-| Modèles SQLAlchemy (10 tables) | ✅ | Utilisateur, Parcelle, Capteur, Mesure, Actionneur, Commande, Action, Alerte, Seuil, Token |
-| Script init_db.py | ✅ | Crée la DB + user PostgreSQL, testé OK |
-| Seed (données de test) | ✅ | 250+ lignes insérées via seed.py |
-| Alembic migrations | ⬜ | Configuré plus tard si nécessaire |
+| Modeles SQLAlchemy (10 tables) | ✅ | Utilisateur, Parcelle, Capteur, Mesure, Actionneur, Commande, Action, Alerte, Seuil, Token |
+| Script init_db.py | ✅ | Cree la DB + user PostgreSQL, teste OK |
+| Seed (donnees de test) | ✅ | 250+ lignes inserees via seed.py |
+| Alembic migrations | ⬜ | Configure plus tard si necessaire |
 
 ---
 
 ## Phase 3 — Backend FastAPI ✅
 | Livrable | Statut | Notes |
 |----------|--------|-------|
-| Schémas Pydantic (10 fichiers) | ✅ | Base, Create, Update, Response pour chaque entité |
-| Routeurs API (11 fichiers) | ✅ | CRUD complet sur toutes les entités |
-| Auth JWT (register/login/me) | ✅ | Route dédiée `/api/auth` |
-| main.py + CORS | ✅ | Application montée, proxy Vite configuré |
-| Middleware (rate limit, logging) | ⬜ | À faire |
-| Services métier | ⬜ | À faire |
-| Tests backend (pytest) | ⬜ | À faire |
-| Alembic upgrade | ⬜ | À faire |
+| Schemas Pydantic (10 fichiers) | ✅ | Base, Create, Update, Response pour chaque entite |
+| Routeurs API (11 fichiers) | ✅ | CRUD complet sur toutes les entites |
+| Auth JWT (register/login/me) | ✅ | Route dediee `/api/auth` |
+| main.py + CORS | ✅ | Application montee, proxy Vite configure |
+| Middleware (rate limit, logging) | ⬜ | A faire |
+| Services metier | ⬜ | A faire |
+| Tests backend (pytest) | ⬜ | A faire |
+| Alembic upgrade | ⬜ | A faire |
 
 ---
 
 ## Phase 4 — CLI Python ✅
 | Livrable | Statut | Notes |
 |----------|--------|-------|
-| Structure argparse/click | ✅ | 8 commandes implémentées |
-| Auth JWT via CLI | ✅ | Login, token stocké dans config.json |
-| Commandes métier | ✅ | Mesures, actionneurs, alertes, parcelles, seuils, capteurs |
+| Structure argparse/click | ✅ | 8 commandes implementees |
+| Auth JWT via CLI | ✅ | Login, token stocke dans config.json |
+| Commandes metier | ✅ | Mesures, actionneurs, alertes, parcelles, seuils, capteurs |
 | Tests CLI | ✅ | 8/8 OK |
 
 ---
@@ -59,30 +59,31 @@
 |----------|--------|-------|
 | Setup Vite + React 19 + Tailwind 4 | ✅ | Build 12.9s, 0 vuln |
 | Routing + AuthContext | ✅ | ProtectedRoute, JWT, localStorage |
-| ThemeContext (clair/sombre) | ✅ | Dark mode figé, light mode refondu |
+| ThemeContext (clair/sombre) | ✅ | Dark mode fige, light mode refondu |
 | 10 pages fonctionnelles | ✅ | Dashboard, Login, Register, Parcelles, Actionneurs, Seuils, Historique, Capteurs, Utilisateurs, Profil |
 | API service + interceptors | ✅ | Axios, proxy `/api` |
-| Design system light mode | ✅ | Charte exacte `#2E7D32`, `#E8F5E9`, `#1B5E20`, `#F5F7F2`. Bug `@custom-variant dark` Tailwind v4 corrigé |
-| Design system dark mode | ✅ | Conservé strictement inchangé |
-| Dashboard détails | ✅ | Bordure rouge alertes, icônes variées actionneurs, titre graphique, barres jauge améliorées |
-| KPIs interactives | ✅ | Clic sur KPI → navigation `/history?capteur=xxx`, filtre auto côté History |
-| Toggle actionneurs | ✅ | Button toggle fonctionnel, champ API `etat` corrigé (pas `statut`), commande `on`/`off` |
-| Cohérence API frontend/backend | ✅ | Champs corrigés : `a.type` (pas `a.titre`), `a.etat` (pas `a.resolu`), `m.id_capteur` (pas `m.capteur_nom`) |
-| Modales de confirmation | ✅ | `window.confirm()` remplacé par `ConfirmModal` custom dans 5 pages (Actionneurs, Capteurs, Parcelles, Users, Profile) |
+| Design system light mode | ✅ | Charte exacte `#2E7D32`, `#E8F5E9`, `#1B5E20`, `#F5F7F2`. Bug `@custom-variant dark` Tailwind v4 corrige |
+| Design system dark mode | ✅ | Conserve strictement inchange |
+| Dashboard details | ✅ | Bordure rouge alertes, icones actionneurs variees, titre graphique, barres jauge ameliorees |
+| KPIs interactives | ✅ | Clic sur KPI -> navigation `/history?capteur=xxx`, filtre auto cote History (`useSearchParams`) |
+| Toggle actionneurs | ✅ | Double appel API : `updateActionneur(id, {etat})` + `commanderActionneur(id, action)`. Voir `Dashboard.jsx:L163-180` |
+| Cohérence API frontend/backend | ✅ | Champs corriges : `a.type` (pas `a.titre`), `a.etat` (pas `a.resolu`), `m.id_capteur` (pas `m.capteur_nom`) |
+| Modales de confirmation | ✅ | `window.confirm()` remplace par `ConfirmModal` custom (`components/ui/ConfirmModal.jsx`) dans 5 pages (Actionneurs, Capteurs, Parcelles, Users, Profile) |
+| Fix couleurs hardcoded | ✅ | Toutes les occurrences `#f8faf5` remplacees par `#F5F7F2` dans toutes les pages |
 
 ---
 
-## Phase 6 — Architecture réseau & déploiement ⬜
+## Phase 6 — Architecture reseau & deploiement ⬜
 | Livrable | Statut |
 |----------|--------|
-| Diagramme de déploiement | ⬜ |
-| Schéma d'architecture réseau | ⬜ |
+| Diagramme de deploiement | ⬜ |
+| Schema d'architecture reseau | ⬜ |
 
 ---
 
-## Phase 7 — Système embarqué & MQTT ⬜
+## Phase 7 — Systeme embarque & MQTT ⬜
 | Livrable | Statut |
 |----------|--------|
 | Protocole MQTT (broker, topics) | ⬜ |
 | Firmware ESP32 (capteurs + WiFi) | ⬜ |
-| Intégration backend ↔ ESP32 | ⬜ |
+| Integration backend ↔ ESP32 | ⬜ |

@@ -253,7 +253,7 @@ export const Capteurs = () => {
               onChange={(e) => setNom(e.target.value)}
               required
               placeholder="Ex: dht22-serre-a"
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
             />
           </div>
 
@@ -264,7 +264,7 @@ export const Capteurs = () => {
               value={reference}
               onChange={(e) => setReference(e.target.value)}
               placeholder="Ex: DHT22-AM2302"
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
             />
           </div>
 
@@ -278,7 +278,7 @@ export const Capteurs = () => {
                 required
                 min="0"
                 placeholder="Ex: 4"
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
               />
             </div>
             <div>
@@ -286,7 +286,7 @@ export const Capteurs = () => {
               <select
                 value={protocole}
                 onChange={(e) => setProtocole(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
               >
                 {PROTOCOLES.map((p) => (
                   <option key={p} value={p}>{p}</option>
@@ -301,7 +301,7 @@ export const Capteurs = () => {
               <select
                 value={etat}
                 onChange={(e) => setEtat(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
               >
                 {ETATS.map((s) => (
                   <option key={s} value={s}>{s}</option>
@@ -314,7 +314,7 @@ export const Capteurs = () => {
                 value={idParcelle}
                 onChange={(e) => setIdParcelle(e.target.value)}
                 required
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
               >
                 <option value="">Sélectionner...</option>
                 {parcelles.map((p) => (

@@ -161,13 +161,17 @@ export const Dashboard = () => {
    * Envoie une commande ON/OFF à un actionneur depuis le tableau de bord.
    */
   const handleToggleActuator = async (act) => {
-    const nextAction = act.etat === 'actif' ? 'off' : 'on';
+    const nextEtat = act.etat === 'actif' ? 'inactif' : 'actif';
+    const nextAction = nextEtat === 'actif' ? 'on' : 'off';
     try {
+      // 1. Mettre a jour l'etat de l'actionneur dans la BDD
+      await apiService.updateActionneur(act.id, { etat: nextEtat });
+      // 2. Enregistrer la commande pour traçabilité / ESP32
       await apiService.commanderActionneur(act.id, nextAction);
       addToast({
-        type: 'info',
+        type: 'success',
         title: 'Actionneur mis à jour',
-        message: `${act.nom} → ${nextAction.toUpperCase()}`,
+        message: `${act.nom} → ${nextEtat.toUpperCase()}`,
       });
       await loadData();
     } catch (err) {

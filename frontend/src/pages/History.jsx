@@ -263,7 +263,7 @@ export const History = () => {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             placeholder="Rechercher..."
-            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none"
+            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none"
           />
         </div>
       </div>
@@ -300,7 +300,7 @@ export const History = () => {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#f8faf5] dark:bg-[#0D1117] text-[#5A5A5A] dark:text-[#8B949E] font-bold uppercase tracking-wider border-b border-[#E0E0E0] dark:border-[#30363D]">
+              <thead className="bg-[#F5F7F2] dark:bg-[#0D1117] text-[#5A5A5A] dark:text-[#8B949E] font-bold uppercase tracking-wider border-b border-[#E0E0E0] dark:border-[#30363D]">
                 <tr>
                   <th className="px-5 py-3">Date & Heure</th>
                   <th className="px-5 py-3">Capteur</th>
@@ -311,7 +311,7 @@ export const History = () => {
               </thead>
               <tbody>
                 {pageItems.map((m) => (
-                  <tr key={m.id} className="border-b border-[#E0E0E0] dark:border-[#30363D] hover:bg-[#f8faf5] dark:hover:bg-[#0D1117]">
+                  <tr key={m.id} className="border-b border-[#E0E0E0] dark:border-[#30363D] hover:bg-[#F5F7F2] dark:hover:bg-[#0D1117]">
                     <td className="px-5 py-3 font-mono text-[#5A5A5A] dark:text-[#8B949E]">
                       {formatDate(m.timestamp)}
                     </td>

@@ -228,7 +228,7 @@ export const Profile = () => {
                   value={nom}
                   onChange={(e) => setNom(e.target.value)}
                   required
-                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
                 />
               </div>
             </div>
@@ -244,7 +244,7 @@ export const Profile = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
                 />
               </div>
             </div>
@@ -268,7 +268,7 @@ export const Profile = () => {
               <span>Sécurité du Compte</span>
             </h3>
 
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
               <div>
                 <p className="text-xs font-bold text-[#1A1A1A] dark:text-white">Authentification 2FA</p>
                 <p className="text-[11px] text-[#5A5A5A] dark:text-[#8B949E]">Double facteur (simulation)</p>
@@ -328,7 +328,7 @@ export const Profile = () => {
                 {tokens.map((k) => (
                   <div
                     key={k.id}
-                    className="p-3 rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] flex items-center justify-between"
+                    className="p-3 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] flex items-center justify-between"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-bold text-[#1A1A1A] dark:text-white truncate">
@@ -381,7 +381,7 @@ export const Profile = () => {
               </p>
             </div>
 
-            <div className="p-3 bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] rounded-xl font-mono text-xs text-[#1A1A1A] dark:text-white flex items-center justify-between gap-2">
+            <div className="p-3 bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] rounded-xl font-mono text-xs text-[#1A1A1A] dark:text-white flex items-center justify-between gap-2">
               <span className="truncate">{generatedKey.keyFull}</span>
               <button
                 onClick={() => handleCopyKey(generatedKey.keyFull)}
@@ -410,7 +410,7 @@ export const Profile = () => {
                 onChange={(e) => setKeyName(e.target.value)}
                 placeholder="Ex: Application Mobile Technicien"
                 required
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#f8faf5] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
               />
             </div>
             <div className="flex gap-2 pt-2">
