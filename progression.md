@@ -68,6 +68,7 @@
 | KPIs interactives | ✅ | Clic sur KPI → navigation `/history?capteur=xxx`, filtre auto côté History |
 | Toggle actionneurs | ✅ | Button toggle fonctionnel, champ API `etat` corrigé (pas `statut`), commande `on`/`off` |
 | Cohérence API frontend/backend | ✅ | Champs corrigés : `a.type` (pas `a.titre`), `a.etat` (pas `a.resolu`), `m.id_capteur` (pas `m.capteur_nom`) |
+| Modales de confirmation | ✅ | `window.confirm()` remplacé par `ConfirmModal` custom dans 5 pages (Actionneurs, Capteurs, Parcelles, Users, Profile) |
 
 ---
 

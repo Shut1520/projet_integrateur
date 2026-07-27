@@ -16,6 +16,7 @@ import {
   Trash2,
   Edit,
 } from 'lucide-react';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 
 // Types de culture disponibles pour le formulaire de création/édition
 const TYPES_CULTURE = [
@@ -41,6 +42,7 @@ export const Parcelles = () => {
   const [superficie, setSuperficie] = useState('');
   const [typeCulture, setTypeCulture] = useState('Tomate');
   const [idUtilisateur, setIdUtilisateur] = useState('');
+    const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   const isAdmin = hasRole('admin');
 
@@ -140,19 +142,25 @@ export const Parcelles = () => {
    * Supprime une parcelle après confirmation.
    * Échoue si des capteurs ou actionneurs y sont rattachés.
    */
-  const handleDelete = async (p) => {
-    if (!window.confirm(`Supprimer la parcelle "${p.nom}" ?`)) return;
-    try {
-      await apiService.deleteParcelle(p.id);
-      addToast({ type: 'success', title: 'Parcelle supprimée', message: p.nom });
-      await loadData();
-    } catch (err) {
-      addToast({
-        type: 'error',
-        title: 'Erreur',
-        message: 'Suppression impossible (capteurs ou actionneurs liés).',
-      });
-    }
+  const handleDelete = (p) => {
+    setConfirmModal({
+      open: true,
+      title: 'Supprimer cette parcelle',
+      message: `Voulez-vous vraiment supprimer la parcelle « ${p.nom} » ? Cette action est irréversible.`,
+      onConfirm: async () => {
+        try {
+          await apiService.deleteParcelle(p.id);
+          addToast({ type: 'success', title: 'Parcelle supprimée', message: p.nom });
+          await loadData();
+        } catch (err) {
+          addToast({
+            type: 'error',
+            title: 'Erreur',
+            message: 'Suppression impossible (capteurs ou actionneurs liés).',
+          });
+        }
+      },
+    });
   };
 
   // Résolution du nom du propriétaire à partir de son ID
@@ -339,6 +347,14 @@ export const Parcelles = () => {
           </div>
         </form>
       </Modal>
+
+      <ConfirmModal
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal({ open: false, title: '', message: '', onConfirm: null })}
+      />
     </div>
   );
 };

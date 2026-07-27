@@ -10,6 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiService } from '../services/api';
 import { Modal } from '../components/ui/Modal';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { useToast } from '../context/ToastContext';
 import { formatDate } from '../utils/formatters';
 import {
@@ -53,6 +54,7 @@ export const Profile = () => {
 
   // Authentification à deux facteurs (simulation côté frontend)
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   // Charger les tokens de l'utilisateur courant
   const loadTokens = async () => {
@@ -150,9 +152,16 @@ export const Profile = () => {
    * Révoque (supprime) une clé API après confirmation.
    */
   const handleDeleteApiKey = (id) => {
-    if (!window.confirm('Révoquer cette clé API ?')) return;
-    setTokens((prev) => prev.filter((k) => k.id !== id));
-    addToast({ type: 'success', title: 'Clé révoquée', message: 'La clé a été supprimée.' });
+    setConfirmModal({
+      open: true,
+      title: 'Révoquer cette clé API',
+      message: 'Voulez-vous vraiment révoquer cette clé API ? Elle ne pourra plus être utilisée.',
+      confirmLabel: 'Révoquer',
+      onConfirm: () => {
+        setTokens((prev) => prev.filter((k) => k.id !== id));
+        addToast({ type: 'success', title: 'Clé révoquée', message: 'La clé a été supprimée.' });
+      },
+    });
   };
 
   /**
@@ -422,6 +431,15 @@ export const Profile = () => {
           </form>
         )}
       </Modal>
+
+      <ConfirmModal
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmLabel={confirmModal.confirmLabel}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal({ open: false, title: '', message: '', onConfirm: null })}
+      />
     </div>
   );
 };

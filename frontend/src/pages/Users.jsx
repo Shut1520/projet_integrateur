@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../context/ToastContext';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import {
   Users as UsersIcon,
   Plus,
@@ -38,6 +39,7 @@ export const UsersPage = () => {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('agriculteur');
   const [password, setPassword] = useState('');
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   /**
    * Récupère la liste complète des utilisateurs depuis le backend.
@@ -123,19 +125,26 @@ export const UsersPage = () => {
    * Supprime un utilisateur après confirmation.
    * Échoue si des ressources lui sont rattachées (parcelles, commandes).
    */
-  const handleDeleteUser = async (id) => {
-    if (!window.confirm('Voulez-vous vraiment supprimer cet utilisateur ?')) return;
-    try {
-      await apiService.deleteUser(id);
-      addToast({ type: 'success', title: 'Supprimé', message: 'L\'utilisateur a été retiré.' });
-      loadUsers();
-    } catch (err) {
-      addToast({
-        type: 'error',
-        title: 'Erreur',
-        message: 'Suppression impossible (parcelles ou commandes liées ?).',
-      });
-    }
+  const handleDeleteUser = (id) => {
+    setConfirmModal({
+      open: true,
+      title: 'Supprimer cet utilisateur',
+      message: 'Voulez-vous vraiment supprimer cet utilisateur ? Cette action est irréversible.',
+      confirmLabel: 'Supprimer',
+      onConfirm: async () => {
+        try {
+          await apiService.deleteUser(id);
+          addToast({ type: 'success', title: 'Supprimé', message: 'L\'utilisateur a été retiré.' });
+          loadUsers();
+        } catch (err) {
+          addToast({
+            type: 'error',
+            title: 'Erreur',
+            message: 'Suppression impossible (parcelles ou commandes liées ?).',
+          });
+        }
+      },
+    });
   };
 
   // Libellé français du rôle
@@ -394,6 +403,15 @@ export const UsersPage = () => {
           </div>
         </form>
       </Modal>
+
+      <ConfirmModal
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmLabel={confirmModal.confirmLabel}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal({ open: false, title: '', message: '', onConfirm: null })}
+      />
     </div>
   );
 };

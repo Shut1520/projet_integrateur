@@ -15,6 +15,7 @@ import {
   Trash2,
   Power,
 } from 'lucide-react';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 
 // Liste des types d'actionneurs disponibles
 const TYPES_ACTIONNEUR = ['pompe', 'ventilation', 'eclairage'];
@@ -44,6 +45,7 @@ export const Actionneurs = () => {
   const [reference, setReference] = useState('');
   const [gpio, setGpio] = useState('');
   const [idParcelle, setIdParcelle] = useState('');
+    const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   const isAdmin = hasRole('admin');
 
@@ -168,19 +170,25 @@ export const Actionneurs = () => {
     }
   };
 
-  const handleDelete = async (act) => {
-    if (!window.confirm(`Supprimer l'actionneur "${act.nom}" ?`)) return;
-    try {
-      await apiService.deleteActionneur(act.id);
-      addToast({ type: 'success', title: 'Actionneur supprimé', message: act.nom });
-      await loadData();
-    } catch (err) {
-      addToast({
-        type: 'error',
-        title: 'Erreur',
-        message: 'Suppression impossible (commandes liées ?).',
-      });
-    }
+  const handleDelete = (act) => {
+    setConfirmModal({
+      open: true,
+      title: 'Supprimer cet actionneur',
+      message: `Voulez-vous vraiment supprimer l'actionneur « ${act.nom} » ? Cette action est irréversible.`,
+      onConfirm: async () => {
+        try {
+          await apiService.deleteActionneur(act.id);
+          addToast({ type: 'success', title: 'Actionneur supprimé', message: act.nom });
+          await loadData();
+        } catch (err) {
+          addToast({
+            type: 'error',
+            title: 'Erreur',
+            message: 'Suppression impossible (commandes liées ?).',
+          });
+        }
+      },
+    });
   };
 
   const getParcelleName = (id) => {
@@ -441,6 +449,14 @@ export const Actionneurs = () => {
           </div>
         </form>
       </Modal>
+
+      <ConfirmModal
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal({ open: false, title: '', message: '', onConfirm: null })}
+      />
     </div>
   );
 };

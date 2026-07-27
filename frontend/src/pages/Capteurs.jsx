@@ -8,6 +8,7 @@ import { apiService } from '../services/api';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../context/ToastContext';
 import { Cpu, Plus, Edit, Trash2, MapPin, Wifi, WifiOff } from 'lucide-react';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 
 /**
  * Page de gestion des capteurs (UC12 - Admin).
@@ -27,6 +28,7 @@ export const Capteurs = () => {
   const [protocole, setProtocole] = useState('digital');
   const [etat, setEtat] = useState('actif');
   const [idParcelle, setIdParcelle] = useState('');
+    const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   // Constantes des choix possibles pour les selects du formulaire
   const PROTOCOLES = ['digital', 'analog', 'i2c'];
@@ -122,15 +124,21 @@ export const Capteurs = () => {
   /**
    * Supprime un capteur après confirmation de l'utilisateur.
    */
-  const handleDelete = async (cap) => {
-    if (!window.confirm(`Supprimer le capteur "${cap.nom}" ?`)) return;
-    try {
-      await apiService.deleteCapteur(cap.id);
-      addToast({ type: 'success', title: 'Capteur supprimé', message: cap.nom });
-      await loadData();
-    } catch (err) {
-      addToast({ type: 'error', title: 'Erreur', message: 'Suppression impossible.' });
-    }
+  const handleDelete = (cap) => {
+    setConfirmModal({
+      open: true,
+      title: 'Supprimer ce capteur',
+      message: `Voulez-vous vraiment supprimer le capteur « ${cap.nom} » ? Cette action est irréversible.`,
+      onConfirm: async () => {
+        try {
+          await apiService.deleteCapteur(cap.id);
+          addToast({ type: 'success', title: 'Capteur supprimé', message: cap.nom });
+          await loadData();
+        } catch (err) {
+          addToast({ type: 'error', title: 'Erreur', message: 'Suppression impossible.' });
+        }
+      },
+    });
   };
 
   // Résolution du nom de parcelle à partir de son ID
@@ -333,6 +341,14 @@ export const Capteurs = () => {
           </div>
         </form>
       </Modal>
+
+      <ConfirmModal
+        open={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal({ open: false, title: '', message: '', onConfirm: null })}
+      />
     </div>
   );
 };
