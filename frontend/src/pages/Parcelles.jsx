@@ -1,9 +1,9 @@
 /**
  * Page de gestion des parcelles (UC14 - Admin + Agriculteur).
- * Permet de créer, modifier et supprimer des parcelles agricoles.
- * Les admins peuvent assigner un propriétaire ; les agriculteurs voient les leurs.
+ * Permet de creer, modifier et supprimer des parcelles agricoles.
+ * Les admins peuvent assigner un proprietaire ; les agriculteurs voient les leurs.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { apiService } from '../services/api';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../context/ToastContext';
@@ -15,18 +15,20 @@ import {
   User,
   Trash2,
   Edit,
+  Search,
+  Filter,
 } from 'lucide-react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 
-// Types de culture disponibles pour le formulaire de création/édition
+// Types de culture disponibles pour le formulaire de creation/edition
 const TYPES_CULTURE = [
-  'Tomate', 'Poivron', 'Laitue', 'Maïs', 'Blé', 'Pomme', 'Vigne',
+  'Tomate', 'Poivron', 'Laitue', 'Mais', 'Ble', 'Pomme', 'Vigne',
   'Concombre', 'Courgette', 'Aubergine', 'Fraise', 'Carotte', 'Autre',
 ];
 
 /**
  * Page de gestion des parcelles (UC14 - Admin + Agriculteur).
- * Aligné sur le backend : nom, localisation, superficie, type_culture, id_utilisateur.
+ * Aligne sur le backend : nom, localisation, superficie, type_culture, id_utilisateur.
  */
 export const Parcelles = () => {
   const { user, hasRole } = useAuth();
@@ -36,19 +38,24 @@ export const Parcelles = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingParcelle, setEditingParcelle] = useState(null);
 
-  // États locaux du formulaire
+  // Filtres
+  const [search, setSearch] = useState('');
+  const [filterTypeCulture, setFilterTypeCulture] = useState('Tous');
+  const [filterProprietaire, setFilterProprietaire] = useState('Tous');
+
+  // Etats locaux du formulaire
   const [nom, setNom] = useState('');
   const [localisation, setLocalisation] = useState('');
   const [superficie, setSuperficie] = useState('');
   const [typeCulture, setTypeCulture] = useState('Tomate');
   const [idUtilisateur, setIdUtilisateur] = useState('');
-    const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   const isAdmin = hasRole('admin');
 
   /**
-   * Charge les parcelles. Les admins récupèrent aussi la liste des utilisateurs
-   * pour le sélecteur de propriétaire.
+   * Charge les parcelles. Les admins recuperent aussi la liste des utilisateurs
+   * pour le selecteur de proprietaire.
    */
   const loadData = async () => {
     try {
@@ -73,7 +80,7 @@ export const Parcelles = () => {
   }, []);
 
   /**
-   * Ouvre la modale en mode création avec des champs vides.
+   * Ouvre la modale en mode creation avec des champs vides.
    */
   const openCreate = () => {
     setEditingParcelle(null);
@@ -86,7 +93,7 @@ export const Parcelles = () => {
   };
 
   /**
-   * Ouvre la modale en mode édition pré-remplie avec les données existantes.
+   * Ouvre la modale en mode edition pre-remplie avec les donnees existantes.
    */
   const openEdit = (p) => {
     setEditingParcelle(p);
@@ -99,8 +106,8 @@ export const Parcelles = () => {
   };
 
   /**
-   * Soumission du formulaire : crée ou met à jour une parcelle.
-   * Gère les erreurs 409 (nom dupliqué) et 422 (validation).
+   * Soumission du formulaire : cree ou met a jour une parcelle.
+   * Gere les erreurs 409 (nom duplique) et 422 (validation).
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -120,54 +127,72 @@ export const Parcelles = () => {
     try {
       if (editingParcelle) {
         await apiService.updateParcelle(editingParcelle.id, payload);
-        addToast({ type: 'success', title: 'Parcelle mise à jour', message: nom });
+        addToast({ type: 'success', title: 'Parcelle mise a jour', message: nom });
       } else {
         await apiService.createParcelle(payload);
-        addToast({ type: 'success', title: 'Parcelle créée', message: nom });
+        addToast({ type: 'success', title: 'Parcelle creee', message: nom });
       }
       setIsModalOpen(false);
       await loadData();
     } catch (err) {
       const message =
         err.response?.status === 409
-          ? 'Une parcelle avec ce nom existe déjà.'
+          ? 'Une parcelle avec ce nom existe deja.'
           : err.response?.status === 422
-          ? 'Données invalides. Vérifiez les champs.'
+          ? 'Donnees invalides. Verifiez les champs.'
           : 'Enregistrement impossible.';
       addToast({ type: 'error', title: 'Erreur', message });
     }
   };
 
   /**
-   * Supprime une parcelle après confirmation.
-   * Échoue si des capteurs ou actionneurs y sont rattachés.
+   * Supprime une parcelle apres confirmation.
+   * Echoue si des capteurs ou actionneurs y sont rattaches.
    */
   const handleDelete = (p) => {
     setConfirmModal({
       open: true,
       title: 'Supprimer cette parcelle',
-      message: `Voulez-vous vraiment supprimer la parcelle « ${p.nom} » ? Cette action est irréversible.`,
+      message: `Voulez-vous vraiment supprimer la parcelle " ${p.nom} " ? Cette action est irreversible.`,
       onConfirm: async () => {
         try {
           await apiService.deleteParcelle(p.id);
-          addToast({ type: 'success', title: 'Parcelle supprimée', message: p.nom });
+          addToast({ type: 'success', title: 'Parcelle supprimee', message: p.nom });
           await loadData();
         } catch (err) {
           addToast({
             type: 'error',
             title: 'Erreur',
-            message: 'Suppression impossible (capteurs ou actionneurs liés).',
+            message: 'Suppression impossible (capteurs ou actionneurs lies).',
           });
         }
       },
     });
   };
 
-  // Résolution du nom du propriétaire à partir de son ID
+  // Resolution du nom du proprietaire a partir de son ID
   const getOwnerName = (id) => {
     const u = utilisateurs.find((x) => x.id === id);
     return u?.nom || `Utilisateur #${id}`;
   };
+
+  // Liste des types de culture uniques presents dans les donnees (pour le filtre)
+  const uniqueTypes = useMemo(() => {
+    const types = parcelles.map((p) => p.type_culture).filter(Boolean);
+    return [...new Set(types)].sort();
+  }, [parcelles]);
+
+  // Application des filtres
+  const filtered = useMemo(() => {
+    return parcelles.filter((p) => {
+      const matchSearch =
+        (p.nom || '').toLowerCase().includes(search.toLowerCase()) ||
+        (p.localisation || '').toLowerCase().includes(search.toLowerCase());
+      const matchType = filterTypeCulture === 'Tous' || p.type_culture === filterTypeCulture;
+      const matchProprietaire = filterProprietaire === 'Tous' || String(p.id_utilisateur) === String(filterProprietaire);
+      return matchSearch && matchType && matchProprietaire;
+    });
+  }, [parcelles, search, filterTypeCulture, filterProprietaire]);
 
   return (
     <div className="space-y-6">
@@ -178,7 +203,7 @@ export const Parcelles = () => {
             <span>Gestion des Parcelles</span>
           </h1>
           <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1 font-medium">
-            Créez, modifiez et organisez vos zones de culture
+            Creez, modifiez et organisez vos zones de culture
           </p>
         </div>
         <button
@@ -190,17 +215,69 @@ export const Parcelles = () => {
         </button>
       </div>
 
-      {parcelles.length === 0 ? (
+      {/* Barre de filtres */}
+      {parcelles.length > 0 && (
+        <div className="bg-white dark:bg-[#161B22] p-4 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-[#1A1A1A] dark:text-white mr-2">
+            <Filter className="w-4 h-4 text-[#2E7D32]" />
+            <span>Filtres :</span>
+          </div>
+
+          {/* Filtre par type de culture */}
+          <select
+            value={filterTypeCulture}
+            onChange={(e) => setFilterTypeCulture(e.target.value)}
+            className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
+          >
+            <option value="Tous">Tous les types</option>
+            {uniqueTypes.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+
+          {/* Filtre par proprietaire (admin only) */}
+          {isAdmin && utilisateurs.length > 0 && (
+            <select
+              value={filterProprietaire}
+              onChange={(e) => setFilterProprietaire(e.target.value)}
+              className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
+            >
+              <option value="Tous">Tous les proprietaires</option>
+              {utilisateurs.map((u) => (
+                <option key={u.id} value={u.id}>{u.nom}</option>
+              ))}
+            </select>
+          )}
+
+          {/* Barre de recherche */}
+          <div className="relative flex-1 min-w-[200px] ml-auto">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] dark:text-[#8B949E]" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher une parcelle..."
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none"
+            />
+          </div>
+        </div>
+      )}
+
+      {filtered.length === 0 ? (
         <div className="bg-white dark:bg-[#161B22] p-12 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] text-center">
           <Sprout className="w-12 h-12 text-[#5A5A5A] dark:text-[#8B949E] mx-auto mb-3" />
-          <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">Aucune parcelle</p>
+          <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">
+            {parcelles.length === 0 ? 'Aucune parcelle' : 'Aucune parcelle ne correspond aux filtres'}
+          </p>
           <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1">
-            Commencez par créer votre première parcelle.
+            {parcelles.length === 0
+              ? 'Commencez par creer votre premiere parcelle.'
+              : 'Essayez de modifier vos criteres de recherche.'}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {parcelles.map((p) => (
+          {filtered.map((p) => (
             <div
               key={p.id}
               className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] hover:border-[#2E7D32]/50 transition-all"
@@ -233,7 +310,7 @@ export const Parcelles = () => {
                 {p.superficie != null && (
                   <div className="flex items-center gap-2">
                     <MapPin className="w-3 h-3" />
-                    <span>{p.superficie} m²</span>
+                    <span>{p.superficie} m2</span>
                   </div>
                 )}
               </div>
@@ -287,7 +364,7 @@ export const Parcelles = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold mb-1">Superficie (m²)</label>
+              <label className="block text-xs font-bold mb-1">Superficie (m2)</label>
               <input
                 type="number"
                 step="0.01"
@@ -313,14 +390,14 @@ export const Parcelles = () => {
 
           {isAdmin && (
             <div>
-              <label className="block text-xs font-bold mb-1">Propriétaire</label>
+              <label className="block text-xs font-bold mb-1">Proprietaire</label>
               <select
                 value={idUtilisateur}
                 onChange={(e) => setIdUtilisateur(e.target.value)}
                 required
                 className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
               >
-                <option value="">Sélectionner...</option>
+                <option value="">Selectionner...</option>
                 {utilisateurs.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.nom} ({u.email})
@@ -342,7 +419,7 @@ export const Parcelles = () => {
               type="submit"
               className="flex-1 py-2.5 text-sm font-bold text-white bg-[#2E7D32] hover:bg-[#256629] rounded-xl"
             >
-              {editingParcelle ? 'Mettre à jour' : 'Créer'}
+              {editingParcelle ? 'Mettre a jour' : 'Creer'}
             </button>
           </div>
         </form>

@@ -1,13 +1,14 @@
 /**
  * Page de gestion des capteurs (UC12 - Admin).
  * CRUD complet sur les capteurs d'une parcelle avec
- * formulaire de création/édition et suppression.
+ * formulaire de creation/edition et suppression.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { apiService } from '../services/api';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../context/ToastContext';
-import { Cpu, Plus, Edit, Trash2, MapPin, Wifi, WifiOff } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Cpu, Plus, Edit, Trash2, MapPin, Wifi, WifiOff, Search, Filter } from 'lucide-react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 
 /**
@@ -21,6 +22,11 @@ export const Capteurs = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCapteur, setEditingCapteur] = useState(null);
 
+  // Filtres
+  const [search, setSearch] = useState('');
+  const [filterParcelle, setFilterParcelle] = useState('Toutes');
+  const [filterEtat, setFilterEtat] = useState('Tous');
+
   // Form
   const [nom, setNom] = useState('');
   const [reference, setReference] = useState('');
@@ -28,15 +34,15 @@ export const Capteurs = () => {
   const [protocole, setProtocole] = useState('digital');
   const [etat, setEtat] = useState('actif');
   const [idParcelle, setIdParcelle] = useState('');
-    const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   // Constantes des choix possibles pour les selects du formulaire
   const PROTOCOLES = ['digital', 'analog', 'i2c'];
   const ETATS = ['actif', 'inactif', 'defaillant'];
 
-/**
- * Charge les listes de capteurs et de parcelles en parallèle.
- */
+  /**
+   * Charge les listes de capteurs et de parcelles en parallele.
+   */
   const loadData = async () => {
     try {
       const [caps, parcs] = await Promise.all([
@@ -57,7 +63,7 @@ export const Capteurs = () => {
   }, []);
 
   /**
-   * Réinitialise le formulaire en mode création et ouvre la modale.
+   * Reinitialise le formulaire en mode creation et ouvre la modale.
    */
   const openCreate = () => {
     setEditingCapteur(null);
@@ -71,8 +77,8 @@ export const Capteurs = () => {
   };
 
   /**
-   * Pré-remplit le formulaire avec les données d'un capteur existant
-   * et ouvre la modale en mode édition.
+   * Pre-remplit le formulaire avec les donnees d'un capteur existant
+   * et ouvre la modale en mode edition.
    */
   const openEdit = (cap) => {
     setEditingCapteur(cap);
@@ -86,8 +92,8 @@ export const Capteurs = () => {
   };
 
   /**
-   * Soumission du formulaire : crée ou met à jour un capteur selon le mode.
-   * Gère les erreurs 409 (doublon) et 422 (validation).
+   * Soumission du formulaire : cree ou met a jour un capteur selon le mode.
+   * Gere les erreurs 409 (doublon) et 422 (validation).
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -103,36 +109,36 @@ export const Capteurs = () => {
     try {
       if (editingCapteur) {
         await apiService.updateCapteur(editingCapteur.id, payload);
-        addToast({ type: 'success', title: 'Capteur mis à jour', message: `${nom} modifié.` });
+        addToast({ type: 'success', title: 'Capteur mis a jour', message: `${nom} modifie.` });
       } else {
         await apiService.createCapteur(payload);
-        addToast({ type: 'success', title: 'Capteur créé', message: `${nom} ajouté.` });
+        addToast({ type: 'success', title: 'Capteur cree', message: `${nom} ajoute.` });
       }
       setIsModalOpen(false);
       await loadData();
     } catch (err) {
       const message =
         err.response?.status === 409
-          ? 'Un capteur existe déjà avec cette configuration.'
+          ? 'Un capteur existe deja avec cette configuration.'
           : err.response?.status === 422
-          ? 'Données invalides. Vérifiez les champs.'
+          ? 'Donnees invalides. Verifiez les champs.'
           : 'Erreur lors de l\'enregistrement.';
       addToast({ type: 'error', title: 'Erreur', message });
     }
   };
 
   /**
-   * Supprime un capteur après confirmation de l'utilisateur.
+   * Supprime un capteur apres confirmation de l'utilisateur.
    */
   const handleDelete = (cap) => {
     setConfirmModal({
       open: true,
       title: 'Supprimer ce capteur',
-      message: `Voulez-vous vraiment supprimer le capteur « ${cap.nom} » ? Cette action est irréversible.`,
+      message: `Voulez-vous vraiment supprimer le capteur " ${cap.nom} " ? Cette action est irreversible.`,
       onConfirm: async () => {
         try {
           await apiService.deleteCapteur(cap.id);
-          addToast({ type: 'success', title: 'Capteur supprimé', message: cap.nom });
+          addToast({ type: 'success', title: 'Capteur supprime', message: cap.nom });
           await loadData();
         } catch (err) {
           addToast({ type: 'error', title: 'Erreur', message: 'Suppression impossible.' });
@@ -141,11 +147,23 @@ export const Capteurs = () => {
     });
   };
 
-  // Résolution du nom de parcelle à partir de son ID
+  // Resolution du nom de parcelle a partir de son ID
   const getParcelleName = (id) => {
     const p = parcelles.find((x) => x.id === id);
     return p?.nom || '—';
   };
+
+  // Application des filtres (recherche + parcelle + etat)
+  const filtered = useMemo(() => {
+    return capteurs.filter((cap) => {
+      const matchSearch =
+        (cap.nom || '').toLowerCase().includes(search.toLowerCase()) ||
+        (cap.reference || '').toLowerCase().includes(search.toLowerCase());
+      const matchParcelle = filterParcelle === 'Toutes' || String(cap.id_parcelle) === String(filterParcelle);
+      const matchEtat = filterEtat === 'Tous' || cap.etat === filterEtat;
+      return matchSearch && matchParcelle && matchEtat;
+    });
+  }, [capteurs, search, filterParcelle, filterEtat]);
 
   return (
     <div className="space-y-6">
@@ -168,17 +186,67 @@ export const Capteurs = () => {
         </button>
       </div>
 
+      {/* Barre de filtres */}
+      {capteurs.length > 0 && (
+        <div className="bg-white dark:bg-[#161B22] p-4 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-[#1A1A1A] dark:text-white mr-2">
+            <Filter className="w-4 h-4 text-[#2E7D32]" />
+            <span>Filtres :</span>
+          </div>
+
+          {/* Filtre par parcelle */}
+          <select
+            value={filterParcelle}
+            onChange={(e) => setFilterParcelle(e.target.value)}
+            className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
+          >
+            <option value="Toutes">Toutes les parcelles</option>
+            {parcelles.map((p) => (
+              <option key={p.id} value={p.id}>{p.nom}</option>
+            ))}
+          </select>
+
+          {/* Filtre par etat */}
+          <select
+            value={filterEtat}
+            onChange={(e) => setFilterEtat(e.target.value)}
+            className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
+          >
+            <option value="Tous">Tous les etats</option>
+            <option value="actif">Actif</option>
+            <option value="inactif">Inactif</option>
+            <option value="defaillant">Defaillant</option>
+          </select>
+
+          {/* Barre de recherche */}
+          <div className="relative flex-1 min-w-[200px] ml-auto">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] dark:text-[#8B949E]" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher un capteur..."
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {capteurs.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="col-span-full bg-white dark:bg-[#161B22] p-12 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] text-center">
             <Cpu className="w-12 h-12 text-[#5A5A5A] dark:text-[#8B949E] mx-auto mb-3" />
-            <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">Aucun capteur enregistré</p>
+            <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">
+              {capteurs.length === 0 ? 'Aucun capteur enregistre' : 'Aucun capteur ne correspond aux filtres'}
+            </p>
             <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1">
-              Commencez par ajouter un capteur à une parcelle.
+              {capteurs.length === 0
+                ? 'Commencez par ajouter un capteur a une parcelle.'
+                : 'Essayez de modifier vos criteres de recherche.'}
             </p>
           </div>
         ) : (
-          capteurs.map((cap) => {
+          filtered.map((cap) => {
             const isOn = cap.etat === 'actif';
             return (
               <div
@@ -193,7 +261,7 @@ export const Capteurs = () => {
                     <div>
                       <h3 className="text-sm font-bold text-[#1A1A1A] dark:text-white">{cap.nom}</h3>
                       <p className="text-[10px] text-[#5A5A5A] dark:text-[#8B949E] font-medium">
-                        {cap.reference || 'Sans référence'}
+                        {cap.reference || 'Sans reference'}
                       </p>
                     </div>
                   </div>
@@ -258,7 +326,7 @@ export const Capteurs = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold mb-1">Référence (optionnel)</label>
+            <label className="block text-xs font-bold mb-1">Reference (optionnel)</label>
             <input
               type="text"
               value={reference}
@@ -297,7 +365,7 @@ export const Capteurs = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold mb-1">État</label>
+              <label className="block text-xs font-bold mb-1">Etat</label>
               <select
                 value={etat}
                 onChange={(e) => setEtat(e.target.value)}
@@ -316,7 +384,7 @@ export const Capteurs = () => {
                 required
                 className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none focus:border-[#2E7D32]"
               >
-                <option value="">Sélectionner...</option>
+                <option value="">Selectionner...</option>
                 {parcelles.map((p) => (
                   <option key={p.id} value={p.id}>{p.nom}</option>
                 ))}
@@ -336,7 +404,7 @@ export const Capteurs = () => {
               type="submit"
               className="flex-1 py-2.5 text-sm font-bold text-white bg-[#2E7D32] hover:bg-[#256629] rounded-xl"
             >
-              {editingCapteur ? 'Mettre à jour' : 'Créer'}
+              {editingCapteur ? 'Mettre a jour' : 'Creer'}
             </button>
           </div>
         </form>

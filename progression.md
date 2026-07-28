@@ -70,6 +70,8 @@
 | Cohérence API frontend/backend | ✅ | Champs corriges : `a.type` (pas `a.titre`), `a.etat` (pas `a.resolu`), `m.id_capteur` (pas `m.capteur_nom`) |
 | Modales de confirmation | ✅ | `window.confirm()` remplace par `ConfirmModal` custom (`components/ui/ConfirmModal.jsx`) dans 5 pages (Actionneurs, Capteurs, Parcelles, Users, Profile) |
 | Fix couleurs hardcoded | ✅ | Toutes les occurrences `#f8faf5` remplacees par `#F5F7F2` dans toutes les pages |
+| Filtres CRUD (Parcelles, Actionneurs, Capteurs) | ✅ | Barre de filtres unifiee : recherche texte + selects (parcelle, etat, type_culture, proprietaire). Voir `Parcelles.jsx`, `Actionneurs.jsx`, `Capteurs.jsx` |
+| Fix toggle Actionneurs page | ✅ | Meme double appel API que Dashboard : `updateActionneur` + `commanderActionneur`. Fix bug filtre parcelle (string vs number) avec `String()` |
 
 ---
 

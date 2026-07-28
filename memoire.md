@@ -51,7 +51,9 @@ Phase 5 (Frontend) **TERMINEE**.
 - Dashboard interactif : KPIs cliquables -> redirigent vers `/history?capteur=xxx` (resolution nom->id cote frontend).
 - Toggle actionneurs fonctionnel : double appel API — `updateActionneur(id, {etat})` pour mettre a jour l'etat dans la BDD + `commanderActionneur(id, action)` pour enregistrer la commande (tracabilite / ESP32 futur). Voir `Dashboard.jsx:L163-180`.
 - ConfirmModal custom : composant reutilisable (`components/ui/ConfirmModal.jsx`), utilise dans 5 pages CRUD (Actionneurs, Capteurs, Parcelles, Users, Profile). Remplace `window.confirm()` par une modale stylisee (AlertTriangle + 2 boutons).
-- Fix `#f8faf5` : toutes les occurrences hardcoded remplacees par `#F5F7F2` (charte officielle) dans toutes les pages du frontend.
+- Fix `#f8faf5` : toutes les occurrences hardcoded remplacees par `#F5F7F2` (charte officielle) dans toutes les pages.
+- Filtres CRUD implementes : barre de filtres unifiee (Filter icon + selects + Search) sur Parcelles (type_culture + proprietaire + recherche), Actionneurs (parcelle + etat + recherche) et Capteurs (parcelle + etat + recherche). Bug filtre actionneurs corrige : comparaison `String()` pour eviter `number !== string`.
+- Fix toggle Actionneurs page : meme double appel API que Dashboard (`updateActionneur` + `commanderActionneur`).
 - Donnees jauges corrigees : fetch capteurs d'abord, map nom->id, puis filtre mesures par `id_capteur`.
 - TopBar corrigee : filtres alertes (`etat !== 'resolue'`), affichage `a.type` + `a.date_debut`, API `resoudreAlerte`.
 - Build Vite : 17.15s, 0 erreur, 0 vulnerability.

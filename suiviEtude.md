@@ -68,5 +68,6 @@ Ce fichier liste les notions enseignees et apprises au fil de la conception du p
 ## 11. Debugging frontend-backend
 - **Champs API** : toujours verifier les schemas Pydantic (`schemas/*.py`) pour connaitre les noms exacts renvoyes par l'API. Les alias Pydantic (`alias="type"`) changent le nom du champ dans la reponse JSON.
 - **Filter par relation** : si le schema mesure ne renvoie que `id_capteur`, il faut charger les capteurs separement pour construire une map `nom->id` avant de filtrer.
+- **Filtres CRUD** : pattern unifie sur toutes les pages admin : barre `bg-white` avec `Filter` icon + selects (parcelle, etat, type) + `Search` input. Utiliser `useMemo` pour le filtrage cote client. Toujours comparer avec `String()` quand un select string rencontre un ID number.
 - **Toggle switch** : `commanderActionneur()` cree une Commande mais ne met PAS a jour l'etat de l'actionneur dans la BDD. Il faut aussi appeler `updateActionneur(id, {etat: nextEtat})` AVANT la commande. Voir `Dashboard.jsx:L163-180`.
 - **References croisees** : comparer systematiquement le frontend (`*.jsx`) avec le backend (`schemas/*.py`, `models/*.py`) pour detecter les incoherences de noms de champs.
