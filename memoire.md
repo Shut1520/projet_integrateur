@@ -54,6 +54,9 @@ Phase 5 (Frontend) **TERMINEE**.
 - Fix `#f8faf5` : toutes les occurrences hardcoded remplacees par `#F5F7F2` (charte officielle) dans toutes les pages.
 - Filtres CRUD implementes : barre de filtres unifiee (Filter icon + selects + Search) sur Parcelles (type_culture + proprietaire + recherche), Actionneurs (parcelle + etat + recherche) et Capteurs (parcelle + etat + recherche). Bug filtre actionneurs corrige : comparaison `String()` pour eviter `number !== string`.
 - Fix toggle Actionneurs page : meme double appel API que Dashboard (`updateActionneur` + `commanderActionneur`).
+- Detail modals : click sur carte Capteur/Actionneur → modal avec tous les champs (nom, GPIO, protocole, etat, reference, parcelle, dates). Bouton Affecter pour reaffecter a une autre parcelle (`updateCapteur/updateActionneur(id, {id_parcelle})`).
+- Detail Parcelle : click sur carte → vue detaillee avec infos generales + liste capteurs attaches + liste actionneurs attaches + bouton Reaffecter pour deplacer un composant vers une autre parcelle.
+- Compteurs sur cartes Parcelles : badge affichant le nombre de capteurs et actionneurs attaches.
 - Donnees jauges corrigees : fetch capteurs d'abord, map nom->id, puis filtre mesures par `id_capteur`.
 - TopBar corrigee : filtres alertes (`etat !== 'resolue'`), affichage `a.type` + `a.date_debut`, API `resoudreAlerte`.
 - Build Vite : 17.15s, 0 erreur, 0 vulnerability.

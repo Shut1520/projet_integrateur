@@ -2,6 +2,7 @@
  * Page de gestion des actionneurs (UC4, UC5, UC13).
  * Permet d'activer/desactiver les actionneurs, de programmer une duree
  * d'activation, et aux admins de creer/supprimer des actionneurs.
+ * Click sur une carte → vue detaillee avec reaffectation.
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { apiService } from '../services/api';
@@ -14,18 +15,20 @@ import {
   Clock,
   Trash2,
   Power,
+  PowerOff,
   Search,
   Filter,
+  Eye,
+  Calendar,
+  MapPin,
 } from 'lucide-react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { formatDate } from '../utils/formatters';
 
-// Liste des types d'actionneurs disponibles
 const TYPES_ACTIONNEUR = ['pompe', 'ventilation', 'eclairage'];
 
 /**
  * Page Controle des Actionneurs.
- * Affiche la liste des actionneurs sous forme de cartes avec
- * boutons d'activation, programmation et suppression (admin).
  */
 export const Actionneurs = () => {
   const { user, hasRole } = useAuth();
@@ -45,7 +48,7 @@ export const Actionneurs = () => {
   const [selectedForSchedule, setSelectedForSchedule] = useState(null);
   const [scheduleDuration, setScheduleDuration] = useState(30);
 
-  // Etats du formulaire de creation
+  // Form creation
   const [nom, setNom] = useState('');
   const [type, setType] = useState('pompe');
   const [reference, setReference] = useState('');
@@ -53,9 +56,12 @@ export const Actionneurs = () => {
   const [idParcelle, setIdParcelle] = useState('');
   const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
+  // Modal detail
+  const [detailAct, setDetailAct] = useState(null);
+  const [reassignParcelleId, setReassignParcelleId] = useState('');
+
   const isAdmin = hasRole('admin');
 
-  // Chargement initial des actionneurs et parcelles
   const loadData = async () => {
     try {
       const [acts, parcs] = await Promise.all([
@@ -78,9 +84,6 @@ export const Actionneurs = () => {
     loadData();
   }, []);
 
-  /**
-   * Envoi d'une commande ON ou OFF (UC4).
-   */
   const handleToggle = async (act) => {
     const nextEtat = act.etat === 'actif' ? 'inactif' : 'actif';
     const nextAction = nextEtat === 'actif' ? 'on' : 'off';
@@ -102,18 +105,12 @@ export const Actionneurs = () => {
     }
   };
 
-  /**
-   * Prepare et ouvre la modale de programmation pour un actionneur donne.
-   */
   const handleOpenSchedule = (act) => {
     setSelectedForSchedule(act);
     setScheduleDuration(30);
     setIsScheduleOpen(true);
   };
 
-  /**
-   * Programmation d'une duree (UC4_ext : Programmer une duree d'activation).
-   */
   const handleConfirmSchedule = async () => {
     if (!selectedForSchedule) return;
     try {
@@ -139,9 +136,6 @@ export const Actionneurs = () => {
     }
   };
 
-  /**
-   * Ouvre la modale de creation en reinitialisant tous les champs du formulaire.
-   */
   const openCreate = () => {
     setNom('');
     setType('pompe');
@@ -151,9 +145,6 @@ export const Actionneurs = () => {
     setIsAddOpen(true);
   };
 
-  /**
-   * Creation d'un actionneur (UC13 - Admin only).
-   */
   const handleCreate = async (e) => {
     e.preventDefault();
     const payload = {
@@ -187,6 +178,7 @@ export const Actionneurs = () => {
         try {
           await apiService.deleteActionneur(act.id);
           addToast({ type: 'success', title: 'Actionneur supprime', message: act.nom });
+          setDetailAct(null);
           await loadData();
         } catch (err) {
           addToast({
@@ -204,7 +196,26 @@ export const Actionneurs = () => {
     return p?.nom || '—';
   };
 
-  // Application des filtres (recherche + parcelle + etat)
+  const openDetail = (act) => {
+    setDetailAct(act);
+    setReassignParcelleId(String(act.id_parcelle));
+  };
+
+  /**
+   * Reaffecte l'actionneur a une autre parcelle depuis le detail.
+   */
+  const handleReassign = async () => {
+    if (!detailAct || !reassignParcelleId) return;
+    try {
+      await apiService.updateActionneur(detailAct.id, { id_parcelle: parseInt(reassignParcelleId, 10) });
+      addToast({ type: 'success', title: 'Actionneur reassigne', message: `${detailAct.nom} deplace.` });
+      await loadData();
+      setDetailAct(null);
+    } catch (err) {
+      addToast({ type: 'error', title: 'Erreur', message: 'Reassignation impossible.' });
+    }
+  };
+
   const filteredActionneurs = useMemo(() => {
     return actionneurs.filter((a) => {
       const matchSearch =
@@ -217,6 +228,11 @@ export const Actionneurs = () => {
       return matchSearch && matchParcelle && matchEtat;
     });
   }, [actionneurs, search, parcelleFilter, etatFilter]);
+
+  const detailData = useMemo(() => {
+    if (!detailAct) return null;
+    return actionneurs.find((a) => a.id === detailAct.id) || detailAct;
+  }, [detailAct, actionneurs]);
 
   return (
     <div className="space-y-6">
@@ -249,7 +265,6 @@ export const Actionneurs = () => {
             <span>Filtres :</span>
           </div>
 
-          {/* Filtre par parcelle */}
           <select
             value={parcelleFilter}
             onChange={(e) => setParcelleFilter(e.target.value)}
@@ -261,7 +276,6 @@ export const Actionneurs = () => {
             ))}
           </select>
 
-          {/* Filtre par etat */}
           <select
             value={etatFilter}
             onChange={(e) => setEtatFilter(e.target.value)}
@@ -272,7 +286,6 @@ export const Actionneurs = () => {
             <option value="Inactif">Inactif</option>
           </select>
 
-          {/* Barre de recherche */}
           <div className="relative flex-1 min-w-[200px] ml-auto">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] dark:text-[#8B949E]" />
             <input
@@ -305,7 +318,8 @@ export const Actionneurs = () => {
             return (
               <div
                 key={act.id}
-                className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] hover:border-[#2E7D32]/50 transition-all"
+                className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] hover:border-[#2E7D32]/50 hover:shadow-md transition-all cursor-pointer"
+                onClick={() => openDetail(act)}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
@@ -314,7 +328,7 @@ export const Actionneurs = () => {
                         isOn ? 'bg-[#2E7D32]/10 text-[#2E7D32]' : 'bg-[#5A5A5A]/10 text-[#5A5A5A]'
                       }`}
                     >
-                      <Zap className="w-5 h-5" />
+                      {isOn ? <Power className="w-5 h-5" /> : <PowerOff className="w-5 h-5" />}
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-[#1A1A1A] dark:text-white">{act.nom}</h3>
@@ -343,7 +357,7 @@ export const Actionneurs = () => {
 
                 <div className="flex items-center gap-2 pt-3 border-t border-[#E0E0E0] dark:border-[#30363D]">
                   <button
-                    onClick={() => handleToggle(act)}
+                    onClick={(e) => { e.stopPropagation(); handleToggle(act); }}
                     className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold rounded-lg ${
                       isOn
                         ? 'text-[#E53935] hover:bg-[#E53935]/10'
@@ -354,7 +368,7 @@ export const Actionneurs = () => {
                     {isOn ? 'Arreter' : 'Activer'}
                   </button>
                   <button
-                    onClick={() => handleOpenSchedule(act)}
+                    onClick={(e) => { e.stopPropagation(); handleOpenSchedule(act); }}
                     className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-[#1E88E5] hover:bg-[#1E88E5]/10 rounded-lg"
                   >
                     <Clock className="w-3.5 h-3.5" />
@@ -362,13 +376,20 @@ export const Actionneurs = () => {
                   </button>
                   {isAdmin && (
                     <button
-                      onClick={() => handleDelete(act)}
+                      onClick={(e) => { e.stopPropagation(); handleDelete(act); }}
                       className="p-1.5 text-[#E53935] hover:bg-[#E53935]/10 rounded-lg"
                       title="Supprimer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); openDetail(act); }}
+                    className="p-1.5 text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#F5F7F2] dark:hover:bg-[#22272e] rounded-lg"
+                    title="Voir les details"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             );
@@ -376,7 +397,113 @@ export const Actionneurs = () => {
         </div>
       )}
 
-      {/* Modal Programmation duree */}
+      {/* ═══ Modal Detail Actionneur ═══ */}
+      <Modal isOpen={!!detailData} onClose={() => setDetailAct(null)} title={`Detail — ${detailData?.nom || ''}`}>
+        {detailData && (
+          <div className="space-y-5">
+            {/* Grille d'infos */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+                <p className="text-[10px] font-bold uppercase text-[#5A5A5A] dark:text-[#8B949E] mb-1">Nom</p>
+                <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">{detailData.nom}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+                <p className="text-[10px] font-bold uppercase text-[#5A5A5A] dark:text-[#8B949E] mb-1">Type</p>
+                <p className="text-sm font-bold text-[#1A1A1A] dark:text-white capitalize">{detailData.type || '—'}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+                <p className="text-[10px] font-bold uppercase text-[#5A5A5A] dark:text-[#8B949E] mb-1">GPIO</p>
+                <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">Broche {detailData.gpio}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+                <p className="text-[10px] font-bold uppercase text-[#5A5A5A] dark:text-[#8B949E] mb-1">Reference</p>
+                <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">{detailData.reference || '—'}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+                <p className="text-[10px] font-bold uppercase text-[#5A5A5A] dark:text-[#8B949E] mb-1">Etat</p>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  detailData.etat === 'actif' ? 'bg-[#43A047]/10 text-[#43A047]' : 'bg-[#5A5A5A]/10 text-[#5A5A5A]'
+                }`}>
+                  {detailData.etat}
+                </span>
+              </div>
+              <div className="p-3 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+                <p className="text-[10px] font-bold uppercase text-[#5A5A5A] dark:text-[#8B949E] mb-1">Parcelle</p>
+                <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">{getParcelleName(detailData.id_parcelle)}</p>
+              </div>
+            </div>
+
+            {/* Dates */}
+            <div className="flex items-center gap-4 text-[10px] text-[#5A5A5A] dark:text-[#8B949E]">
+              {detailData.created_at && (
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  <span>Cree le {formatDate(detailData.created_at)}</span>
+                </div>
+              )}
+              {detailData.updated_at && (
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  <span>Modifie le {formatDate(detailData.updated_at)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Reaffectation */}
+            <div className="p-4 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+              <p className="text-xs font-bold text-[#1A1A1A] dark:text-white mb-2">Affecter a une parcelle</p>
+              <div className="flex items-center gap-2">
+                <select
+                  value={reassignParcelleId}
+                  onChange={(e) => setReassignParcelleId(e.target.value)}
+                  className="flex-1 px-3 py-2 text-xs rounded-xl bg-white dark:bg-[#161B22] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none"
+                >
+                  {parcelles.map((p) => (
+                    <option key={p.id} value={p.id}>{p.nom}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleReassign}
+                  className="px-4 py-2 text-xs font-bold text-white bg-[#1E88E5] hover:bg-[#1565C0] rounded-xl"
+                >
+                  Affecter
+                </button>
+              </div>
+            </div>
+
+            {/* Actions rapides */}
+            <div className="flex gap-2 pt-2 border-t border-[#E0E0E0] dark:border-[#30363D]">
+              <button
+                onClick={() => { setDetailAct(null); handleToggle(detailData); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-bold rounded-xl border border-[#E0E0E0] dark:border-[#30363D] ${
+                  detailData.etat === 'actif' ? 'text-[#E53935] hover:bg-[#E53935]/10' : 'text-[#2E7D32] hover:bg-[#2E7D32]/10'
+                }`}
+              >
+                <Power className="w-4 h-4" />
+                {detailData.etat === 'actif' ? 'Arreter' : 'Activer'}
+              </button>
+              <button
+                onClick={() => { setDetailAct(null); handleOpenSchedule(detailData); }}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-bold text-[#1E88E5] hover:bg-[#1E88E5]/10 rounded-xl border border-[#E0E0E0] dark:border-[#30363D]"
+              >
+                <Clock className="w-4 h-4" />
+                Programmer
+              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => { setDetailAct(null); handleDelete(detailData); }}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-bold text-[#E53935] hover:bg-[#E53935]/10 rounded-xl border border-[#E0E0E0] dark:border-[#30363D]"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Supprimer
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ═══ Modal Programmation duree ═══ */}
       <Modal isOpen={isScheduleOpen} onClose={() => setIsScheduleOpen(false)} title="Programmer une duree">
         <div className="space-y-4">
           <p className="text-sm text-[#5A5A5A] dark:text-[#8B949E]">
@@ -415,7 +542,7 @@ export const Actionneurs = () => {
         </div>
       </Modal>
 
-      {/* Modal Creation (UC13) */}
+      {/* ═══ Modal Creation (UC13) ═══ */}
       <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="Nouvel actionneur">
         <form onSubmit={handleCreate} className="space-y-3.5">
           <div>

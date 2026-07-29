@@ -72,6 +72,17 @@
 | Fix couleurs hardcoded | ✅ | Toutes les occurrences `#f8faf5` remplacees par `#F5F7F2` dans toutes les pages |
 | Filtres CRUD (Parcelles, Actionneurs, Capteurs) | ✅ | Barre de filtres unifiee : recherche texte + selects (parcelle, etat, type_culture, proprietaire). Voir `Parcelles.jsx`, `Actionneurs.jsx`, `Capteurs.jsx` |
 | Fix toggle Actionneurs page | ✅ | Meme double appel API que Dashboard : `updateActionneur` + `commanderActionneur`. Fix bug filtre parcelle (string vs number) avec `String()` |
+| Detail modal (Capteurs, Actionneurs) | ✅ | Click sur carte → modal detail avec tous les champs + dates + reaffectation a une autre parcelle |
+| Detail modal Parcelles | ✅ | Click sur carte → vue detaillee avec infos parcelle + liste capteurs/actionneurs attaches + reaffectation |
+| Affectation capteurs/actionneurs | ✅ | Selecteur de parcelle dans le detail modal + bouton Affecter, utilise `updateCapteur/updateActionneur(id, {id_parcelle})` |
+
+#### Phase 5b — Refonte design Light Mode Dashboard (TERMINÉE ✅)
+- [x] **KPIs interactives** — Clic sur KPI → navigation `/history?capteur=xxx`. Voir `Dashboard.jsx:L262-297` (GaugeCard onClick) + `History.jsx:L54-78` (useSearchParams + match capteur par nom).
+- [x] **Toggle interrupteur contrôle rapide** — Double appel API : `updateActionneur(id, {etat})` + `commanderActionneur(id, action)`. Voir `Dashboard.jsx:L163-180` (handleToggleActuator).
+- [x] **ConfirmModal custom** — `window.confirm()` remplacé par `ConfirmModal` dans 5 pages. Voir `components/ui/ConfirmModal.jsx` + usages dans `Actionneurs.jsx`, `Capteurs.jsx`, `Parcelles.jsx`, `Users.jsx`, `Profile.jsx`.
+- [x] **Filtres CRUD (Parcelles, Actionneurs, Capteurs)** — Barre de filtres unifiée : recherche + selects. `Parcelles.jsx:L268-277`, `Actionneurs.jsx:L219-230`, `Capteurs.jsx:L163-172`.
+- [x] **Détail modals (Parcelles, Capteurs, Actionneurs)** — Click carte → modal info + grille dates + réaffectation parcelle. Voir les sections `Modal Detail` dans chaque fichier.
+- [x] **Affectation capteurs/actionneurs aux parcelles** — Sélecteur parcelle dans le détail modal → `updateCapteur/updateActionneur(id, {id_parcelle})`. Voir `Parcelles.jsx:L212-236`, `Capteurs.jsx:L145-156`, `Actionneurs.jsx:L207-217`.
 
 ---
 

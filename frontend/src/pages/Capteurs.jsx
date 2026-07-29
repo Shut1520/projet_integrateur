@@ -1,15 +1,15 @@
 /**
  * Page de gestion des capteurs (UC12 - Admin).
  * CRUD complet sur les capteurs d'une parcelle avec
- * formulaire de creation/edition et suppression.
+ * formulaire de creation/edition, suppression et vue detaillee.
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { apiService } from '../services/api';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../context/ToastContext';
-import { useAuth } from '../context/AuthContext';
-import { Cpu, Plus, Edit, Trash2, MapPin, Wifi, WifiOff, Search, Filter } from 'lucide-react';
+import { Cpu, Plus, Edit, Trash2, MapPin, Wifi, WifiOff, Search, Filter, Eye, Calendar } from 'lucide-react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { formatDate } from '../utils/formatters';
 
 /**
  * Page de gestion des capteurs (UC12 - Admin).
@@ -36,13 +36,13 @@ export const Capteurs = () => {
   const [idParcelle, setIdParcelle] = useState('');
   const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
-  // Constantes des choix possibles pour les selects du formulaire
+  // Modal detail
+  const [detailCapteur, setDetailCapteur] = useState(null);
+  const [reassignParcelleId, setReassignParcelleId] = useState('');
+
   const PROTOCOLES = ['digital', 'analog', 'i2c'];
   const ETATS = ['actif', 'inactif', 'defaillant'];
 
-  /**
-   * Charge les listes de capteurs et de parcelles en parallele.
-   */
   const loadData = async () => {
     try {
       const [caps, parcs] = await Promise.all([
@@ -62,9 +62,6 @@ export const Capteurs = () => {
     loadData();
   }, []);
 
-  /**
-   * Reinitialise le formulaire en mode creation et ouvre la modale.
-   */
   const openCreate = () => {
     setEditingCapteur(null);
     setNom('');
@@ -76,10 +73,6 @@ export const Capteurs = () => {
     setIsModalOpen(true);
   };
 
-  /**
-   * Pre-remplit le formulaire avec les donnees d'un capteur existant
-   * et ouvre la modale en mode edition.
-   */
   const openEdit = (cap) => {
     setEditingCapteur(cap);
     setNom(cap.nom || '');
@@ -91,10 +84,6 @@ export const Capteurs = () => {
     setIsModalOpen(true);
   };
 
-  /**
-   * Soumission du formulaire : cree ou met a jour un capteur selon le mode.
-   * Gere les erreurs 409 (doublon) et 422 (validation).
-   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     const payload = {
@@ -127,9 +116,6 @@ export const Capteurs = () => {
     }
   };
 
-  /**
-   * Supprime un capteur apres confirmation de l'utilisateur.
-   */
   const handleDelete = (cap) => {
     setConfirmModal({
       open: true,
@@ -139,6 +125,7 @@ export const Capteurs = () => {
         try {
           await apiService.deleteCapteur(cap.id);
           addToast({ type: 'success', title: 'Capteur supprime', message: cap.nom });
+          setDetailCapteur(null);
           await loadData();
         } catch (err) {
           addToast({ type: 'error', title: 'Erreur', message: 'Suppression impossible.' });
@@ -147,13 +134,32 @@ export const Capteurs = () => {
     });
   };
 
-  // Resolution du nom de parcelle a partir de son ID
+  const openDetail = (cap) => {
+    setDetailCapteur(cap);
+    setReassignParcelleId(String(cap.id_parcelle));
+  };
+
+  /**
+   * Reaffecte le capteur a une autre parcelle depuis le detail.
+   */
+  const handleReassign = async () => {
+    if (!detailCapteur || !reassignParcelleId) return;
+    try {
+      await apiService.updateCapteur(detailCapteur.id, { id_parcelle: parseInt(reassignParcelleId, 10) });
+      addToast({ type: 'success', title: 'Capteur reassigne', message: `${detailCapteur.nom} deplace.` });
+      await loadData();
+      // Mettre a jour le detail
+      setDetailCapteur(null);
+    } catch (err) {
+      addToast({ type: 'error', title: 'Erreur', message: 'Reassignation impossible.' });
+    }
+  };
+
   const getParcelleName = (id) => {
     const p = parcelles.find((x) => x.id === id);
     return p?.nom || '—';
   };
 
-  // Application des filtres (recherche + parcelle + etat)
   const filtered = useMemo(() => {
     return capteurs.filter((cap) => {
       const matchSearch =
@@ -164,6 +170,12 @@ export const Capteurs = () => {
       return matchSearch && matchParcelle && matchEtat;
     });
   }, [capteurs, search, filterParcelle, filterEtat]);
+
+  // Donnees du detail (pour rafraichir apres modif)
+  const detailData = useMemo(() => {
+    if (!detailCapteur) return null;
+    return capteurs.find((c) => c.id === detailCapteur.id) || detailCapteur;
+  }, [detailCapteur, capteurs]);
 
   return (
     <div className="space-y-6">
@@ -194,7 +206,6 @@ export const Capteurs = () => {
             <span>Filtres :</span>
           </div>
 
-          {/* Filtre par parcelle */}
           <select
             value={filterParcelle}
             onChange={(e) => setFilterParcelle(e.target.value)}
@@ -206,7 +217,6 @@ export const Capteurs = () => {
             ))}
           </select>
 
-          {/* Filtre par etat */}
           <select
             value={filterEtat}
             onChange={(e) => setFilterEtat(e.target.value)}
@@ -218,7 +228,6 @@ export const Capteurs = () => {
             <option value="defaillant">Defaillant</option>
           </select>
 
-          {/* Barre de recherche */}
           <div className="relative flex-1 min-w-[200px] ml-auto">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] dark:text-[#8B949E]" />
             <input
@@ -251,7 +260,8 @@ export const Capteurs = () => {
             return (
               <div
                 key={cap.id}
-                className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] hover:border-[#2E7D32]/50 transition-all"
+                className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] hover:border-[#2E7D32]/50 hover:shadow-md transition-all cursor-pointer"
+                onClick={() => openDetail(cap)}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
@@ -291,18 +301,25 @@ export const Capteurs = () => {
 
                 <div className="flex items-center gap-2 mt-4 pt-3 border-t border-[#E0E0E0] dark:border-[#30363D]">
                   <button
-                    onClick={() => openEdit(cap)}
+                    onClick={(e) => { e.stopPropagation(); openEdit(cap); }}
                     className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-[#2E7D32] hover:bg-[#2E7D32]/10 rounded-lg"
                   >
                     <Edit className="w-3.5 h-3.5" />
                     Modifier
                   </button>
                   <button
-                    onClick={() => handleDelete(cap)}
+                    onClick={(e) => { e.stopPropagation(); handleDelete(cap); }}
                     className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-[#E53935] hover:bg-[#E53935]/10 rounded-lg"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Supprimer
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); openDetail(cap); }}
+                    className="p-1.5 text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#F5F7F2] dark:hover:bg-[#22272e] rounded-lg"
+                    title="Voir les details"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -311,6 +328,102 @@ export const Capteurs = () => {
         )}
       </div>
 
+      {/* ═══ Modal Detail Capteur ═══ */}
+      <Modal isOpen={!!detailData} onClose={() => setDetailCapteur(null)} title={`Detail — ${detailData?.nom || ''}`}>
+        {detailData && (
+          <div className="space-y-5">
+            {/* Grille d'infos */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+                <p className="text-[10px] font-bold uppercase text-[#5A5A5A] dark:text-[#8B949E] mb-1">Nom</p>
+                <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">{detailData.nom}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+                <p className="text-[10px] font-bold uppercase text-[#5A5A5A] dark:text-[#8B949E] mb-1">Reference</p>
+                <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">{detailData.reference || '—'}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+                <p className="text-[10px] font-bold uppercase text-[#5A5A5A] dark:text-[#8B949E] mb-1">GPIO</p>
+                <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">Broche {detailData.gpio}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+                <p className="text-[10px] font-bold uppercase text-[#5A5A5A] dark:text-[#8B949E] mb-1">Protocole</p>
+                <p className="text-sm font-bold text-[#1A1A1A] dark:text-white uppercase">{detailData.protocole}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+                <p className="text-[10px] font-bold uppercase text-[#5A5A5A] dark:text-[#8B949E] mb-1">Etat</p>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  detailData.etat === 'actif' ? 'bg-[#43A047]/10 text-[#43A047]' : detailData.etat === 'defaillant' ? 'bg-[#E53935]/10 text-[#E53935]' : 'bg-[#FB8C00]/10 text-[#FB8C00]'
+                }`}>
+                  {detailData.etat}
+                </span>
+              </div>
+              <div className="p-3 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+                <p className="text-[10px] font-bold uppercase text-[#5A5A5A] dark:text-[#8B949E] mb-1">Parcelle</p>
+                <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">{getParcelleName(detailData.id_parcelle)}</p>
+              </div>
+            </div>
+
+            {/* Dates */}
+            <div className="flex items-center gap-4 text-[10px] text-[#5A5A5A] dark:text-[#8B949E]">
+              {detailData.created_at && (
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  <span>Cree le {formatDate(detailData.created_at)}</span>
+                </div>
+              )}
+              {detailData.updated_at && (
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  <span>Modifie le {formatDate(detailData.updated_at)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Reaffectation */}
+            <div className="p-4 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
+              <p className="text-xs font-bold text-[#1A1A1A] dark:text-white mb-2">Affecter a une parcelle</p>
+              <div className="flex items-center gap-2">
+                <select
+                  value={reassignParcelleId}
+                  onChange={(e) => setReassignParcelleId(e.target.value)}
+                  className="flex-1 px-3 py-2 text-xs rounded-xl bg-white dark:bg-[#161B22] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none"
+                >
+                  {parcelles.map((p) => (
+                    <option key={p.id} value={p.id}>{p.nom}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleReassign}
+                  className="px-4 py-2 text-xs font-bold text-white bg-[#1E88E5] hover:bg-[#1565C0] rounded-xl"
+                >
+                  Affecter
+                </button>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 pt-2 border-t border-[#E0E0E0] dark:border-[#30363D]">
+              <button
+                onClick={() => { setDetailCapteur(null); openEdit(detailData); }}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-bold text-[#2E7D32] hover:bg-[#2E7D32]/10 rounded-xl border border-[#E0E0E0] dark:border-[#30363D]"
+              >
+                <Edit className="w-4 h-4" />
+                Modifier
+              </button>
+              <button
+                onClick={() => { setDetailCapteur(null); handleDelete(detailData); }}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-bold text-[#E53935] hover:bg-[#E53935]/10 rounded-xl border border-[#E0E0E0] dark:border-[#30363D]"
+              >
+                <Trash2 className="w-4 h-4" />
+                Supprimer
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ═══ Modal Formulaire Capteur ═══ */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingCapteur ? 'Modifier le capteur' : 'Nouveau capteur'}>
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
