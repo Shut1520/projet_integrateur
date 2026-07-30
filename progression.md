@@ -78,7 +78,8 @@
 | Suppression actionneur (bug fix) | ✅ | `backend/routes/actionneurs.py` : suppression manuelle des commandes liées avant suppression (FK sans ON DELETE CASCADE). Voir `supprimer_actionneur()`. |
 | Export CSV propre (bug fix) | ✅ | `History.jsx` : BOM UTF-8 `\uFEFF`, séparateur `;`, échappement RFC 4180, en-têtes français, nom de fichier daté `sai_historique_YYYY-MM-DD.csv`. Fonction retirée de `formatters.js`. |
 | Graphique historique synchronisé (bug fix) | ✅ | `History.jsx` : données filtrées (pas `enriched`), groupage par `capteur_nom`, alignement datasets via map timestamp→index, `spanGaps: true`, `pointRadius: 3`, `fill: false`. |
-| Scroll isolé (sidebar fixe) | ✅ | `index.css` + `AppLayout.jsx` + `Sidebar.jsx` + `TopBar.jsx`. Sidebar `lg:relative h-full overflow-hidden`, contenu `<main>` `overflow-y-auto` uniquement. Root `h-screen overflow-hidden`. |
+| Scroll isolé au contenu (sidebar fixe) | ✅ | `index.css` + `AppLayout.jsx` + `Sidebar.jsx` + `TopBar.jsx`. Sidebar `lg:relative h-full overflow-hidden`, contenu `<main>` `overflow-y-auto` uniquement. Root `h-screen overflow-hidden`. |
+| Sidebar profil + déconnexion inline | ✅ | `Sidebar.jsx` : profil (`flex-1`) et bouton déconnexion (`shrink-0`, icône seule) sur la même ligne horizontale. Suppression de `space-y-2`. |
 
 #### Phase 5b — Refonte design Light Mode Dashboard (TERMINÉE ✅)
 - [x] **KPIs interactives** — Clic sur KPI → navigation `/history?capteur=xxx`. Voir `Dashboard.jsx:L262-297` (GaugeCard onClick) + `History.jsx:L54-78` (useSearchParams + match capteur par nom).

@@ -115,12 +115,12 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
         </div>
 
         {/* User Profile & Logout Bottom Section */}
-        <div className="p-4 border-t border-[#E0E0E0] dark:border-[#30363D] space-y-2">
+        <div className="p-4 border-t border-[#E0E0E0] dark:border-[#30363D] flex items-center gap-2">
           <NavLink
             to="/profile"
             onClick={onCloseMobile}
             className={({ isActive }) =>
-              `flex items-center gap-3 p-2.5 rounded-xl transition-all ${
+              `flex-1 flex items-center gap-2.5 p-2.5 rounded-xl transition-all min-w-0 ${
                 isActive
                   ? 'bg-[#E8F5E9] dark:bg-[#22272e] border border-[#2E7D32]/30'
                   : 'hover:bg-[#E8F5E9] dark:hover:bg-[#22272e]'
@@ -131,10 +131,10 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
               <img
                 src={user.avatarUrl}
                 alt={user.nom}
-                className="w-8 h-8 rounded-full object-cover border border-[#E0E0E0]"
+                className="w-8 h-8 rounded-full object-cover border border-[#E0E0E0] shrink-0"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-[#2E7D32]/10 text-[#2E7D32] flex items-center justify-center font-bold text-xs">
+              <div className="w-8 h-8 rounded-full bg-[#2E7D32]/10 text-[#2E7D32] flex items-center justify-center font-bold text-xs shrink-0">
                 <User className="w-4 h-4" />
               </div>
             )}
@@ -150,10 +150,10 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
 
           <button
             onClick={logout}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold text-[#E53935] hover:bg-[#E53935]/10 rounded-xl transition-colors"
+            title="Déconnexion"
+            className="shrink-0 p-2.5 rounded-xl text-[#E53935] hover:bg-[#E53935]/10 transition-colors"
           >
             <LogOut className="w-4 h-4" />
-            <span>Déconnexion</span>
           </button>
         </div>
       </aside>
