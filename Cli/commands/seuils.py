@@ -1,12 +1,23 @@
 """
-Commande : seuils — Liste et configure les seuils.
+Commande : seuils — Liste et configure les seuils d'automatisation.
+
+Permet de :
+- Lister les seuils existants, éventuellement filtrés par parcelle.
+- Configurer un nouveau seuil (type de mesure, min, max, unité, parcelle).
 """
 
 from client import APIClient
 
 
 def lister(api: APIClient, parcelle_id: int = None):
-    """Liste les seuils configures."""
+    """
+    Liste les seuils configurés.
+
+    Args:
+        api: Client API authentifié.
+        parcelle_id: Filtre optionnel par ID de parcelle.
+    """
+    # Construction des paramètres de requête si filtre présent
     params = {}
     if parcelle_id:
         params["parcelle_id"] = parcelle_id
@@ -17,6 +28,7 @@ def lister(api: APIClient, parcelle_id: int = None):
         print("Aucun seuil configure.")
         return
 
+    # En-tête du tableau
     print(f"Seuils ({len(seuils)} trouves)")
     print("-" * 65)
     print(f"{'ID':<4} {'Type':<16} {'Min':<10} {'Max':<10} {'Unite':<8} {'Parcelle':<10}")
@@ -36,7 +48,21 @@ def lister(api: APIClient, parcelle_id: int = None):
 
 def configurer(api: APIClient, type_mesure: str, valeur_min: float, valeur_max: float,
                unite: str, id_parcelle: int):
-    """Configure un nouveau seuil."""
+    """
+    Configure un nouveau seuil d'automatisation.
+
+    Récupère d'abord l'ID de l'utilisateur connecté, puis envoie
+    la configuration au serveur via POST /api/seuils.
+
+    Args:
+        api: Client API authentifié.
+        type_mesure: Type de mesure (ex: 'humidite_sol', 'temperature').
+        valeur_min: Seuil minimum déclenchant une action.
+        valeur_max: Seuil maximum déclenchant une action.
+        unite: Unité de mesure (ex: '%', '°C', 'ppm').
+        id_parcelle: Identifiant de la parcelle concernée.
+    """
+    # Récupération de l'utilisateur connecté pour l'associer au seuil
     try:
         profil = api.get("/api/auth/me")
         id_utilisateur = profil.get("id")

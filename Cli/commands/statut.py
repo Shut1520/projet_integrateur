@@ -1,7 +1,8 @@
 """
-commandes/statut.py — Commande "statut" du CLI.
+Commande : statut — Tableau de bord récapitulatif du système.
 
-Affiche une vue d'ensemble du systeme.
+Récupère depuis l'API les capteurs, actionneurs, alertes actives
+et parcelles, puis affiche un résumé numérique du système.
 
 Exemple :
     python cli.py statut
@@ -12,13 +13,13 @@ from client import SAIClient
 
 def run(client: SAIClient):
     """
-    Recupere les statistiques du systeme et les affiche.
+    Récupère les statistiques du système et les affiche.
 
     Args:
-        client: Instance de SAIClient connectee
+        client: Instance de SAIClient connectée.
     """
     try:
-        # Recuperer toutes les donnees necessaires
+        # Récupération de toutes les ressources en un seul appel
         capteurs = client.get("/api/capteurs")
         actionneurs = client.get("/api/actionneurs")
         alertes = client.get("/api/alertes", params={"etat": "active"})
@@ -28,7 +29,7 @@ def run(client: SAIClient):
         print(f"❌ Erreur lors de la recuperation des donnees : {e}")
         return
 
-    # Calculer les statistiques
+    # Calcul des statistiques par filtrage des états
     nb_capteurs_total = len(capteurs)
     nb_capteurs_actifs = sum(1 for c in capteurs if c["etat"] == "actif")
     nb_actionneurs_total = len(actionneurs)

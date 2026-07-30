@@ -158,6 +158,7 @@ def profil_utilisateur(
     Retourne le profil de l'utilisateur connecte.
     Necessite un token JWT dans l'en-tete Authorization: Bearer <token>
     """
+    # Extraire le token du format "Bearer <token>"
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

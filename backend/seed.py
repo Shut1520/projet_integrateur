@@ -31,12 +31,14 @@ from models import Actionneur, Capteur, Mesure, Parcelle, Seuil, Token, Utilisat
 
 
 def hacher_mot_de_passe(mot_de_passe: str) -> str:
+    """Hash un mot de passe en texte clair avec bcrypt via werkzeug."""
     from werkzeug.security import generate_password_hash
 
     return generate_password_hash(mot_de_passe)
 
 
 def seed_utilisateurs(db: Session) -> dict:
+    """Insere un administrateur et un agriculteur de test."""
     admin = Utilisateur(
         nom="Admin",
         email="admin@sai.com",
@@ -58,6 +60,7 @@ def seed_utilisateurs(db: Session) -> dict:
 
 
 def seed_parcelle(db: Session, proprietaire: Utilisateur) -> Parcelle:
+    """Cree une parcelle de test ('Serre A') rattachee a un proprietaire."""
     parcelle = Parcelle(
         nom="Serre A", localisation="Jardin principal", id_utilisateur=proprietaire.id
     )
@@ -68,6 +71,7 @@ def seed_parcelle(db: Session, proprietaire: Utilisateur) -> Parcelle:
 
 
 def seed_capteurs(db: Session, parcelle: Parcelle) -> list:
+    """Cree les 5 capteurs de test (DHT22, YL-69, BH1750, SEN0159, HC-SR04)."""
     capteurs_data = [
         {"nom": "dht22", "reference": "AM2302", "gpio": 4, "protocole": "digital"},
         {"nom": "yl-69", "reference": "YL-69", "gpio": 34, "protocole": "analog"},
@@ -91,6 +95,7 @@ def seed_capteurs(db: Session, parcelle: Parcelle) -> list:
 
 
 def seed_actionneurs(db: Session, parcelle: Parcelle) -> list:
+    """Cree les 3 actionneurs de test (pompe, ventilation, eclairage)."""
     actionneurs_data = [
         {"nom": "pompe", "reference": "Pompe 12V", "gpio": 26},
         {"nom": "ventilation", "reference": "Ventilateur 120mm", "gpio": 27},
@@ -107,6 +112,7 @@ def seed_actionneurs(db: Session, parcelle: Parcelle) -> list:
 
 
 def seed_seuils(db: Session, configurateur: Utilisateur, parcelle: Parcelle) -> list:
+    """Definit les seuils d'automatisation pour chaque type de mesure."""
     seuils_data = [
         {
             "type_mesure": "humidite_sol",
@@ -145,6 +151,7 @@ def seed_seuils(db: Session, configurateur: Utilisateur, parcelle: Parcelle) -> 
 
 
 def seed_token(db: Session, utilisateur: Utilisateur) -> Token:
+    """Genere une cle API de developpement pour l'utilisateur donne."""
     token = Token(
         cle_api="sk_sai_" + secrets.token_hex(32),
         nom="Cle de developpement",
@@ -159,6 +166,7 @@ def seed_token(db: Session, utilisateur: Utilisateur) -> Token:
 
 
 def seed_mesures_mock(db: Session, capteurs: list, nb_mesures: int = 50):
+    """Genere des mesures aleatoires pour simuler un historique temps reel."""
     maintenant = datetime.now()
     types_mesure = {
         "dht22": {"unite": "C", "min": 25, "max": 38},
@@ -182,6 +190,7 @@ def seed_mesures_mock(db: Session, capteurs: list, nb_mesures: int = 50):
                     id_capteur=capteur.id,
                 )
                 mesures.append(mesure)
+    # Insertion par lots de 100 pour optimiser les performances
     for i in range(0, len(mesures), 100):
         db.bulk_save_objects(mesures[i : i + 100])
         db.flush()
@@ -190,6 +199,7 @@ def seed_mesures_mock(db: Session, capteurs: list, nb_mesures: int = 50):
 
 
 def vider_tables(db: Session):
+    """Supprime toutes les donnees de chaque table (ordre anti-FK)."""
     ordre = [
         "tokens",
         "seuils",
@@ -209,6 +219,7 @@ def vider_tables(db: Session):
 
 
 def main():
+    """Point d'entree du script : parse les arguments et lance le seed."""
     parser = argparse.ArgumentParser(description="Seed la base de donnees SAI")
     parser.add_argument(
         "--drop", action="store_true", help="Vide les tables avant le seed"

@@ -1,16 +1,79 @@
-# React + Vite
+# SAI — Frontend React
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interface web du **Système Agricole Intelligent (SAI)**.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **React 19** + **Vite 6**
+- **Tailwind CSS 4** (charte graphique agriculture)
+- **React Router 7** (navigation)
+- **Chart.js 4** + **react-chartjs-2** (graphiques)
+- **Lucide React** (icônes)
+- **Axios** (appels API)
 
-## React Compiler
+## Démarrage
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+# 1. Installer les dépendances
+npm install
 
-## Expanding the ESLint configuration
+# 2. Lancer le serveur de développement
+npm run dev
+# → http://localhost:3000
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Configuration
+
+Le frontend communique avec le backend FastAPI via le **proxy Vite** configuré dans `vite.config.js` :
+- **Frontend** : `http://localhost:3000`
+- **Backend** : `http://localhost:8000`
+- **Appels API** : préfixe `/api` (le proxy redirige automatiquement)
+
+Assure-toi que le **backend est démarré** avant d'utiliser l'application (voir `../backend/README.md`).
+
+## Structure
+
+```
+src/
+├── components/
+│   ├── layout/      # AppLayout, Sidebar, TopBar, BottomNav
+│   └── ui/          # GaugeCard, Modal (composants réutilisables)
+├── context/         # AuthContext, ThemeContext, ToastContext
+├── pages/           # Login, Register, Dashboard, Parcelles, Actionneurs, ...
+├── services/
+│   ├── api.js       # Client Axios + méthodes API
+│   └── storage.js   # localStorage (utilisateur + token)
+├── utils/           # formatters.js (dates, CSV)
+├── App.jsx          # Routes + ProtectedRoute
+└── main.jsx         # Point d'entrée
+```
+
+## Authentification
+
+L'authentification utilise **JWT** :
+1. `POST /api/auth/login` → récupère un `access_token`
+2. Le token est stocké dans `localStorage` avec l'utilisateur
+3. Un **interceptor Axios** ajoute automatiquement `Authorization: Bearer <token>` à chaque requête
+4. Sur 401, l'utilisateur est déconnecté automatiquement
+
+## Pages
+
+| Route | Page | Accès |
+|-------|------|-------|
+| `/login` | Connexion | Public |
+| `/register` | Inscription | Public |
+| `/dashboard` | Tableau de bord | Connecté |
+| `/parcelles` | Gestion des parcelles (UC14) | Connecté |
+| `/actionneurs` | Contrôle des actionneurs (UC13) | Connecté |
+| `/history` | Historique des mesures (UC3) | Connecté |
+| `/thresholds` | Configuration des seuils (UC7) | Connecté |
+| `/capteurs` | Gestion des capteurs (UC12) | Admin |
+| `/users` | Gestion des utilisateurs (UC8) | Admin |
+| `/profile` | Profil utilisateur | Connecté |
+
+## Build de production
+
+```bash
+npm run build
+# → génère dist/
+```

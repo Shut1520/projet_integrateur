@@ -31,6 +31,14 @@ from commands import capteurs, mesures, actionneurs, commandes, alertes, seuils
 
 
 def main():
+    """
+    Point d'entree principal du CLI.
+
+    Configure l'analyseur d'arguments (argparse) avec toutes les sous-commandes
+    disponibles (login, logout, status, capteurs, mesures, commander, etc.)
+    et redirige vers la fonction de traitement correspondante.
+    """
+    # Construction du parser principal avec description et exemples d'utilisation
     parser = argparse.ArgumentParser(
         description="SAI - Systeme Agricole Intelligent (CLI)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -45,6 +53,7 @@ Exemples :
         """,
     )
 
+    # Les sous-commandes sont mutuellement exclusives ; au moins une est requise
     sous_commandes = parser.add_subparsers(dest="commande", help="Commande a executer")
     sous_commandes.required = True
 
@@ -111,8 +120,10 @@ Exemples :
                           help="Unite (ex: %%, C, ppm)")
 
     args = parser.parse_args()
+    # Instantiation du client HTTP unique utilisé par toutes les commandes
     api = APIClient()
 
+    # Dispatch vers la commande correspondante
     if args.commande == "login":
         login(api, args.email, args.password)
     elif args.commande == "logout":
@@ -130,6 +141,7 @@ Exemples :
     elif args.commande == "commandes":
         commandes.lister(api)
     elif args.commande == "alertes":
+        # "sous-action" contient 'lister', 'reconnaitre' ou 'resoudre'
         sous_action = getattr(args, "sous-action", "lister")
         if sous_action == "lister":
             alertes.lister(api, etat=args.etat, parcelle_id=args.parcelle)
@@ -144,10 +156,12 @@ Exemples :
                 sys.exit(1)
             alertes.resoudre(api, args.id)
     elif args.commande == "seuils":
+        # "sous-action" contient 'lister' ou 'configurer'
         sous_action = getattr(args, "sous-action", "lister")
         if sous_action == "lister":
             seuils.lister(api, parcelle_id=args.parcelle)
         elif sous_action == "configurer":
+            # Vérification que tous les paramètres obligatoires sont présents
             if not all([args.type_mesure, args.valeur_min is not None,
                         args.valeur_max is not None, args.unite, args.parcelle]):
                 print("[ERR] Utilisation : python cli.py seuils configurer")
