@@ -74,3 +74,7 @@ Ce fichier liste les notions enseignees et apprises au fil de la conception du p
 - **Detail modals** : pattern modal detail (`Modal` component) avec grille `grid-cols-2` de cards info (label uppercase + valeur bold + fond `#F5F7F2`). Dates via `formatTimeAgo()`. Bouton reaffectation avec select + bouton Affecter. Actions en bas (Modifier, Supprimer, Activer/Arreter).
 - **Affectation capteurs/actionneurs** : le champ `id_parcelle` est une FK directe sur le modele Capteur/Actionneur. Pour reaffecter, appeler `updateCapteur(id, {id_parcelle: newId})` ou `updateActionneur(id, {id_parcelle: newId})`. Le backend accepte la mise a jour partielle.
 - **References croisees** : comparer systematiquement le frontend (`*.jsx`) avec le backend (`schemas/*.py`, `models/*.py`) pour detecter les incoherences de noms de champs.
+- **Corrections critiques (3 bugs)** :
+  1. `backend/routes/actionneurs.py` — Suppression manuelle des `Commande` liées avant `db.delete(actionneur)` car la FK `commandes.id_actionneur` n'a pas de `ON DELETE CASCADE`. Voir `supprimer_actionneur()`.
+  2. `History.jsx` / `formatters.js` — Export CSV inline avec BOM `\uFEFF`, séparateur `;`, `escapeCSV()` (quotes RFC 4180), en-têtes français, nom daté. La fonction générique `exportMesuresToCSV()` a été retirée.
+  3. `History.jsx` — Chart.js : utiliser `filtered` au lieu de `enriched`, grouper par `capteur_nom`, aligner les datasets via une map `timestamp->index` commune, `spanGaps: true`.

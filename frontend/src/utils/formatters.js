@@ -2,7 +2,6 @@
  * Fonctions utilitaires de formatage pour l'interface SAI.
  * - formatDate : date complète en format français
  * - formatTimeAgo : temps relatif lisible ("Il y a 5 min")
- * - exportMesuresToCSV : export de données vers un fichier CSV téléchargeable
  */
 
 /**
@@ -33,33 +32,4 @@ export function formatTimeAgo(secondsAgo) {
   if (mins < 60) return `Il y a ${mins} min`;
   const hours = Math.floor(mins / 60);
   return `Il y a ${hours} h`;
-}
-
-/**
- * Exporte un tableau de mesures au format CSV et déclenche le téléchargement.
- * @param {Array} mesures - Tableau d'objets mesures
- * @param {string} filename - Nom du fichier à télécharger
- */
-export function exportMesuresToCSV(mesures, filename = 'sai_export.csv') {
-  const headers = ['ID', 'Capteur Code', 'Nom Capteur', 'Parcelle', 'Valeur', 'Unité', 'Statut', 'Date/Heure'];
-  const rows = mesures.map((m) => [
-    m.id,
-    `"${m.capteurCode}"`,
-    `"${m.capteurNom}"`,
-    `"${m.parcelleNom}"`,
-    m.valeur,
-    `"${m.unite}"`,
-    `"${m.statut}"`,
-    `"${m.timestamp}"`,
-  ]);
-
-  const csvContent = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', filename);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 }

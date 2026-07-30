@@ -5,7 +5,7 @@
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { apiService } from '../services/api';
-import { exportMesuresToCSV, formatDate } from '../utils/formatters';
+import { formatDate } from '../utils/formatters';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSearchParams } from 'react-router-dom';
@@ -130,34 +130,57 @@ export const History = () => {
   );
 
   // Construction du jeu de données pour le graphique Chart.js
-  // On prend les 50 mesures les plus récentes, groupées par unité
+  // Synchronise avec les données FILTREES et groupe par CAPTEUR.
+  // Chaque dataset est aligné sur les mêmes labels (timestamps) pour éviter le décalage.
   const chartData = useMemo(() => {
-    const recent = [...enriched]
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-      .slice(0, 50)
-      .reverse();
+    // On prend les données filtrées, triées chronologiquement
+    const sorted = [...filtered].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-    // On groupe par unité pour avoir des datasets cohérents
-    const byUnit = {};
-    recent.forEach((m) => {
-      const key = m.unite || '';
-      if (!byUnit[key]) byUnit[key] = [];
-      byUnit[key].push({ x: m.timestamp, y: m.valeur });
+    if (sorted.length === 0) {
+      return { labels: [], datasets: [] };
+    }
+
+    // On limite à 50 points maximum pour la lisibilité
+    const recent = sorted.slice(-50);
+
+    // Labels = timestamps uniques formatés
+    const labels = recent.map((m) => {
+      const d = new Date(m.timestamp);
+      return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
     });
 
-    const colors = ['#2E7D32', '#2563EB', '#D97706', '#CA8A04', '#0891B2'];
-    return {
-      labels: recent.map((m) => formatDate(m.timestamp)),
-      datasets: Object.entries(byUnit).map(([unit, points], i) => ({
-        label: unit,
-        data: points.map((p) => p.y),
-        borderColor: colors[i % colors.length],
-        backgroundColor: colors[i % colors.length] + '20',
-        tension: 0.3,
-        fill: true,
-      })),
-    };
-  }, [enriched]);
+    // Index rapide : timestamp brut -> index dans le tableau recent
+    const tsToIndex = {};
+    recent.forEach((m, idx) => { tsToIndex[m.timestamp] = idx; });
+
+    // Groupe par capteur
+    const byCapteur = {};
+    recent.forEach((m) => {
+      const key = m.capteur_nom || `Capteur #${m.id_capteur}`;
+      if (!byCapteur[key]) byCapteur[key] = new Array(recent.length).fill(null);
+      const idx = tsToIndex[m.timestamp];
+      byCapteur[key][idx] = m.valeur;
+    });
+
+    const colors = [
+      '#2E7D32', '#2563EB', '#D97706', '#E53935', '#0891B2',
+      '#8E24AA', '#FB8C00', '#43A047',
+    ];
+
+    const datasets = Object.entries(byCapteur).map(([nom, data], i) => ({
+      label: nom,
+      data,
+      borderColor: colors[i % colors.length],
+      backgroundColor: colors[i % colors.length] + '15',
+      tension: 0.3,
+      fill: false,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      spanGaps: true, // Relie les points même s'il y a des null entre eux
+    }));
+
+    return { labels, datasets };
+  }, [filtered]);
 
   // Options du graphique adaptées au thème clair/sombre
   const isDark = theme === 'dark';
@@ -186,24 +209,58 @@ export const History = () => {
   };
 
   /**
-   * Exporte les données filtrées en CSV et déclenche le téléchargement.
+   * Échappe une valeur CSV selon la RFC 4180.
+   * - Si la valeur contient des guillemets, des virgules ou des sauts de ligne,
+   *   elle est entourée de guillemets et les guillemets internes sont doublés.
+   */
+  const escapeCSV = (value) => {
+    if (value == null) return '';
+    const str = String(value);
+    if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  /**
+   * Exporte les données filtrées en CSV proprement formaté.
+   * Ajoute un BOM UTF-8 pour Excel, des en-têtes français clairs,
+   * et échappe correctement les valeurs.
    */
   const handleExportCSV = () => {
-    // Formatage plat pour compatibilité Excel
-    const flat = filtered.map((m) => ({
-      id: m.id,
-      capteur: m.capteur_nom,
-      parcelle: m.parcelle_nom,
-      valeur: m.valeur,
-      unite: m.unite,
-      source: m.source,
-      timestamp: m.timestamp,
-    }));
-    exportMesuresToCSV(flat, 'sai_historique.csv');
+    if (filtered.length === 0) {
+      addToast({ type: 'warning', title: 'Export vide', message: 'Aucune mesure à exporter avec les filtres actuels.' });
+      return;
+    }
+
+    const headers = ['ID', 'Capteur', 'Parcelle', 'Valeur', 'Unite', 'Source', 'Date et Heure'];
+    const rows = filtered.map((m) => [
+      m.id,
+      m.capteur_nom,
+      m.parcelle_nom,
+      m.valeur,
+      m.unite,
+      m.source || 'esp32',
+      formatDate(m.timestamp),
+    ]);
+
+    const csvLines = [headers.map(escapeCSV).join(';'), ...rows.map((row) => row.map(escapeCSV).join(';'))];
+    const csvContent = '\uFEFF' + csvLines.join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `sai_historique_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
     addToast({
       type: 'success',
       title: 'Export CSV',
-      message: `${flat.length} mesures exportées.`,
+      message: `${filtered.length} mesure${filtered.length > 1 ? 's' : ''} exportée${filtered.length > 1 ? 's' : ''}.`,
     });
   };
 

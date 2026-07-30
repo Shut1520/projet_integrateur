@@ -75,6 +75,9 @@
 | Detail modal (Capteurs, Actionneurs) | ✅ | Click sur carte → modal detail avec tous les champs + dates + reaffectation a une autre parcelle |
 | Detail modal Parcelles | ✅ | Click sur carte → vue detaillee avec infos parcelle + liste capteurs/actionneurs attaches + reaffectation |
 | Affectation capteurs/actionneurs | ✅ | Selecteur de parcelle dans le detail modal + bouton Affecter, utilise `updateCapteur/updateActionneur(id, {id_parcelle})` |
+| Suppression actionneur (bug fix) | ✅ | `backend/routes/actionneurs.py` : suppression manuelle des commandes liées avant suppression (FK sans ON DELETE CASCADE). Voir `supprimer_actionneur()`. |
+| Export CSV propre (bug fix) | ✅ | `History.jsx` : BOM UTF-8 `\uFEFF`, séparateur `;`, échappement RFC 4180, en-têtes français, nom de fichier daté `sai_historique_YYYY-MM-DD.csv`. Fonction retirée de `formatters.js`. |
+| Graphique historique synchronisé (bug fix) | ✅ | `History.jsx` : données filtrées (pas `enriched`), groupage par `capteur_nom`, alignement datasets via map timestamp→index, `spanGaps: true`, `pointRadius: 3`, `fill: false`. |
 
 #### Phase 5b — Refonte design Light Mode Dashboard (TERMINÉE ✅)
 - [x] **KPIs interactives** — Clic sur KPI → navigation `/history?capteur=xxx`. Voir `Dashboard.jsx:L262-297` (GaugeCard onClick) + `History.jsx:L54-78` (useSearchParams + match capteur par nom).

@@ -56,8 +56,11 @@ def modifier_actionneur(id: int, data: ActionneurUpdate, db: Session = Depends(g
 
 @router.delete("/{id}", status_code=204)
 def supprimer_actionneur(id: int, db: Session = Depends(get_db)):
-    """Supprime un actionneur et ses commandes associees (CASCADE)."""
+    """Supprime un actionneur et ses commandes associees (CASCADE manuel)."""
     actionneur = _get_ou_404(db, id)
+    # Supprimer d'abord les commandes liees (la FK n'a pas ON DELETE CASCADE)
+    from models.commande import Commande
+    db.query(Commande).filter(Commande.id_actionneur == id).delete(synchronize_session=False)
     db.delete(actionneur)
     db.commit()
     return None  # 204 = pas de contenu dans la reponse
