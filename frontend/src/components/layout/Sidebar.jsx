@@ -56,7 +56,7 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
 
       {/* Sidebar container */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#161B22] border-r border-[#E0E0E0] dark:border-[#30363D] flex flex-col justify-between transform transition-transform duration-300 ease-in-out ${
+        className={`fixed lg:relative inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#161B22] border-r border-[#E0E0E0] dark:border-[#30363D] h-full overflow-hidden flex flex-col justify-between transform transition-transform duration-300 ease-in-out ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >

@@ -58,7 +58,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-[#161B22] border-b border-[#E0E0E0] dark:border-[#30363D] sticky top-0 z-30 px-4 md:px-6 flex items-center justify-between">
+    <header className="h-16 bg-white dark:bg-[#161B22] border-b border-[#E0E0E0] dark:border-[#30363D] shrink-0 z-30 px-4 md:px-6 flex items-center justify-between">
       {/* Left: Mobile Toggle & Search Bar */}
       <div className="flex items-center gap-3 flex-1 max-w-xl">
         <button

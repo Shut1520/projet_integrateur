@@ -18,8 +18,8 @@ export const AppLayout = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#F5F7F2] dark:bg-[#0D1117] text-[#1A1A1A] dark:text-[#F0F0F0] flex flex-col font-sans transition-colors duration-200">
-      <div className="flex flex-1 min-h-0">
+    <div className="h-screen overflow-hidden bg-[#F5F7F2] dark:bg-[#0D1117] text-[#1A1A1A] dark:text-[#F0F0F0] flex flex-col font-sans transition-colors duration-200">
+      <div className="flex flex-1 h-full overflow-hidden">
         {/* Desktop & Mobile Sidebar */}
         <Sidebar
           mobileOpen={mobileMenuOpen}
@@ -27,10 +27,10 @@ export const AppLayout = ({ children }) => {
         />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
           <TopBar onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)} />
 
-          <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-8">
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-8">
             {children || <Outlet />}
           </main>
         </div>
