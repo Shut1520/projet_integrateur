@@ -10,7 +10,9 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models.commande import Commande
+from models.utilisateur import Utilisateur
 from schemas.commande import CommandeCreate, CommandeUpdate, CommandeResponse
+from auth import get_utilisateur_connecte
 
 router = APIRouter(prefix="/api/commandes", tags=["Commandes"])
 
@@ -24,19 +26,30 @@ def _get_ou_404(db: Session, id: int) -> Commande:
 
 
 @router.get("", response_model=list[CommandeResponse])
-def lister_commandes(db: Session = Depends(get_db)):
+def lister_commandes(
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """Liste toutes les commandes (avec les plus recentes en premier)."""
     return db.query(Commande).order_by(Commande.timestamp.desc()).all()
 
 
 @router.get("/{id}", response_model=CommandeResponse)
-def lire_commande(id: int, db: Session = Depends(get_db)):
+def lire_commande(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """Retourne une commande specifique par son ID."""
     return _get_ou_404(db, id)
 
 
 @router.post("", response_model=CommandeResponse, status_code=201)
-def creer_commande(data: CommandeCreate, db: Session = Depends(get_db)):
+def creer_commande(
+    data: CommandeCreate,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """
     Cree une nouvelle commande.
 
@@ -51,7 +64,12 @@ def creer_commande(data: CommandeCreate, db: Session = Depends(get_db)):
 
 
 @router.put("/{id}", response_model=CommandeResponse)
-def modifier_commande(id: int, data: CommandeUpdate, db: Session = Depends(get_db)):
+def modifier_commande(
+    id: int,
+    data: CommandeUpdate,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """
     Met a jour le statut d'une commande.
     Utilise par l'ESP32 (via MQTT) pour signaler :
@@ -68,7 +86,11 @@ def modifier_commande(id: int, data: CommandeUpdate, db: Session = Depends(get_d
 
 
 @router.delete("/{id}", status_code=204)
-def supprimer_commande(id: int, db: Session = Depends(get_db)):
+def supprimer_commande(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """Supprime une commande et son action associee (CASCADE)."""
     commande = _get_ou_404(db, id)
     db.delete(commande)

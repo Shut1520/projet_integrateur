@@ -13,7 +13,9 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models.alerte import Alerte
+from models.utilisateur import Utilisateur
 from schemas.alerte import AlerteCreate, AlerteUpdate, AlerteResponse
+from auth import get_utilisateur_connecte
 
 router = APIRouter(prefix="/api/alertes", tags=["Alertes"])
 
@@ -32,6 +34,7 @@ def lister_alertes(
     parcelle_id: Optional[int] = Query(None, description="Filtrer par parcelle"),
     severite: Optional[str] = Query(None, description="Filtrer par severite (basse, haute, critique)"),
     db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
 ):
     """Liste les alertes avec filtres optionnels."""
     query = db.query(Alerte)
@@ -45,13 +48,21 @@ def lister_alertes(
 
 
 @router.get("/{id}", response_model=AlerteResponse)
-def lire_alerte(id: int, db: Session = Depends(get_db)):
+def lire_alerte(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """Retourne une alerte specifique par son ID."""
     return _get_ou_404(db, id)
 
 
 @router.post("", response_model=AlerteResponse, status_code=201)
-def creer_alerte(data: AlerteCreate, db: Session = Depends(get_db)):
+def creer_alerte(
+    data: AlerteCreate,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """
     Cree une alerte manuellement (pour les tests ou intervention manuelle).
     En production, les alertes sont generees automatiquement par le systeme.
@@ -64,7 +75,12 @@ def creer_alerte(data: AlerteCreate, db: Session = Depends(get_db)):
 
 
 @router.put("/{id}", response_model=AlerteResponse)
-def modifier_alerte(id: int, data: AlerteUpdate, db: Session = Depends(get_db)):
+def modifier_alerte(
+    id: int,
+    data: AlerteUpdate,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """
     Met a jour une alerte (reconnaissance, resolution).
     """
@@ -77,7 +93,11 @@ def modifier_alerte(id: int, data: AlerteUpdate, db: Session = Depends(get_db)):
 
 
 @router.put("/{id}/reconnaitre", response_model=AlerteResponse)
-def reconnaitre_alerte(id: int, db: Session = Depends(get_db)):
+def reconnaitre_alerte(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """Marque une alerte comme 'reconnue' (l'utilisateur l'a vue)."""
     alerte = _get_ou_404(db, id)
     alerte.reconnaitre()
@@ -87,7 +107,11 @@ def reconnaitre_alerte(id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{id}/resoudre", response_model=AlerteResponse)
-def resoudre_alerte(id: int, db: Session = Depends(get_db)):
+def resoudre_alerte(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """Marque une alerte comme 'resolue' avec la date de resolution."""
     alerte = _get_ou_404(db, id)
     alerte.resoudre()
