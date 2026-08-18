@@ -5,7 +5,7 @@ Schemas Pydantic pour l'entite Actionneur.
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ActionneurBase(BaseModel):
@@ -41,5 +41,4 @@ class ActionneurResponse(ActionneurBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -192,7 +192,7 @@ def seed_mesures_mock(db: Session, capteurs: list, nb_mesures: int = 50):
                 mesures.append(mesure)
     # Insertion par lots de 100 pour optimiser les performances
     for i in range(0, len(mesures), 100):
-        db.bulk_save_objects(mesures[i : i + 100])
+        db.add_all(mesures[i : i + 100])
         db.flush()
     db.commit()
     print(f"  OK - {len(mesures)} mesures factices inserees")

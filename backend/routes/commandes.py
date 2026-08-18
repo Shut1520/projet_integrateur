@@ -17,7 +17,7 @@ router = APIRouter(prefix="/api/commandes", tags=["Commandes"])
 
 def _get_ou_404(db: Session, id: int) -> Commande:
     """Recupere une commande par son ID ou lève une 404."""
-    commande = db.query(Commande).get(id)
+    commande = db.get(Commande, id)
     if not commande:
         raise HTTPException(status_code=404, detail=f"Commande id={id} introuvable")
     return commande

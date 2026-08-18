@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/actions", tags=["Actions"])
 
 def _get_ou_404(db: Session, id: int) -> Action:
     """Recupere une action par son ID ou lève une 404."""
-    action = db.query(Action).get(id)
+    action = db.get(Action, id)
     if not action:
         raise HTTPException(status_code=404, detail=f"Action id={id} introuvable")
     return action

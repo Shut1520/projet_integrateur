@@ -33,4 +33,4 @@ capteurs
 
 globale : 
 - les messages de confirmations pour la suppression sont des alertes **fait**
-- les scrolles se fait dans la sidebar et les onglets en meme temps
+- les scrolles se fait dans la sidebar et les onglets en meme temps **fait**
