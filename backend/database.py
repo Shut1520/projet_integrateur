@@ -8,8 +8,8 @@ Ce fichier contient :
 """
 
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy import event
 
 # ─── URL de connexion a PostgreSQL ───
 # Format : postgresql://utilisateur:mot_de_passe@hote:port/nom_base
@@ -26,8 +26,9 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # ─── Classe mere de TOUS les modeles ───
-# Toutes nos classes (Utilisateur, Capteur, etc.) vont heriter de Base et des propriété SQL
-Base = declarative_base()
+# Toutes nos classes (Utilisateur, Capteur, etc.) vont heriter de Base et des propriete SQL
+class Base(DeclarativeBase):
+    pass
 
 
 # ─── Fonction utilitaire pour obtenir une session ───

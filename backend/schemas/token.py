@@ -8,7 +8,7 @@ Le Response ne montre pas la cle (securite).
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TokenBase(BaseModel):
@@ -40,8 +40,7 @@ class TokenResponse(TokenBase):
     created_at: Optional[datetime] = None
     id_utilisateur: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TokenResponseWithKey(TokenResponse):

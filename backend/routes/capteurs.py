@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/capteurs", tags=["Capteurs"])
 
 def _get_ou_404(db: Session, id: int) -> Capteur:
     """Recupere un capteur par son ID ou lève une 404."""
-    capteur = db.query(Capteur).get(id)
+    capteur = db.get(Capteur, id)
     if not capteur:
         raise HTTPException(status_code=404, detail=f"Capteur id={id} introuvable")
     return capteur

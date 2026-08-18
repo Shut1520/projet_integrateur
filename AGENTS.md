@@ -12,14 +12,18 @@ always discuss in french
 - `backend/` — FastAPI + SQLAlchemy + PostgreSQL
 - `Cli/` — Python CLI (argparse + requests), talks to backend API
 - `Iot/` — Placeholder (no code yet)
-- `Diagrammes/` — UML and Merise diagrams, including `mpd.sql` (DB schema)
+- `Diagrammes/` — UML, Merise, déploiement et architecture réseau :
+  - `1.UML/` — Use case, séquence, activité
+  - `2.Merise_&_classe/` — MCD, MLD, MPD, classes POO
+  - `3.Deploiement/` — Diagrammes de déploiement (local + production)
+  - `4.Architecture_reseau/` — Architecture réseau (local + production)
 
 ## Commands
 
 ### Backend (from `backend/`)
 
 ```bash
-# Start dev server
+# Start dev server (Python 3.12)
 python main.py
 # or: uvicorn main:app --reload --port 8000
 
@@ -33,9 +37,9 @@ python seed.py
 python seed.py --drop --mock 100
 ```
 
-Dépendances Python (pas de `requirements.txt`) :
+Dépendances Python (voir `requirements.txt`) :
 ```
-fastapi, uvicorn, sqlalchemy, psycopg2, pydantic, python-jose, werkzeug
+fastapi==0.111.0, uvicorn==0.30.1, sqlalchemy==2.0.30, psycopg2-binary==2.9.9, pydantic==2.13.4, python-jose==3.3.0, werkzeug==3.1.3
 ```
 
 Backend entry: `backend/main.py`. Routes live in `backend/routes/`. Models in `backend/models/`, schemas in `backend/schemas/`.
@@ -62,7 +66,8 @@ python test_cli.py    # lance le backend + exécute 8 commandes CLI
 
 ## Outils manquants
 
-- Pas de `requirements.txt` ni `pyproject.toml` pour le backend — les dépendances sont listées ci-dessus.
+- ~~Pas de `requirements.txt`~~ ✅ Créé avec dépendances pinées (Python 3.12).
+- Pas de `pyproject.toml` pour le backend.
 - Pas de scripts `lint`/`typecheck`/`test` dans `package.json`.
 - ESLint configuré mais manuel : `npx eslint .` depuis `frontend/`.
 - Pas de pipeline CI/CD.
@@ -92,3 +97,6 @@ python test_cli.py    # lance le backend + exécute 8 commandes CLI
 - **Tailwind v4 dark mode** : nécessite `@custom-variant dark (&:where(.dark, .dark *));` dans `index.css`, sinon le toggle ne fait rien.
 - **Repo `.git/` imbriqué** : `projet_integrateur/` contient son propre `.git/` à l'intérieur du repo parent.
 - **Identifiants DB hardcodés** : pas de `.env` pour le backend. Credentials dans `database.py` et `init_db.py` (y compris le mot de passe superuser).
+- **Python 3.12 + psycopg2** : `psycopg2` n'est pas précompilé. Installer `psycopg2-binary` à la place.
+- **SQLAlchemy 2.0** : `declarative_base()` déprécié → `DeclarativeBase`. `Query.get()` déprécié → `Session.get()`.
+- **Pydantic v2** : `class Config: from_attributes = True` déprécié → `model_config = ConfigDict(from_attributes=True)`.

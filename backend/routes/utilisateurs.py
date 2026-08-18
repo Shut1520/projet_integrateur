@@ -31,7 +31,7 @@ router = APIRouter(prefix="/api/utilisateurs", tags=["Utilisateurs"])
 # ─── Helper : récupérer un utilisateur ou lever une erreur 404 ───
 def _get_ou_404(db: Session, id: int) -> Utilisateur:
     """Cherche un utilisateur par son ID. Retourne 404 si introuvable."""
-    utilisateur = db.query(Utilisateur).get(id)
+    utilisateur = db.get(Utilisateur, id)
     if not utilisateur:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

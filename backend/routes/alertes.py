@@ -20,7 +20,7 @@ router = APIRouter(prefix="/api/alertes", tags=["Alertes"])
 
 def _get_ou_404(db: Session, id: int) -> Alerte:
     """Recupere une alerte par son ID ou lève une 404."""
-    alerte = db.query(Alerte).get(id)
+    alerte = db.get(Alerte, id)
     if not alerte:
         raise HTTPException(status_code=404, detail=f"Alerte id={id} introuvable")
     return alerte

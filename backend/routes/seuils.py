@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/seuils", tags=["Seuils"])
 
 def _get_ou_404(db: Session, id: int) -> Seuil:
     """Recupere un seuil par son ID ou lève une 404."""
-    seuil = db.query(Seuil).get(id)
+    seuil = db.get(Seuil, id)
     if not seuil:
         raise HTTPException(status_code=404, detail=f"Seuil id={id} introuvable")
     return seuil

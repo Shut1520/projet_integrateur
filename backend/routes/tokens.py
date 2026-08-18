@@ -24,7 +24,7 @@ def _generer_cle_api() -> str:
 
 def _get_ou_404(db: Session, id: int) -> Token:
     """Recupere un token par son ID ou lève une 404."""
-    token = db.query(Token).get(id)
+    token = db.get(Token, id)
     if not token:
         raise HTTPException(status_code=404, detail=f"Token id={id} introuvable")
     return token

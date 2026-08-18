@@ -5,7 +5,7 @@ Schemas Pydantic pour l'entite Seuil.
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SeuilBase(BaseModel):
@@ -45,5 +45,4 @@ class SeuilResponse(SeuilBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

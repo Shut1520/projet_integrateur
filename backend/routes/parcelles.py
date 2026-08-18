@@ -22,7 +22,7 @@ router = APIRouter(prefix="/api/parcelles", tags=["Parcelles"])
 
 def _get_ou_404(db: Session, id: int) -> Parcelle:
     """Recupere une parcelle par son ID ou lève une 404."""
-    parcelle = db.query(Parcelle).get(id)
+    parcelle = db.get(Parcelle, id)
     if not parcelle:
         raise HTTPException(status_code=404, detail=f"Parcelle id={id} introuvable")
     return parcelle

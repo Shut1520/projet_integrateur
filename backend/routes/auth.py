@@ -61,7 +61,7 @@ def _get_utilisateur_par_token(token: str, db: Session) -> Utilisateur:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    utilisateur = db.query(Utilisateur).get(utilisateur_id)
+    utilisateur = db.get(Utilisateur, utilisateur_id)
     if not utilisateur:
         raise HTTPException(status_code=401, detail="Utilisateur introuvable")
     return utilisateur

@@ -46,7 +46,7 @@ def lister_mesures(
 @router.get("/{id}", response_model=MesureResponse)
 def lire_mesure(id: int, db: Session = Depends(get_db)):
     """Retourne une mesure specifique par son ID."""
-    mesure = db.query(Mesure).get(id)
+    mesure = db.get(Mesure, id)
     if not mesure:
         raise HTTPException(status_code=404, detail=f"Mesure id={id} introuvable")
     return mesure
