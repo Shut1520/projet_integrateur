@@ -12,7 +12,9 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models.token import Token
+from models.utilisateur import Utilisateur
 from schemas.token import TokenCreate, TokenUpdate, TokenResponse, TokenResponseWithKey
+from auth import get_utilisateur_connecte
 
 router = APIRouter(prefix="/api/tokens", tags=["Tokens"])
 
@@ -34,6 +36,7 @@ def _get_ou_404(db: Session, id: int) -> Token:
 def lister_tokens(
     utilisateur_id: int | None = None,
     db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
 ):
     """Liste les tokens. Peut filtrer par utilisateur."""
     query = db.query(Token)
@@ -43,13 +46,21 @@ def lister_tokens(
 
 
 @router.get("/{id}", response_model=TokenResponse)
-def lire_token(id: int, db: Session = Depends(get_db)):
+def lire_token(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """Detail d'un token (sans la cle_api)."""
     return _get_ou_404(db, id)
 
 
 @router.post("", response_model=TokenResponseWithKey, status_code=201)
-def creer_token(data: TokenCreate, db: Session = Depends(get_db)):
+def creer_token(
+    data: TokenCreate,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """
     Cree un nouveau token.
 
@@ -74,7 +85,12 @@ def creer_token(data: TokenCreate, db: Session = Depends(get_db)):
 
 
 @router.put("/{id}", response_model=TokenResponse)
-def modifier_token(id: int, data: TokenUpdate, db: Session = Depends(get_db)):
+def modifier_token(
+    id: int,
+    data: TokenUpdate,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """
     Modifie un token (renommer, revoquer).
     On ne peut PAS recuperer la cle_api apres la creation.
@@ -88,7 +104,11 @@ def modifier_token(id: int, data: TokenUpdate, db: Session = Depends(get_db)):
 
 
 @router.delete("/{id}", status_code=204)
-def supprimer_token(id: int, db: Session = Depends(get_db)):
+def supprimer_token(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """Supprime/revoque un token."""
     token = _get_ou_404(db, id)
     db.delete(token)

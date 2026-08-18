@@ -11,7 +11,9 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models.action import Action
+from models.utilisateur import Utilisateur
 from schemas.action import ActionCreate, ActionUpdate, ActionResponse
+from auth import get_utilisateur_connecte
 
 router = APIRouter(prefix="/api/actions", tags=["Actions"])
 
@@ -28,6 +30,7 @@ def _get_ou_404(db: Session, id: int) -> Action:
 def lister_actions(
     commande_id: int | None = None,
     db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
 ):
     """Liste les actions. Peut filtrer par commande_id."""
     query = db.query(Action)
@@ -37,13 +40,21 @@ def lister_actions(
 
 
 @router.get("/{id}", response_model=ActionResponse)
-def lire_action(id: int, db: Session = Depends(get_db)):
+def lire_action(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """Retourne une action specifique par son ID."""
     return _get_ou_404(db, id)
 
 
 @router.post("", response_model=ActionResponse, status_code=201)
-def creer_action(data: ActionCreate, db: Session = Depends(get_db)):
+def creer_action(
+    data: ActionCreate,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """
     Cree une action (liee a une commande existante).
     Utilise par l'ESP32 quand il commence a executer une commande.
@@ -56,7 +67,12 @@ def creer_action(data: ActionCreate, db: Session = Depends(get_db)):
 
 
 @router.put("/{id}", response_model=ActionResponse)
-def modifier_action(id: int, data: ActionUpdate, db: Session = Depends(get_db)):
+def modifier_action(
+    id: int,
+    data: ActionUpdate,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """
     Met a jour une action (ex: fin d'execution).
     L'ESP32 appelle cet endpoint pour signaler :

@@ -7,9 +7,8 @@ Routes API pour l'authentification.
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -18,6 +17,7 @@ from database import get_db
 from models.utilisateur import Utilisateur
 from schemas.utilisateur import UtilisateurCreate, UtilisateurResponse
 from pydantic import BaseModel, EmailStr
+from auth import get_utilisateur_connecte
 
 
 class LoginRequest(BaseModel):
@@ -44,27 +44,6 @@ def _creer_token(utilisateur_id: int) -> str:
         "iat": datetime.now(timezone.utc),
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHME)
-
-
-def _get_utilisateur_par_token(token: str, db: Session) -> Utilisateur:
-    """
-    Decode un JWT et retourne l'utilisateur correspondant.
-    Leve HTTPException 401 si le token est invalide ou expire.
-    """
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHME])
-        utilisateur_id = int(payload.get("sub"))
-    except (JWTError, ValueError, TypeError):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token invalide ou expire",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    utilisateur = db.get(Utilisateur, utilisateur_id)
-    if not utilisateur:
-        raise HTTPException(status_code=401, detail="Utilisateur introuvable")
-    return utilisateur
 
 
 # ====================================================================
@@ -151,19 +130,10 @@ def login(
 # ====================================================================
 @router.get("/me", response_model=UtilisateurResponse)
 def profil_utilisateur(
-    authorization: Optional[str] = Header(None),
-    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
 ):
     """
     Retourne le profil de l'utilisateur connecte.
     Necessite un token JWT dans l'en-tete Authorization: Bearer <token>
     """
-    # Extraire le token du format "Bearer <token>"
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token manquant",
-        )
-
-    token = authorization.split(" ")[1]
-    return _get_utilisateur_par_token(token, db)
+    return utilisateur
