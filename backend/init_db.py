@@ -70,6 +70,29 @@ def creer_base_si_absente():
         engine.dispose()
 
 
+# ─── 2b. Accorder les droits au user applicatif ───────────────
+def accorder_droits():
+    """
+    Donne les droits SELECT/INSERT/UPDATE/DELETE sur le schema public
+    et toutes les tables/sequences a sai_user (user applicatif).
+    PostgreSQL 15+ necessite cela explicitement.
+    """
+    url = f"postgresql://{DB_SUPERUSER}:{DB_SUPERPASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    engine = create_engine(url)
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO sai_user"))
+            conn.execute(text("GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO sai_user"))
+            conn.execute(text("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO sai_user"))
+            conn.execute(text("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO sai_user"))
+            conn.commit()
+            print("✅ Droits accordes a sai_user (schema public, tables, sequences).")
+    except Exception as e:
+        print(f"❌ Erreur lors de l'octroi des droits : {e}")
+    finally:
+        engine.dispose()
+
+
 # ─── 2. Executer le fichier MPD ───────────────────────────────
 def executer_mpd():
     """
@@ -215,6 +238,10 @@ def main():
     # Étape 2 : Executer le MPD
     print("─── Étape 2/3 : Execution du MPD ───")
     executer_mpd()
+
+    # Étape 2b : Accorder les droits
+    print("─── Étape 2b : Configuration des droits ───")
+    accorder_droits()
 
     # Étape 3 : Verifier
     print("─── Étape 3/3 : Verification ───")

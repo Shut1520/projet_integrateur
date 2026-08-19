@@ -10,48 +10,70 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models.commande import Commande
+from models.utilisateur import Utilisateur
 from schemas.commande import CommandeCreate, CommandeUpdate, CommandeResponse
+from auth import get_utilisateur_connecte
+from services.commande_service import creer_commande, mettre_a_jour_statut
 
 router = APIRouter(prefix="/api/commandes", tags=["Commandes"])
 
 
 def _get_ou_404(db: Session, id: int) -> Commande:
     """Recupere une commande par son ID ou lève une 404."""
-    commande = db.query(Commande).get(id)
+    commande = db.get(Commande, id)
     if not commande:
         raise HTTPException(status_code=404, detail=f"Commande id={id} introuvable")
     return commande
 
 
 @router.get("", response_model=list[CommandeResponse])
-def lister_commandes(db: Session = Depends(get_db)):
+def lister_commandes(
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """Liste toutes les commandes (avec les plus recentes en premier)."""
     return db.query(Commande).order_by(Commande.timestamp.desc()).all()
 
 
 @router.get("/{id}", response_model=CommandeResponse)
-def lire_commande(id: int, db: Session = Depends(get_db)):
+def lire_commande(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """Retourne une commande specifique par son ID."""
     return _get_ou_404(db, id)
 
 
 @router.post("", response_model=CommandeResponse, status_code=201)
-def creer_commande(data: CommandeCreate, db: Session = Depends(get_db)):
+def creer_commande_route(
+    data: CommandeCreate,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """
     Cree une nouvelle commande.
 
     Si la source est 'auto', id_utilisateur doit etre None.
     Une action sera creee automatiquement des que l'ESP32 confirme l'execution.
     """
-    commande = Commande(**data.model_dump())
-    db.add(commande)
-    db.commit()
-    db.refresh(commande)
-    return commande
+    return creer_commande(
+        db=db,
+        type_action=data.type_action,
+        source=data.source,
+        id_actionneur=data.id_actionneur,
+        id_utilisateur=data.id_utilisateur,
+        valeur_parametre=data.valeur_parametre,
+    )
 
 
 @router.put("/{id}", response_model=CommandeResponse)
-def modifier_commande(id: int, data: CommandeUpdate, db: Session = Depends(get_db)):
+def modifier_commande(
+    id: int,
+    data: CommandeUpdate,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """
     Met a jour le statut d'une commande.
     Utilise par l'ESP32 (via MQTT) pour signaler :
@@ -59,6 +81,9 @@ def modifier_commande(id: int, data: CommandeUpdate, db: Session = Depends(get_d
       'executee' → la commande a ete executee avec succes
       'echouee'  → l'execution a echoue
     """
+    if data.statut:
+        return mettre_a_jour_statut(db, id, data.statut)
+
     commande = _get_ou_404(db, id)
     for champ, valeur in data.model_dump(exclude_unset=True).items():
         setattr(commande, champ, valeur)
@@ -68,7 +93,11 @@ def modifier_commande(id: int, data: CommandeUpdate, db: Session = Depends(get_d
 
 
 @router.delete("/{id}", status_code=204)
-def supprimer_commande(id: int, db: Session = Depends(get_db)):
+def supprimer_commande(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """Supprime une commande et son action associee (CASCADE)."""
     commande = _get_ou_404(db, id)
     db.delete(commande)

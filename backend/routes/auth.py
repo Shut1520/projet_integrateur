@@ -6,18 +6,15 @@ Routes API pour l'authentification.
 - GET  /api/auth/me        → Profil de l'utilisateur connecte
 """
 
-from datetime import datetime, timedelta, timezone
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from jose import JWTError, jwt
-from werkzeug.security import generate_password_hash, check_password_hash
 
 from database import get_db
 from models.utilisateur import Utilisateur
 from schemas.utilisateur import UtilisateurCreate, UtilisateurResponse
 from pydantic import BaseModel, EmailStr
+from auth import get_utilisateur_connecte
+from services.auth_service import inscrire, connecter
 
 
 class LoginRequest(BaseModel):
@@ -25,46 +22,7 @@ class LoginRequest(BaseModel):
     password: str
 
 
-# ─── Configuration JWT ───
-SECRET_KEY = "sai_secret_key_changez_en_production"  # TODO: mettre dans .env
-ALGORITHME = "HS256"
-DUREE_TOKEN = 24  # heures
-
-
-
 router = APIRouter(prefix="/api/auth", tags=["Authentification"])
-
-
-def _creer_token(utilisateur_id: int) -> str:
-    """Cree un token JWT pour un utilisateur."""
-    expiration = datetime.now(timezone.utc) + timedelta(hours=DUREE_TOKEN)
-    payload = {
-        "sub": str(utilisateur_id),
-        "exp": expiration,
-        "iat": datetime.now(timezone.utc),
-    }
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHME)
-
-
-def _get_utilisateur_par_token(token: str, db: Session) -> Utilisateur:
-    """
-    Decode un JWT et retourne l'utilisateur correspondant.
-    Leve HTTPException 401 si le token est invalide ou expire.
-    """
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHME])
-        utilisateur_id = int(payload.get("sub"))
-    except (JWTError, ValueError, TypeError):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token invalide ou expire",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    utilisateur = db.query(Utilisateur).get(utilisateur_id)
-    if not utilisateur:
-        raise HTTPException(status_code=401, detail="Utilisateur introuvable")
-    return utilisateur
 
 
 # ====================================================================
@@ -75,75 +33,18 @@ def register(data: UtilisateurCreate, db: Session = Depends(get_db)):
     """
     Cree un nouveau compte utilisateur et retourne le profil.
     """
-    # Verifier email unique
-    existant = db.query(Utilisateur).filter(Utilisateur.email == data.email).first()
-    if existant:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"L'email '{data.email}' est deja utilise",
-        )
-
-    utilisateur = Utilisateur(
-        nom=data.nom,
-        email=data.email,
-        role=data.role,
-        password_hash=generate_password_hash(data.password),
-    )
-    db.add(utilisateur)
-    db.commit()
-    db.refresh(utilisateur)
-    return utilisateur
+    return inscrire(db, data.nom, data.email, data.password, data.role)
 
 
 # ====================================================================
 #  POST /api/auth/login
 # ====================================================================
 @router.post("/login")
-def login(
-    data: LoginRequest,
-    db: Session = Depends(get_db),
-):
+def login(data: LoginRequest, db: Session = Depends(get_db)):
     """
     Authentifie un utilisateur et retourne un token JWT.
-
-    Envoyer:
-    {
-        "email": "user@example.com",
-        "password": "monMot2Passe"
-    }
-
-    Retourne:
-    {
-        "access_token": "eyJhbGciOiJIUzI1NiIs...",
-        "token_type": "bearer",
-        "expires_in": 24,
-        "utilisateur": { ... }
-    }
     """
-    # Chercher l'utilisateur par email
-    utilisateur = db.query(Utilisateur).filter(Utilisateur.email == data.email).first()
-    if not utilisateur:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email ou mot de passe incorrect",
-        )
-
-    # Verifier le mot de passe
-    if not check_password_hash(utilisateur.password_hash, data.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email ou mot de passe incorrect",
-        )
-
-    # Creer le token JWT
-    access_token = _creer_token(utilisateur.id)
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "expires_in": DUREE_TOKEN,
-        "utilisateur": UtilisateurResponse.model_validate(utilisateur).model_dump(),
-    }
+    return connecter(db, data.email, data.password)
 
 
 # ====================================================================
@@ -151,19 +52,10 @@ def login(
 # ====================================================================
 @router.get("/me", response_model=UtilisateurResponse)
 def profil_utilisateur(
-    authorization: Optional[str] = Header(None),
-    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
 ):
     """
     Retourne le profil de l'utilisateur connecte.
     Necessite un token JWT dans l'en-tete Authorization: Bearer <token>
     """
-    # Extraire le token du format "Bearer <token>"
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token manquant",
-        )
-
-    token = authorization.split(" ")[1]
-    return _get_utilisateur_par_token(token, db)
+    return utilisateur
