@@ -13,6 +13,7 @@ from models.commande import Commande
 from models.utilisateur import Utilisateur
 from schemas.commande import CommandeCreate, CommandeUpdate, CommandeResponse
 from auth import get_utilisateur_connecte
+from services.commande_service import creer_commande, mettre_a_jour_statut
 
 router = APIRouter(prefix="/api/commandes", tags=["Commandes"])
 
@@ -45,7 +46,7 @@ def lire_commande(
 
 
 @router.post("", response_model=CommandeResponse, status_code=201)
-def creer_commande(
+def creer_commande_route(
     data: CommandeCreate,
     db: Session = Depends(get_db),
     utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
@@ -56,11 +57,14 @@ def creer_commande(
     Si la source est 'auto', id_utilisateur doit etre None.
     Une action sera creee automatiquement des que l'ESP32 confirme l'execution.
     """
-    commande = Commande(**data.model_dump())
-    db.add(commande)
-    db.commit()
-    db.refresh(commande)
-    return commande
+    return creer_commande(
+        db=db,
+        type_action=data.type_action,
+        source=data.source,
+        id_actionneur=data.id_actionneur,
+        id_utilisateur=data.id_utilisateur,
+        valeur_parametre=data.valeur_parametre,
+    )
 
 
 @router.put("/{id}", response_model=CommandeResponse)
@@ -77,6 +81,9 @@ def modifier_commande(
       'executee' → la commande a ete executee avec succes
       'echouee'  → l'execution a echoue
     """
+    if data.statut:
+        return mettre_a_jour_statut(db, id, data.statut)
+
     commande = _get_ou_404(db, id)
     for champ, valeur in data.model_dump(exclude_unset=True).items():
         setattr(commande, champ, valeur)
