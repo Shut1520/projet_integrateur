@@ -68,7 +68,7 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
                 {/* logo*/}
                 <Leaf className="w-5 h-5 fill-current" />
               </div>
-              <div>
+        <div className="flex flex-col flex-1 min-h-0">
                 <span className="font-extrabold text-base text-[#1A1A1A] dark:text-white tracking-tight">
                   SAI
                 </span>
@@ -87,7 +87,7 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
           </div>
 
           {/* Navigation Links */}
-          <nav className="p-4 space-y-1.5">
+          <nav className="p-4 space-y-1.5 overflow-y-auto flex-1">
             <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-[#5A5A5A] dark:text-[#8B949E] mb-2">
               Menu Principal
             </p>

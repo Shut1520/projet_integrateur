@@ -42,7 +42,17 @@
   }
 }
 
-html, body, #root {
+html {
+  height: 100%;
+  overscroll-behavior: contain;
+}
+
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
   height: 100%;
   overflow: hidden;
 }

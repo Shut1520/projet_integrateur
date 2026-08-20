@@ -1,7 +1,7 @@
 # Planning d'exécution — Projet SAI
 
 **Échéance** : 1 semaine  
-**Dernière mise à jour** : 2026-08-19 01:00
+**Dernière mise à jour** : 2026-08-19 02:30
 
 ---
 
@@ -39,7 +39,7 @@
 | 2.7 | Installer `psycopg2-binary` (precompilé pour Python 3.12) | ✅ | pip |
 | 2.8 | Test uvicorn avec Python 3.12 : démarrage OK | ✅ | `backend/main.py` |
 | 2.9 | Middleware JWT : `Depends(get_utilisateur_connecte)` sur les routes protégées | ✅ | `backend/auth.py` + 11 fichiers routes |
-| 2.10 | Fix scroll sidebar : bug scroll simultané sidebar + contenu (`todo.md:36`) | ⬜ | `frontend/src/components/layout/` |
+| 2.10 | Fix scroll sidebar : bug scroll simultané sidebar + contenu (`todo.md:36`) | ✅ | `frontend/src/components/layout/`, `frontend/src/index.css` |
 
 ---
 
@@ -81,9 +81,9 @@
 | Phase | Tâches totales | Terminées | En cours | Restantes |
 |-------|----------------|-----------|----------|-----------|
 | Phase 6 (Déploiement) | 3 | 3 | 0 | 0 |
-| Backend (Jour 3-5) | 18 | 17 | 0 | 1 |
+| Backend (Jour 3-5) | 18 | 18 | 0 | 0 |
 | Phase 7 (IoT) | 4 | 0 | 0 | 4 |
-| **TOTAL** | **25** | **20** | **0** | **5** |
+| **TOTAL** | **25** | **21** | **0** | **4** |
 
 ---
 
