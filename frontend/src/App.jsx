@@ -20,6 +20,7 @@ import { Thresholds } from './pages/Thresholds';
 import { UsersPage } from './pages/Users';
 import { Capteurs } from './pages/Capteurs';
 import { Profile } from './pages/Profile';
+import { Alertes } from './pages/Alertes';
 
 /**
  * Route protégée : redirige vers /login si l'utilisateur n'est pas authentifié.
@@ -70,6 +71,7 @@ export default function App() {
                 <Route path="/seuils" element={<Navigate to="/thresholds" replace />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/capteurs" element={<Capteurs />} />
+                <Route path="/alertes" element={<Alertes />} />
                 <Route path="/profile" element={<Profile />} />
               </Route>
 

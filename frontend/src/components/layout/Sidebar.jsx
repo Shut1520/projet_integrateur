@@ -18,7 +18,9 @@ import {
   Leaf,
   X,
   Cpu,
+  AlertTriangle,
 } from 'lucide-react';
+import logo from '../../assets/SAI_logo/logo.png';
 
 /**
  * Composant sidebar responsive.
@@ -35,6 +37,7 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
     { name: 'Parcelles', to: '/parcelles', icon: Sprout },
     { name: 'Actionneurs', to: '/actionneurs', icon: Zap },
     { name: 'Historique', to: '/history', icon: History },
+    { name: 'Alertes', to: '/alertes', icon: AlertTriangle },
     { name: 'Seuils d\'Automate', to: '/thresholds', icon: Sliders },
   ];
 
@@ -63,11 +66,8 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
         <div>
           {/* Brand Logo Header */}
           <div className="h-16 px-6 border-b border-[#E0E0E0] dark:border-[#30363D] flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#2E7D32] flex items-center justify-center text-white shadow-md shadow-[#2E7D32]/20">
-                {/* logo*/}
-                <Leaf className="w-5 h-5 fill-current" />
-              </div>
+            <div className="flex items-center gap-1">
+              <img src={logo} alt="SAI Logo" className="w-12 h-12 object-contain rounded-xl" />
         <div className="flex flex-col flex-1 min-h-0">
                 <span className="font-extrabold text-base text-[#1A1A1A] dark:text-white tracking-tight">
                   SAI
