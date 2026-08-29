@@ -43,6 +43,28 @@ const ProtectedRoute = ({ children }) => {
   return <>{children}</>;
 };
 
+/**
+ * Route réservée aux administrateurs.
+ * Redirige vers /dashboard si l'utilisateur n'est pas admin.
+ */
+const AdminRoute = ({ children }) => {
+  const { isAuthenticated, loading, hasRole } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[var(--color-surface)] dark:bg-[#0D1117] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#2E7D32] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  if (!hasRole('admin')) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <>{children}</>;
+};
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -69,8 +91,8 @@ export default function App() {
                 <Route path="/actionneurs" element={<Actionneurs />} />
                 <Route path="/thresholds" element={<Thresholds />} />
                 <Route path="/seuils" element={<Navigate to="/thresholds" replace />} />
-                <Route path="/users" element={<UsersPage />} />
-                <Route path="/capteurs" element={<Capteurs />} />
+                <Route path="/users" element={<AdminRoute><UsersPage /></AdminRoute>} />
+                <Route path="/capteurs" element={<AdminRoute><Capteurs /></AdminRoute>} />
                 <Route path="/alertes" element={<Alertes />} />
                 <Route path="/profile" element={<Profile />} />
               </Route>

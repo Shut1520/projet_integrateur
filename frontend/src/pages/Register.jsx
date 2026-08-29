@@ -8,7 +8,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
-import { Mail, Lock, User as UserIcon, Shield, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
 import logoClair from '../assets/SAI_logo/logo_welcome_claire.png';
 import logoSombre from '../assets/SAI_logo/logo_welcome_sombre.png';
 
@@ -41,8 +41,8 @@ export const Register = () => {
       addToast({ type: 'error', title: 'Erreur', message: 'Veuillez remplir tous les champs.' });
       return;
     }
-    if (password.length < 6) {
-      addToast({ type: 'error', title: 'Erreur', message: 'Le mot de passe doit contenir au moins 6 caractères.' });
+    if (password.length < 8) {
+      addToast({ type: 'error', title: 'Erreur', message: 'Le mot de passe doit contenir au moins 8 caractères.' });
       return;
     }
     if (password !== confirmPassword) {
@@ -113,23 +113,6 @@ export const Register = () => {
                 required
                 className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
               />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-[#1A1A1A] dark:text-white mb-1">
-              Rôle sur la plateforme
-            </label>
-            <div className="relative focus-halo rounded-xl">
-              <Shield className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5A5A5A] dark:text-[#8B949E]" />
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
-              >
-                <option value="agriculteur">Agriculteur</option>
-                <option value="admin">Administrateur</option>
-              </select>
             </div>
           </div>
 

@@ -46,10 +46,11 @@ def inscrire(db: Session, nom: str, email: str, password: str, role: str) -> Uti
             detail=f"L'email '{email}' est deja utilise",
         )
 
+    # Forcer le role agriculteur — seule un admin peut creer des admin via /utilisateurs
     utilisateur = Utilisateur(
         nom=nom,
         email=email,
-        role=role,
+        role="agriculteur",
         password_hash=generate_password_hash(password),
     )
     db.add(utilisateur)
