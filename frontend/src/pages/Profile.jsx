@@ -3,7 +3,6 @@
  * Permet à l'utilisateur de :
  *  - Modifier ses informations (nom, email)
  *  - Voir et gérer ses tokens API (génération / révocation)
- *  - Activer/désactiver la 2FA (UI seulement, simulation)
  *  - Se déconnecter
  */
 import React, { useState, useEffect } from 'react';
@@ -32,7 +31,6 @@ import {
  * Permet de :
  *  - Modifier ses informations (nom, email)
  *  - Voir et gérer ses tokens API (génération / révocation)
- *  - Activer/désactiver la 2FA (UI seulement, simulation)
  */
 export const Profile = () => {
   const { user, updateUserProfile, logout } = useAuth();
@@ -52,8 +50,6 @@ export const Profile = () => {
   const [keyName, setKeyName] = useState('');
   const [generatedKey, setGeneratedKey] = useState(null);
 
-  // Authentification à deux facteurs (simulation côté frontend)
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
   // Charger les tokens de l'utilisateur courant via le backend
@@ -165,8 +161,7 @@ export const Profile = () => {
   };
 
   /**
-   * Bascule l'état de la 2FA (simulation).
-   * La vraie implémentation nécessitera un endpoint backend dédié.
+   * Copie un texte dans le presse-papier avec notification toast.
    */
   const handleToggle2FA = () => {
     setTwoFactorEnabled((v) => !v);
@@ -267,26 +262,6 @@ export const Profile = () => {
               <Power className="w-4 h-4 text-[#2E7D32]" />
               <span>Sécurité du Compte</span>
             </h3>
-
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]">
-              <div>
-                <p className="text-xs font-bold text-[#1A1A1A] dark:text-white">Authentification 2FA</p>
-                <p className="text-[11px] text-[#5A5A5A] dark:text-[#8B949E]">Double facteur (simulation)</p>
-              </div>
-              <button
-                onClick={handleToggle2FA}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                  twoFactorEnabled ? 'bg-[#2E7D32]' : 'bg-gray-300 dark:bg-gray-700'
-                }`}
-                aria-label="Toggle 2FA"
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
-                    twoFactorEnabled ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
 
             <button
               onClick={logout}

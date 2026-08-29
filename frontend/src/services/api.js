@@ -65,22 +65,6 @@ function asArray(payload) {
  * que l'UI puisse afficher un toast.
  */
 export const apiService = {
-  // ─── Authentification ───
-  async login(email, password) {
-    const response = await apiClient.post('/auth/login', { email, password });
-    return response.data;
-  },
-
-  async register(userData) {
-    const response = await apiClient.post('/auth/register', userData);
-    return response.data;
-  },
-
-  async me() {
-    const response = await apiClient.get('/auth/me');
-    return response.data;
-  },
-
   // ─── Parcelles (UC14) ───
   async getParcelles() {
     const response = await apiClient.get('/parcelles');

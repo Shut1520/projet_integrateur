@@ -61,20 +61,23 @@ export const TopBar = ({ onToggleMobileMenu }) => {
     loadSearchData();
   }, []);
 
-  // Filtrage des résultats quand searchQuery change
+  // Filtrage des résultats avec debounce 300ms
   useEffect(() => {
-    if (searchQuery.length < 2) {
-      setSearchResults({ parcelles: [], capteurs: [], actionneurs: [] });
-      setShowSearchResults(false);
-      return;
-    }
-    const q = searchQuery.toLowerCase();
-    setSearchResults({
-      parcelles: allData.current.parcelles.filter((p) => p.nom?.toLowerCase().includes(q)),
-      capteurs: allData.current.capteurs.filter((c) => c.nom?.toLowerCase().includes(q)),
-      actionneurs: allData.current.actionneurs.filter((a) => a.nom?.toLowerCase().includes(q)),
-    });
-    setShowSearchResults(true);
+    const timer = setTimeout(() => {
+      if (searchQuery.length < 2) {
+        setSearchResults({ parcelles: [], capteurs: [], actionneurs: [] });
+        setShowSearchResults(false);
+        return;
+      }
+      const q = searchQuery.toLowerCase();
+      setSearchResults({
+        parcelles: allData.current.parcelles.filter((p) => p.nom?.toLowerCase().includes(q)),
+        capteurs: allData.current.capteurs.filter((c) => c.nom?.toLowerCase().includes(q)),
+        actionneurs: allData.current.actionneurs.filter((a) => a.nom?.toLowerCase().includes(q)),
+      });
+      setShowSearchResults(true);
+    }, 300);
+    return () => clearTimeout(timer);
   }, [searchQuery]);
 
   // Fermer le dropdown si on clique à l'extérieur
@@ -100,7 +103,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
       }
     }
     fetchAlertes();
-    const interval = setInterval(fetchAlertes, 5000);
+    const interval = setInterval(fetchAlertes, 30000);
     return () => clearInterval(interval);
   }, []);
 
