@@ -22,7 +22,6 @@ import {
   Cpu,
   Zap,
   Eye,
-  X,
   ChevronRight,
   Wifi,
   WifiOff,

@@ -68,9 +68,6 @@ export const Login = () => {
               alt="SAI Logo"
               className=" h-20 object-contain mx-auto mb-3"
             />
-          {/* <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight">
-            Système Agricole Intelligent
-          </h1> */}
           <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1 font-medium">
             Connectez-vous pour accéder au tableau de bord d'exploitation
           </p>

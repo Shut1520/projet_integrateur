@@ -15,7 +15,6 @@ import {
   Users,
   User,
   LogOut,
-  Leaf,
   X,
   Cpu,
   AlertTriangle,

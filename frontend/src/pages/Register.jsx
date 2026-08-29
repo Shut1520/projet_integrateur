@@ -79,9 +79,6 @@ export const Register = () => {
           <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight">
             Inscription SAI
           </h1>
-          {/* <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1 font-medium">
-            Créez votre compte d'exploitation agricole
-          </p> */}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3.5">

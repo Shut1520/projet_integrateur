@@ -56,14 +56,12 @@ export const Profile = () => {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
 
-  // Charger les tokens de l'utilisateur courant
+  // Charger les tokens de l'utilisateur courant via le backend
   const loadTokens = async () => {
     if (!user?.id) return;
     try {
-      const all = await apiService.getUsers(); // endpoint indirect
-      // À ce stade le backend ne propose pas encore /tokens/me
-      // On liste donc tous les tokens (sera filtré par un endpoint dédié plus tard)
-      setTokens([]);
+      const data = await apiService.getTokens({ utilisateur_id: user.id });
+      setTokens(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Erreur loadTokens:', err);
       setTokens([]);
@@ -104,29 +102,26 @@ export const Profile = () => {
   };
 
   /**
-   * Génère un token API (clé pour le CLI).
-   * À ce stade, le backend n'expose pas encore d'endpoint pour générer un token
-   * depuis le frontend, donc on garde la génération locale (à migrer).
+   * Génère un token API via le backend.
+   * La clé est retournée une seule fois à la création.
+   * Recharge la liste depuis le backend pour éviter les doublons.
    */
   const handleCreateApiKey = async (e) => {
     e.preventDefault();
     if (!keyName.trim()) return;
     try {
-      // Génération locale (mock) : à remplacer par un vrai endpoint backend
-      const random = Array.from(crypto.getRandomValues(new Uint8Array(24)))
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
-      const full = `sai_live_${random}`;
-      const prefix = `${full.substring(0, 12)}...`;
-      const newKey = {
-        id: 'k_' + Date.now(),
+      const result = await apiService.createToken({
         nom: keyName,
-        keyPrefix: prefix,
-        keyFull: full,
-        dateCreation: new Date().toISOString(),
+        id_utilisateur: user.id,
+      });
+      const newKey = {
+        ...result,
+        keyPrefix: `${result.cle_api.substring(0, 12)}...`,
+        keyFull: result.cle_api,
       };
       setGeneratedKey(newKey);
-      setTokens((prev) => [newKey, ...prev]);
+      // Recharger depuis le backend pour éviter les doublons
+      await loadTokens();
       addToast({
         type: 'success',
         title: 'Clé API générée',
@@ -149,7 +144,7 @@ export const Profile = () => {
   };
 
   /**
-   * Révoque (supprime) une clé API après confirmation.
+   * Révoque (supprime) une clé API via le backend après confirmation.
    */
   const handleDeleteApiKey = (id) => {
     setConfirmModal({
@@ -157,9 +152,14 @@ export const Profile = () => {
       title: 'Révoquer cette clé API',
       message: 'Voulez-vous vraiment révoquer cette clé API ? Elle ne pourra plus être utilisée.',
       confirmLabel: 'Révoquer',
-      onConfirm: () => {
-        setTokens((prev) => prev.filter((k) => k.id !== id));
-        addToast({ type: 'success', title: 'Clé révoquée', message: 'La clé a été supprimée.' });
+      onConfirm: async () => {
+        try {
+          await apiService.revokeToken(id);
+          setTokens((prev) => prev.filter((k) => k.id !== id));
+          addToast({ type: 'success', title: 'Clé révoquée', message: 'La clé a été supprimée.' });
+        } catch (err) {
+          addToast({ type: 'error', title: 'Erreur', message: 'Impossible de révoquer la clé.' });
+        }
       },
     });
   };
@@ -335,15 +335,15 @@ export const Profile = () => {
                         {k.nom}
                       </p>
                       <p className="text-[10px] font-mono text-[#5A5A5A] dark:text-[#8B949E]">
-                        {k.keyPrefix}
+                        {k.keyPrefix || `${k.cle_api?.substring(0, 12)}...`}
                       </p>
                       <p className="text-[10px] text-[#5A5A5A] dark:text-[#8B949E]">
-                        Créée le {formatDate(k.dateCreation)}
+                        Créée le {formatDate(k.created_at)}
                       </p>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => handleCopyKey(k.keyPrefix)}
+                        onClick={() => handleCopyKey(k.keyFull || k.cle_api)}
                         className="p-1.5 text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#1A1A1A]"
                         title="Copier"
                       >
