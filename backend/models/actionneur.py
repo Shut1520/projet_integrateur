@@ -38,7 +38,7 @@ class Actionneur(Base):
 
     # ─── Relations ───
     parcelle = relationship("Parcelle", back_populates="actionneurs")
-    commandes = relationship("Commande", back_populates="actionneur")
+    commandes = relationship("Commande", back_populates="actionneur", cascade="all, delete-orphan")
 
     # ─── Methodes ───
     def __repr__(self):

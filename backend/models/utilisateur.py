@@ -40,16 +40,16 @@ class Utilisateur(Base):
     """Date de derniere modification (se met a jour automatiquement)"""
 
     # ─── Relations ORM ───
-    parcelles = relationship("Parcelle", back_populates="proprietaire")
+    parcelles = relationship("Parcelle", back_populates="proprietaire", cascade="all, delete-orphan")
     """Parcelles gerees par cet utilisateur"""
 
-    commandes = relationship("Commande", back_populates="emetteur")
+    commandes = relationship("Commande", back_populates="emetteur", cascade="all, delete-orphan")
     """Commandes soumises par cet utilisateur"""
 
     tokens = relationship("Token", back_populates="proprietaire", cascade="all, delete-orphan")
     """Cles API possedees par cet utilisateur (COMPOSITION)"""
 
-    seuils_configures = relationship("Seuil", back_populates="configurateur")
+    seuils_configures = relationship("Seuil", back_populates="configurateur", cascade="all, delete-orphan")
     """Seuils configures par cet utilisateur"""
 
     # ─── Methodes ───
