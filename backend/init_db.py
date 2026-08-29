@@ -25,20 +25,13 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 
-# ─── Configuration ────────────────────────────────────────────
+# ─── Configuration (depuis .env via config.py) ───
+from config import DB_SUPERUSER, DB_SUPERPASS, DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS
+
 # Chemin vers le fichier MPD (relatif a ce script)
 CHEMIN_MPD = os.path.join(
     os.path.dirname(__file__), "..", "Diagrammes", "2.Merise_&_classe", "MPD", "mpd.sql"
 )
-
-# Identifiants de connexion au serveur PostgreSQL
-DB_SUPERUSER = "postgres"  # Superuser PostgreSQL
-DB_SUPERPASS = "EMMA050220"  # Mot de passe du superuser
-DB_HOST = "localhost"
-DB_PORT = "5432"
-DB_NAME = "sai_db"
-DB_USER = "sai_user"
-DB_PASS = "sai_password"
 
 
 # ─── 1. Creer la base de donnees si elle n'existe pas ────────

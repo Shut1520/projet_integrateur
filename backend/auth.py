@@ -17,8 +17,9 @@ from jose import JWTError, jwt
 from database import get_db
 from models.utilisateur import Utilisateur
 
-# ─── Configuration JWT (doit etre identique a routes/auth.py) ───
-SECRET_KEY = "sai_secret_key_changez_en_production"  # TODO: deplacer dans .env
+# ─── Configuration JWT (doit etre identique a services/auth_service.py) ───
+from config import JWT_SECRET_KEY
+SECRET_KEY = JWT_SECRET_KEY
 ALGORITHME = "HS256"
 
 # HTTPBearer ajoute automatiquement le champ Authorization dans Swagger UI

@@ -16,7 +16,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models.utilisateur import Utilisateur
 
 # ─── Configuration JWT ───
-SECRET_KEY = "sai_secret_key_changez_en_production"  # TODO: deplacer dans .env
+from config import JWT_SECRET_KEY
+SECRET_KEY = JWT_SECRET_KEY
 ALGORITHME = "HS256"
 DUREE_TOKEN = 24  # heures
 

@@ -10,6 +10,8 @@ Ou directement :
 
 import os
 import sys
+import time
+import threading
 
 # Ajoute le dossier backend au PYTHONPATH pour que 'routes' soit trouvable
 sys.path.insert(0, os.path.dirname(__file__))
@@ -71,6 +73,31 @@ app.include_router(auth_router)
 def health_check():
     """Verifie que l'API est bien en ligne."""
     return {"status": "ok", "message": "SAI API is running"}
+
+
+# ─── Automatisation en arriere-plan (UC6) ───
+def _boucle_automatisation():
+    """Boucle infinie : evalue les seuils toutes les 5 minutes."""
+    from database import SessionLocal
+    from services.automatisation_service import executer_boucle
+
+    while True:
+        time.sleep(300)  # 5 minutes
+        db = SessionLocal()
+        try:
+            executer_boucle(db)
+        except Exception as e:
+            print(f"[automatisation] Erreur: {e}")
+        finally:
+            db.close()
+
+
+@app.on_event("startup")
+def demarrer_automatisation():
+    """Lance la boucle d'automatisation au demarrage du serveur."""
+    thread = threading.Thread(target=_boucle_automatisation, daemon=True)
+    thread.start()
+    print("[automatisation] Boucle demarrree (toutes les 5 min)")
 
 
 # ─── Point d'entree pour l'execution directe ───
