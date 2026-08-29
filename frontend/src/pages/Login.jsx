@@ -7,7 +7,10 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Leaf, Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react';
+import logoClair from '../assets/SAI_logo/logo_welcome_claire.png';
+import logoSombre from '../assets/SAI_logo/logo_welcome_sombre.png';
 
 /**
  * Composant page de connexion.
@@ -18,6 +21,7 @@ export const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const { addToast } = useToast();
+  const { theme } = useTheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -58,13 +62,12 @@ export const Login = () => {
     <div className="min-h-screen bg-[#F5F7F2] dark:bg-[#0D1117] flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white dark:bg-[#161B22] border border-[#E0E0E0] dark:border-[#30363D] rounded-3xl p-8 shadow-xl">
         {/* Brand Header */}
-        <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-[#2E7D32] flex items-center justify-center text-white mx-auto mb-3 shadow-lg shadow-[#2E7D32]/25">
-            <Leaf className="w-6 h-6 fill-current" />
-          </div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight">
-            Système Agricole Intelligent
-          </h1>
+          <div className="text-center mb-8">
+            <img
+              src={theme === 'dark' ? logoSombre : logoClair}
+              alt="SAI Logo"
+              className=" h-20 object-contain mx-auto mb-3"
+            />
           <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1 font-medium">
             Connectez-vous pour accéder au tableau de bord d'exploitation
           </p>
@@ -99,8 +102,8 @@ export const Login = () => {
                 onClick={() =>
                   addToast({
                     type: 'info',
-                    title: 'Réinitialisation',
-                    message: 'Un lien de réinitialisation a été envoyé si l\'email existe.',
+                    title: 'Réinitialisation du mot de passe',
+                    message: 'Contactez votre administrateur pour réinitialiser votre mot de passe.',
                   })
                 }
                 className="text-[11px] font-semibold text-[#2E7D32] dark:text-[#66BB6A] hover:underline"

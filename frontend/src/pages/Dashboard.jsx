@@ -7,11 +7,10 @@
 import React, { useState, useEffect } from 'react';
 import { GaugeCard } from '../components/ui/GaugeCard';
 import { apiService } from '../services/api';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
-import { formatTimeAgo } from '../utils/formatters';
+
 import {
   RefreshCw,
   Zap,
@@ -52,7 +51,6 @@ ChartJS.register(
  * et les alertes au montage, puis les affiche dans une grille responsive.
  */
 export const Dashboard = () => {
-  const { user } = useAuth();
   const { addToast } = useToast();
   const { theme } = useTheme();
   const navigate = useNavigate();
@@ -74,50 +72,48 @@ export const Dashboard = () => {
   const [alertes, setAlertes] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Données du graphique (remplaçent les données hardcodées)
+  const [chartDataTemp, setChartDataTemp] = useState([]);
+  const [chartDataHumSol, setChartDataHumSol] = useState([]);
+
+  // Map nom capteur → id (pour résoudre les filtres sans re-fetch)
+  const [capteurMap, setCapteurMap] = useState({});
+
   /**
-   * Récupère la dernière mesure d'un capteur par son nom.
-   * D'abord résout le nom → id via la liste des capteurs, puis filtre par id_capteur.
+   * Extrait la dernière mesure d'un capteur à partir d'une liste déjà chargée.
    */
-  const getLatestMesure = async (capteurNom, capteurMap) => {
-    try {
-      const capteurId = capteurMap[capteurNom];
-      if (!capteurId) return null;
-      const mesures = await apiService.getMesures();
-      if (!Array.isArray(mesures)) return null;
-      const filtered = mesures
-        .filter((m) => m.id_capteur === capteurId)
-        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-      return filtered[0] || null;
-    } catch (err) {
-      console.error(`Erreur getLatestMesure ${capteurNom}:`, err);
-      return null;
-    }
+  const findLatestMesure = (mesures, capteurId) => {
+    return mesures
+      .filter((m) => m.id_capteur === capteurId)
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0] || null;
   };
 
   /**
    * Chargement complet des données du dashboard.
-   * Récupère capteurs → actionneurs → alertes → dernières mesures par type.
+   * 1 seul appel getMesures() pour les jauges + capteurs + actionneurs + alertes.
    */
   const loadData = async () => {
     try {
-      const [capteurs, acts, alts] = await Promise.all([
+      const [capteurs, acts, alts, mesures] = await Promise.all([
         apiService.getCapteurs(),
         apiService.getActionneurs(),
         apiService.getAlertes(),
+        apiService.getMesures(),
       ]);
-      // Construire la map nom → id pour résoudre les filtres
-      const capteurMap = {};
-      (Array.isArray(capteurs) ? capteurs : []).forEach((c) => {
-        capteurMap[c.nom] = c.id;
-      });
-      // Charger les dernières mesures en parallèle
-      const [mTemp, mHum, mLux, mCo2, mEau] = await Promise.all([
-        getLatestMesure('dht22', capteurMap),
-        getLatestMesure('yl-69', capteurMap),
-        getLatestMesure('bh1750', capteurMap),
-        getLatestMesure('sen0159', capteurMap),
-        getLatestMesure('niveau_eau', capteurMap),
-      ]);
+      // Construire la map nom → id
+      const map = {};
+      const capteursList = Array.isArray(capteurs) ? capteurs : [];
+      capteursList.forEach((c) => { map[c.nom] = c.id; });
+      setCapteurMap(map);
+
+      // Filtrer localement la dernière mesure par type (1 seul fetch, 5 filtres)
+      const mesuresList = Array.isArray(mesures) ? mesures : [];
+      const mTemp = findLatestMesure(mesuresList, map['dht22']);
+      const mHum = findLatestMesure(mesuresList, map['yl-69']);
+      const mLux = findLatestMesure(mesuresList, map['bh1750']);
+      const mCo2 = findLatestMesure(mesuresList, map['sen0159']);
+      const mEau = findLatestMesure(mesuresList, map['niveau_eau']);
+
       setActionneurs(Array.isArray(acts) ? acts : []);
       setAlertes(Array.isArray(alts) ? alts.filter((a) => a.etat !== 'resolue') : []);
       setGauges({
@@ -135,14 +131,59 @@ export const Dashboard = () => {
     }
   };
 
+  /**
+   * Charge les données du graphique pour un type de capteur et une plage donnée.
+   * Utilise l'API getMesures avec filtre capteur_id et limite.
+   */
+  const loadChartData = async (capteurNom, capteurMap, range) => {
+    try {
+      const capteurId = capteurMap[capteurNom];
+      if (!capteurId) return [];
+      const params = { capteur_id: capteurId, limite: range === '24h' ? 8 : 7 };
+      if (range === '7j') {
+        const depuis = new Date();
+        depuis.setDate(depuis.getDate() - 7);
+        params.depuis = depuis.toISOString();
+      }
+      const mesures = await apiService.getMesures(params);
+      if (!Array.isArray(mesures)) return [];
+      return mesures
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+        .map((m) => m.valeur);
+    } catch (err) {
+      console.error(`Erreur loadChartData ${capteurNom}:`, err);
+      return [];
+    }
+  };
+
+  /**
+   * Recharge les données du graphique quand la plage change.
+   * Réutilise la map capteurMap déjà construite par loadData().
+   */
+  const refreshChartData = async (range) => {
+    const map = Object.keys(capteurMap).length > 0 ? capteurMap : null;
+    if (!map) return;
+    const [temp, hum] = await Promise.all([
+      loadChartData('dht22', map, range),
+      loadChartData('yl-69', map, range),
+    ]);
+    setChartDataTemp(temp);
+    setChartDataHumSol(hum);
+  };
+
   // Initialisation : chargement des données + minuteur pour "dernière MAJ"
   useEffect(() => {
-    loadData();
+    loadData().then(() => refreshChartData(chartRange));
     const interval = setInterval(() => {
       setLastUpdateSecs((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Rechargement du graphique quand la plage change
+  useEffect(() => {
+    refreshChartData(chartRange);
+  }, [chartRange]);
 
   /**
    * Rafraîchissement manuel des données avec spin animation.
@@ -150,7 +191,7 @@ export const Dashboard = () => {
    */
   const handleManualRefresh = async () => {
     setRefreshing(true);
-    await loadData();
+    await Promise.all([loadData(), refreshChartData(chartRange)]);
     setTimeout(() => {
       setRefreshing(false);
       addToast({ type: 'success', title: 'Données actualisées', message: 'Les capteurs ont été relus.' });
@@ -203,19 +244,21 @@ export const Dashboard = () => {
     datasets: [
       {
         label: 'Température Air (°C)',
-        data: chartRange === '24h' ? [21, 20, 22, 24, 26, 25.3, 23, 22] : [22, 24, 25, 23, 26, 24.5, 25.3],
+        data: chartDataTemp.length > 0 ? chartDataTemp : (chartRange === '24h' ? labels24h : labels7d).map(() => null),
         borderColor: '#2E7D32',
         backgroundColor: 'rgba(46, 125, 50, 0.1)',
         tension: 0.35,
         fill: true,
+        spanGaps: true,
       },
       {
         label: 'Humidité Sol (%)',
-        data: chartRange === '24h' ? [55, 52, 50, 48, 46, 45, 47, 49] : [60, 58, 52, 49, 47, 45, 45],
+        data: chartDataHumSol.length > 0 ? chartDataHumSol : (chartRange === '24h' ? labels24h : labels7d).map(() => null),
         borderColor: '#2563EB',
         backgroundColor: 'rgba(37, 99, 235, 0.08)',
         tension: 0.35,
         fill: true,
+        spanGaps: true,
       },
     ],
   };

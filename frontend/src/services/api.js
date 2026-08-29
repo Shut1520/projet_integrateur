@@ -177,12 +177,12 @@ export const apiService = {
   },
 
   async reconnaitreAlerte(id) {
-    const response = await apiClient.post(`/alertes/${id}/reconnaitre`);
+    const response = await apiClient.put(`/alertes/${id}/reconnaitre`);
     return response.data;
   },
 
   async resoudreAlerte(id) {
-    const response = await apiClient.post(`/alertes/${id}/resoudre`);
+    const response = await apiClient.put(`/alertes/${id}/resoudre`);
     return response.data;
   },
 

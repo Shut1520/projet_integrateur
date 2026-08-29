@@ -7,7 +7,10 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Leaf, Mail, Lock, User as UserIcon, Shield, ArrowRight } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { Mail, Lock, User as UserIcon, Shield, ArrowRight } from 'lucide-react';
+import logoClair from '../assets/SAI_logo/logo_welcome_claire.png';
+import logoSombre from '../assets/SAI_logo/logo_welcome_sombre.png';
 
 /**
  * Composant page d'inscription.
@@ -18,6 +21,7 @@ export const Register = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
   const { addToast } = useToast();
+  const { theme } = useTheme();
 
   const [nom, setNom] = useState('');
   const [email, setEmail] = useState('');
@@ -66,16 +70,15 @@ export const Register = () => {
   return (
     <div className="min-h-screen bg-[#F5F7F2] dark:bg-[#0D1117] flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white dark:bg-[#161B22] border border-[#E0E0E0] dark:border-[#30363D] rounded-3xl p-8 shadow-xl">
-        <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-[#2E7D32] flex items-center justify-center text-white mx-auto mb-3 shadow-lg shadow-[#2E7D32]/25">
-            <Leaf className="w-6 h-6 fill-current" />
-          </div>
+        <div className="text-center mb-3">
+            <img
+              src={theme === 'dark' ? logoSombre : logoClair}
+              alt="SAI Logo"
+              className="h-20 object-contain mx-auto "
+            />
           <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight">
             Inscription SAI
           </h1>
-          <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1 font-medium">
-            Créez votre compte d'exploitation agricole
-          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3.5">
@@ -180,7 +183,7 @@ export const Register = () => {
           </button>
         </form>
 
-        <div className="mt-6 pt-6 border-t border-[#E0E0E0] dark:border-[#30363D] text-center">
+        <div className="pt-3 border-t border-[#E0E0E0] dark:border-[#30363D] text-center">
           <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E]">
             Déjà inscrit ?{' '}
             <Link

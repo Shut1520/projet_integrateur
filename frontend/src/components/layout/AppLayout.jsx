@@ -30,7 +30,7 @@ export const AppLayout = ({ children }) => {
         <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
           <TopBar onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)} />
 
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-8">
+          <main className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-8">
             {children || <Outlet />}
           </main>
         </div>
