@@ -1,2 +1,5 @@
 agentCode_images.md
 AGENTS.md
+backend/venv/*
+backend/__pycache__/*
+backend/*.pyc 
