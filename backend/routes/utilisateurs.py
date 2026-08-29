@@ -2,11 +2,12 @@
 Routes API pour l'entite Utilisateur.
 
 Endpoints :
-    GET    /api/utilisateurs       → Liste tous les utilisateurs
-    GET    /api/utilisateurs/{id}  → Détail d'un utilisateur
-    POST   /api/utilisateurs       → Créer un utilisateur
-    PUT    /api/utilisateurs/{id}  → Modifier un utilisateur
-    DELETE /api/utilisateurs/{id}  → Supprimer un utilisateur
+    GET    /api/utilisateurs              → Liste tous les utilisateurs
+    GET    /api/utilisateurs/{id}         → Détail d'un utilisateur
+    POST   /api/utilisateurs              → Créer un utilisateur
+    PUT    /api/utilisateurs/{id}         → Modifier un utilisateur
+    PUT    /api/utilisateurs/{id}/activer → Bascule actif/inactif
+    DELETE /api/utilisateurs/{id}         → Supprimer un utilisateur
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status

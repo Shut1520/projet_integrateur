@@ -41,8 +41,8 @@ export const Register = () => {
       addToast({ type: 'error', title: 'Erreur', message: 'Veuillez remplir tous les champs.' });
       return;
     }
-    if (password.length < 6) {
-      addToast({ type: 'error', title: 'Erreur', message: 'Le mot de passe doit contenir au moins 6 caractères.' });
+    if (password.length < 8) {
+      addToast({ type: 'error', title: 'Erreur', message: 'Le mot de passe doit contenir au moins 8 caractères.' });
       return;
     }
     if (password !== confirmPassword) {
