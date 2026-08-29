@@ -43,6 +43,7 @@ class UtilisateurResponse(UtilisateurBase):
     """Renvoie au client (jamais le mot de passe)."""
 
     id: int
+    actif: bool = True
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

@@ -144,6 +144,34 @@ def modifier_utilisateur(
 
 
 # ====================================================================
+#  PUT /api/utilisateurs/{id}/activer  →  Bascule actif/inactif
+# ====================================================================
+@router.put("/{id}/activer", response_model=UtilisateurResponse)
+def basculer_etat_utilisateur(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
+    """
+    Bascule l'état actif/inactif d'un utilisateur.
+    Un admin ne peut pas se désactiver lui-même.
+    """
+    cible = _get_ou_404(db, id)
+
+    # Un admin ne peut pas se désactiver lui-même
+    if cible.id == utilisateur.id and cible.est_admin():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Un administrateur ne peut pas se désactiver lui-même",
+        )
+
+    cible.actif = not cible.actif
+    db.commit()
+    db.refresh(cible)
+    return cible
+
+
+# ====================================================================
 #  DELETE /api/utilisateurs/{id}
 # ====================================================================
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)

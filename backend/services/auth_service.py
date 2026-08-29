@@ -78,6 +78,13 @@ def connecter(db: Session, email: str, password: str) -> dict:
             detail="Email ou mot de passe incorrect",
         )
 
+    # Vérifier si le compte est actif
+    if not utilisateur.actif:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Votre compte a été désactivé. Contactez un administrateur.",
+        )
+
     access_token = creer_token(utilisateur.id)
 
     from schemas.utilisateur import UtilisateurResponse
