@@ -5,7 +5,7 @@ Represente un agriculteur ou un administrateur du systeme.
 Herite de Base pour etre persiste en base de donnees.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Boolean, Column, Integer, String, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -32,6 +32,10 @@ class Utilisateur(Base):
     role = Column(String(20), nullable=False, default="agriculteur")
     """Role : 'agriculteur' ou 'admin' (la contrainte CHECK sera dans la BD)"""
 
+    # ─── Etat du compte ───
+    actif = Column(Boolean, nullable=False, default=True)
+    """True = actif, False = desactive (ne peut plus se connecter)"""
+
     # ─── Horodatage ───
     created_at = Column(DateTime, default=func.now())
     """Date de creation du compte (DEFAULT NOW())"""
@@ -40,16 +44,16 @@ class Utilisateur(Base):
     """Date de derniere modification (se met a jour automatiquement)"""
 
     # ─── Relations ORM ───
-    parcelles = relationship("Parcelle", back_populates="proprietaire")
+    parcelles = relationship("Parcelle", back_populates="proprietaire", cascade="all, delete-orphan")
     """Parcelles gerees par cet utilisateur"""
 
-    commandes = relationship("Commande", back_populates="emetteur")
+    commandes = relationship("Commande", back_populates="emetteur", cascade="all, delete-orphan")
     """Commandes soumises par cet utilisateur"""
 
     tokens = relationship("Token", back_populates="proprietaire", cascade="all, delete-orphan")
     """Cles API possedees par cet utilisateur (COMPOSITION)"""
 
-    seuils_configures = relationship("Seuil", back_populates="configurateur")
+    seuils_configures = relationship("Seuil", back_populates="configurateur", cascade="all, delete-orphan")
     """Seuils configures par cet utilisateur"""
 
     # ─── Methodes ───
@@ -64,6 +68,7 @@ class Utilisateur(Base):
             "nom": self.nom,
             "email": self.email,
             "role": self.role,
+            "actif": self.actif,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

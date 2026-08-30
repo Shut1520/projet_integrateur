@@ -210,6 +210,11 @@ export const apiService = {
     await apiClient.delete(`/utilisateurs/${id}`);
   },
 
+  async toggleUser(id) {
+    const response = await apiClient.put(`/utilisateurs/${id}/activer`);
+    return response.data;
+  },
+
   // ─── Tokens API (CLI) ───
   async getTokens() {
     const response = await apiClient.get('/tokens');

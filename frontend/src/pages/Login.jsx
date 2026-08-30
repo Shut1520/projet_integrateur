@@ -49,6 +49,8 @@ export const Login = () => {
       const message =
         err.response?.status === 401
           ? 'Email ou mot de passe incorrect.'
+          : err.response?.status === 403
+          ? 'Votre compte a été désactivé. Contactez un administrateur.'
           : err.response?.status === 422
           ? 'Champs invalides. Vérifiez votre saisie.'
           : 'Impossible de joindre le serveur. Vérifiez votre connexion.';

@@ -86,6 +86,15 @@ def creer_mesure(data: MesureCreate, db: Session = Depends(get_db)):
     Utilise par l'ESP32 (MQTT -> API) ou par saisie manuelle.
     Publique pour permettre a l'ESP32 d'envoyer des donnees sans JWT.
     """
+    # Verifier que le capteur existe
+    from models.capteur import Capteur
+    capteur = db.get(Capteur, data.id_capteur)
+    if not capteur:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Capteur id={data.id_capteur} introuvable",
+        )
+
     mesure = Mesure(**data.model_dump())
     db.add(mesure)
     db.commit()

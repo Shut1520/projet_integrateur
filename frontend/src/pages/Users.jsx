@@ -18,6 +18,7 @@ import {
   Edit,
   Mail,
   Clock,
+  Power,
 } from 'lucide-react';
 
 /**
@@ -93,8 +94,8 @@ export const UsersPage = () => {
       addToast({ type: 'error', title: 'Erreur', message: 'Veuillez saisir le nom et l\'email.' });
       return;
     }
-    if (!editingUser && (!password || password.length < 6)) {
-      addToast({ type: 'error', title: 'Erreur', message: 'Le mot de passe doit contenir au moins 6 caractères.' });
+    if (!editingUser && (!password || password.length < 8)) {
+      addToast({ type: 'error', title: 'Erreur', message: 'Le mot de passe doit contenir au moins 8 caractères.' });
       return;
     }
 
@@ -141,6 +142,36 @@ export const UsersPage = () => {
             type: 'error',
             title: 'Erreur',
             message: 'Suppression impossible (parcelles ou commandes liées ?).',
+          });
+        }
+      },
+    });
+  };
+
+  /**
+   * Active ou désactive un utilisateur (UC8 - Admin).
+   */
+  const handleToggleUser = async (u) => {
+    const action = u.actif ? 'désactiver' : 'activer';
+    setConfirmModal({
+      open: true,
+      title: `${action.charAt(0).toUpperCase() + action.slice(1)} cet utilisateur`,
+      message: `Voulez-vous vraiment ${action} le compte de « ${u.nom} » ?`,
+      confirmLabel: action.charAt(0).toUpperCase() + action.slice(1),
+      onConfirm: async () => {
+        try {
+          await apiService.toggleUser(u.id);
+          addToast({
+            type: 'success',
+            title: 'Succès',
+            message: `Le compte de « ${u.nom} » a été ${u.actif ? 'désactivé' : 'activé'}.`,
+          });
+          loadUsers();
+        } catch (err) {
+          addToast({
+            type: 'error',
+            title: 'Erreur',
+            message: err.response?.data?.detail || 'Impossible de modifier l\'état de l\'utilisateur.',
           });
         }
       },
@@ -299,8 +330,31 @@ export const UsersPage = () => {
                     </div>
                   </td>
 
+                  <td className="px-5 py-3.5">
+                    <span
+                      className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                        u.actif
+                          ? 'bg-[#2E7D32]/10 text-[#2E7D32]'
+                          : 'bg-[#E53935]/10 text-[#E53935]'
+                      }`}
+                    >
+                      {u.actif ? 'Actif' : 'Inactif'}
+                    </span>
+                  </td>
+
                   <td className="px-5 py-3.5 text-right">
                     <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => handleToggleUser(u)}
+                        className={`p-1.5 rounded-lg ${
+                          u.actif
+                            ? 'text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#E53935] hover:bg-[#E53935]/10'
+                            : 'text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#2E7D32] hover:bg-[#2E7D32]/10'
+                        }`}
+                        title={u.actif ? 'Désactiver' : 'Activer'}
+                      >
+                        <Power className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => handleOpenEditModal(u)}
                         className="p-1.5 rounded-lg text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#2E7D32] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"

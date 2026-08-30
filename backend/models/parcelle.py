@@ -58,7 +58,7 @@ class Parcelle(Base):
     Liste des seuils definis pour cette parcelle (COMPOSITION).
     """
 
-    alertes = relationship("Alerte", back_populates="parcelle")
+    alertes = relationship("Alerte", back_populates="parcelle", cascade="all, delete-orphan")
     """
     Alertes liees a cette parcelle.
     Pas de cascade : une alerte est declenchee par une mesure/action,

@@ -16,7 +16,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models.utilisateur import Utilisateur
 
 # ─── Configuration JWT ───
-SECRET_KEY = "sai_secret_key_changez_en_production"  # TODO: deplacer dans .env
+from config import JWT_SECRET_KEY
+SECRET_KEY = JWT_SECRET_KEY
 ALGORITHME = "HS256"
 DUREE_TOKEN = 24  # heures
 
@@ -77,6 +78,13 @@ def connecter(db: Session, email: str, password: str) -> dict:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email ou mot de passe incorrect",
+        )
+
+    # Vérifier si le compte est actif
+    if not utilisateur.actif:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Votre compte a été désactivé. Contactez un administrateur.",
         )
 
     access_token = creer_token(utilisateur.id)

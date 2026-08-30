@@ -9,15 +9,11 @@ Ce fichier contient :
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
-from sqlalchemy import event
 
 # ─── URL de connexion a PostgreSQL ───
-# Format : postgresql://utilisateur:mot_de_passe@hote:port/nom_base
-# A modifier selon votre environnement
-DATABASE_URL = "postgresql://sai_user:sai_password@localhost:5432/sai_db"
+from config import DATABASE_URL
 
 # ─── Moteur de connexion ───
-# la connexion avc PostgreSQL
 engine = create_engine(DATABASE_URL)
 
 
