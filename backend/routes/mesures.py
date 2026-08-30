@@ -14,7 +14,9 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models.mesure import Mesure
+from models.utilisateur import Utilisateur
 from schemas.mesure import MesureCreate, MesureResponse
+from auth import get_utilisateur_connecte
 
 router = APIRouter(prefix="/api/mesures", tags=["Mesures"])
 
@@ -26,6 +28,7 @@ def lister_mesures(
     jusqua: Optional[datetime] = Query(None, description="Date fin (ISO)"),
     limite: int = Query(100, ge=1, le=10000, description="Nombre max de resultats"),
     db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
 ):
     """
     Liste les mesures avec filtres optionnels.
@@ -44,8 +47,13 @@ def lister_mesures(
 
 
 @router.get("/{id}", response_model=MesureResponse)
-def lire_mesure(id: int, db: Session = Depends(get_db)):
-    mesure = db.query(Mesure).get(id)
+def lire_mesure(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
+    """Retourne une mesure specifique par son ID."""
+    mesure = db.get(Mesure, id)
     if not mesure:
         raise HTTPException(status_code=404, detail=f"Mesure id={id} introuvable")
     return mesure
@@ -56,6 +64,7 @@ def dernieres_mesures(
     capteur_id: int,
     nb: int = Query(10, ge=1, le=1000, description="Nombre de mesures"),
     db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
 ):
     """
     Retourne les N dernieres mesures d'un capteur specifique.
@@ -75,6 +84,7 @@ def creer_mesure(data: MesureCreate, db: Session = Depends(get_db)):
     """
     Ajoute une mesure.
     Utilise par l'ESP32 (MQTT -> API) ou par saisie manuelle.
+    Publique pour permettre a l'ESP32 d'envoyer des donnees sans JWT.
     """
     mesure = Mesure(**data.model_dump())
     db.add(mesure)

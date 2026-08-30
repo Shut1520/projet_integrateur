@@ -11,13 +11,16 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models.seuil import Seuil
+from models.utilisateur import Utilisateur
 from schemas.seuil import SeuilCreate, SeuilUpdate, SeuilResponse
+from auth import get_utilisateur_connecte
 
 router = APIRouter(prefix="/api/seuils", tags=["Seuils"])
 
 
 def _get_ou_404(db: Session, id: int) -> Seuil:
-    seuil = db.query(Seuil).get(id)
+    """Recupere un seuil par son ID ou lève une 404."""
+    seuil = db.get(Seuil, id)
     if not seuil:
         raise HTTPException(status_code=404, detail=f"Seuil id={id} introuvable")
     return seuil
@@ -27,6 +30,7 @@ def _get_ou_404(db: Session, id: int) -> Seuil:
 def lister_seuils(
     parcelle_id: int | None = None,
     db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
 ):
     """Liste les seuils. Peut filtrer par parcelle."""
     query = db.query(Seuil)
@@ -36,12 +40,21 @@ def lister_seuils(
 
 
 @router.get("/{id}", response_model=SeuilResponse)
-def lire_seuil(id: int, db: Session = Depends(get_db)):
+def lire_seuil(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
+    """Retourne un seuil specifique par son ID."""
     return _get_ou_404(db, id)
 
 
 @router.post("", response_model=SeuilResponse, status_code=201)
-def creer_seuil(data: SeuilCreate, db: Session = Depends(get_db)):
+def creer_seuil(
+    data: SeuilCreate,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """Configure un nouveau seuil pour une parcelle."""
     seuil = Seuil(**data.model_dump())
     db.add(seuil)
@@ -51,7 +64,12 @@ def creer_seuil(data: SeuilCreate, db: Session = Depends(get_db)):
 
 
 @router.put("/{id}", response_model=SeuilResponse)
-def modifier_seuil(id: int, data: SeuilUpdate, db: Session = Depends(get_db)):
+def modifier_seuil(
+    id: int,
+    data: SeuilUpdate,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """Modifie un seuil existant."""
     seuil = _get_ou_404(db, id)
     for champ, valeur in data.model_dump(exclude_unset=True).items():
@@ -62,7 +80,11 @@ def modifier_seuil(id: int, data: SeuilUpdate, db: Session = Depends(get_db)):
 
 
 @router.delete("/{id}", status_code=204)
-def supprimer_seuil(id: int, db: Session = Depends(get_db)):
+def supprimer_seuil(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """Supprime un seuil."""
     seuil = _get_ou_404(db, id)
     db.delete(seuil)

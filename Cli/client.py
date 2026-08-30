@@ -1,5 +1,10 @@
 """
 client.py — Client HTTP pour communiquer avec l'API REST.
+
+Fournit la classe APIClient qui encapsule les appels HTTP (GET, POST, PUT, DELETE)
+vers le backend FastAPI. Gère la configuration (URL, token JWT), la construction
+des en-têtes d'authentification et le traitement centralisé des réponses (codes
+200, 201, 204, 401, 404, 409, 422).
 """
 
 import json
@@ -11,10 +16,23 @@ import requests
 
 class APIClient:
     """
-    Client HTTP qui parle a notre API FastAPI.
+    Client HTTP qui parle à l'API FastAPI.
+
+    Responsabilités :
+    - Lecture/écriture de la configuration (URL du serveur, token JWT)
+      dans un fichier config.json local.
+    - Construction automatique des en-têtes Authorization.
+    - Méthodes get/post/put/delete avec gestion d'erreur unifiée.
     """
 
     def __init__(self, config_path: str = None):
+        """
+        Initialise le client.
+
+        Args:
+            config_path: Chemin vers le fichier de configuration JSON.
+                        Si None, utilise config.json dans le même dossier que ce module.
+        """
         if config_path is None:
             self.config_path = Path(__file__).parent / "config.json"
         else:
@@ -25,6 +43,12 @@ class APIClient:
         self._charger_config()
 
     def _charger_config(self):
+        """
+        Charge la configuration depuis le fichier JSON.
+
+        Lit l'URL de l'API et le token JWT sauvegardés. En cas de fichier
+        absent ou corrompu, utilise les valeurs par défaut.
+        """
         try:
             with open(self.config_path, "r") as f:
                 config = json.load(f)
@@ -35,12 +59,23 @@ class APIClient:
             self.token = None
 
     def sauvegarder_token(self, token: str):
+        """
+        Sauvegarde le token JWT en mémoire et dans le fichier de configuration.
+
+        Args:
+            token: Le token JWT à conserver pour les futures requêtes.
+        """
         self.token = token
         config = {"api_url": self.api_url, "token": token}
         with open(self.config_path, "w") as f:
             json.dump(config, f, indent=4)
 
     def effacer_token(self):
+        """
+        Efface le token JWT de la mémoire et du fichier de configuration.
+
+        Appelé lors de la déconnexion (logout).
+        """
         self.token = None
         config = {"api_url": self.api_url, "token": None}
         with open(self.config_path, "w") as f:
@@ -50,17 +85,29 @@ class APIClient:
         return self.token is not None
 
     def _headers(self) -> dict:
+        """
+        Construit les en-têtes HTTP pour les requêtes.
+
+        Inclut toujours Content-Type: application/json.
+        Ajoute Authorization: Bearer <token> si un token est disponible.
+        """
         headers = {"Content-Type": "application/json"}
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
         return headers
 
     def _erreur_connexion(self):
+        """
+        Affiche un message d'erreur et termine le programme.
+
+        Appelé quand le serveur est inaccessible (erreur de connexion ou timeout).
+        """
         print(f"[ERR] Impossible de se connecter a {self.api_url}")
         print("   Verifiez que le serveur FastAPI est lance.")
         sys.exit(1)
 
     def get(self, chemin: str, params: dict = None) -> dict | list:
+        """Envoie une requête GET."""
         url = f"{self.api_url}{chemin}"
         try:
             r = requests.get(url, headers=self._headers(), params=params, timeout=10)
@@ -69,6 +116,7 @@ class APIClient:
             self._erreur_connexion()
 
     def post(self, chemin: str, data: dict = None) -> dict | list:
+        """Envoie une requête POST avec un body JSON."""
         url = f"{self.api_url}{chemin}"
         try:
             r = requests.post(url, headers=self._headers(), json=data, timeout=10)
@@ -77,6 +125,7 @@ class APIClient:
             self._erreur_connexion()
 
     def put(self, chemin: str, data: dict = None) -> dict | list:
+        """Envoie une requête PUT avec un body JSON."""
         url = f"{self.api_url}{chemin}"
         try:
             r = requests.put(url, headers=self._headers(), json=data, timeout=10)
@@ -85,6 +134,7 @@ class APIClient:
             self._erreur_connexion()
 
     def delete(self, chemin: str) -> bool:
+        """Envoie une requête DELETE. Retourne True en cas de succès."""
         url = f"{self.api_url}{chemin}"
         try:
             r = requests.delete(url, headers=self._headers(), timeout=10)
@@ -96,6 +146,16 @@ class APIClient:
             self._erreur_connexion()
 
     def _traiter_reponse(self, r: requests.Response) -> dict | list:
+        """
+        Traite la réponse HTTP et gère les codes de statut.
+
+        - 200/201 : succès, retourne le JSON.
+        - 204 : succès sans contenu.
+        - 401 : non autorisé, invite à se reconnecter.
+        - 404 : ressource introuvable.
+        - 409 : conflit (ex: doublon).
+        - 422 : données invalides, affiche les détails de validation.
+        """
         if r.status_code in (200, 201):
             return r.json() if r.text else {}
         elif r.status_code == 204:
@@ -128,6 +188,12 @@ class APIClient:
             sys.exit(1)
 
     def _extraire_detail(self, r, defaut: str) -> str:
+        """
+        Extrait le champ 'detail' du body JSON de réponse.
+
+        Utilisé pour récupérer les messages d'erreur renvoyés par FastAPI.
+        Retourne defaut si le parsing échoue.
+        """
         try:
             return r.json().get("detail", defaut)
         except (json.JSONDecodeError, AttributeError):

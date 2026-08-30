@@ -20,6 +20,7 @@ from schemas.utilisateur import (
     UtilisateurUpdate,
     UtilisateurResponse,
 )
+from auth import get_utilisateur_connecte
 
 # ─── Routeur avec prefixe et tag pour la doc automatique ───
 # # Toutes les routes de ce fichier commenceront par `/api/utilisateurs`.
@@ -31,7 +32,7 @@ router = APIRouter(prefix="/api/utilisateurs", tags=["Utilisateurs"])
 # ─── Helper : récupérer un utilisateur ou lever une erreur 404 ───
 def _get_ou_404(db: Session, id: int) -> Utilisateur:
     """Cherche un utilisateur par son ID. Retourne 404 si introuvable."""
-    utilisateur = db.query(Utilisateur).get(id)
+    utilisateur = db.get(Utilisateur, id)
     if not utilisateur:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -44,7 +45,10 @@ def _get_ou_404(db: Session, id: int) -> Utilisateur:
 #  GET /api/utilisateurs
 # ====================================================================
 @router.get("", response_model=list[UtilisateurResponse])
-def lister_utilisateurs(db: Session = Depends(get_db)):
+def lister_utilisateurs(
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """
     Retourne la liste de tous les utilisateurs.
     """
@@ -55,7 +59,11 @@ def lister_utilisateurs(db: Session = Depends(get_db)):
 #  GET /api/utilisateurs/{id}
 # ====================================================================
 @router.get("/{id}", response_model=UtilisateurResponse)
-def lire_utilisateur(id: int, db: Session = Depends(get_db)):
+def lire_utilisateur(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """
     Retourne un utilisateur specifique par son ID.
     """
@@ -66,7 +74,11 @@ def lire_utilisateur(id: int, db: Session = Depends(get_db)):
 #  POST /api/utilisateurs
 # ====================================================================
 @router.post("", response_model=UtilisateurResponse, status_code=status.HTTP_201_CREATED)
-def creer_utilisateur(data: UtilisateurCreate, db: Session = Depends(get_db)):
+def creer_utilisateur(
+    data: UtilisateurCreate,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """
     Crée un nouvel utilisateur.
 
@@ -102,7 +114,12 @@ def creer_utilisateur(data: UtilisateurCreate, db: Session = Depends(get_db)):
 #  PUT /api/utilisateurs/{id}
 # ====================================================================
 @router.put("/{id}", response_model=UtilisateurResponse)
-def modifier_utilisateur(id: int, data: UtilisateurUpdate, db: Session = Depends(get_db)):
+def modifier_utilisateur(
+    id: int,
+    data: UtilisateurUpdate,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """
     Modifie un utilisateur existant.
 
@@ -117,6 +134,7 @@ def modifier_utilisateur(id: int, data: UtilisateurUpdate, db: Session = Depends
         # Transformer le mot de passe en hash
         update_data["password_hash"] = generate_password_hash(update_data.pop("password"))
 
+    # Appliquer les modifications sur l'objet ORM
     for champ, valeur in update_data.items():
         setattr(utilisateur, champ, valeur)
 
@@ -129,7 +147,11 @@ def modifier_utilisateur(id: int, data: UtilisateurUpdate, db: Session = Depends
 #  DELETE /api/utilisateurs/{id}
 # ====================================================================
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def supprimer_utilisateur(id: int, db: Session = Depends(get_db)):
+def supprimer_utilisateur(
+    id: int,
+    db: Session = Depends(get_db),
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+):
     """
     Supprime un utilisateur.
 

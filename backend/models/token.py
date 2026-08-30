@@ -8,7 +8,7 @@ Chaque token appartient a un utilisateur.
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 
 from database import Base
 
@@ -60,7 +60,7 @@ class Token(Base):
         """Verifie si le token a expire."""
         if self.expires_at is None:
             return False  # Pas de date d'expiration = jamais expire
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
 
     def est_utilisable(self):
         """Retourne True si le token est actif ET non expire."""
