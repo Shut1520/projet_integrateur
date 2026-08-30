@@ -27,7 +27,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from client import APIClient
 from auth import login, logout, status
-from commands import capteurs, mesures, actionneurs, commandes, alertes, seuils
+from commands import capteurs, mesures, actionneurs, commandes, alertes, seuils, statut
 
 
 def main():
@@ -68,6 +68,9 @@ Exemples :
     # status
     p_status = sous_commandes.add_parser("status", help="Verifier l'etat de la connexion")
     p_status.add_argument("--check", action="store_true", help="Verifier le token aupres du serveur")
+
+    # statut
+    p_statut = sous_commandes.add_parser("statut", help="Tableau de bord du systeme")
 
     # capteurs
     p_capteurs = sous_commandes.add_parser("capteurs", help="Lister les capteurs")
@@ -130,6 +133,8 @@ Exemples :
         logout(api)
     elif args.commande == "status":
         status(api)
+    elif args.commande == "statut":
+        statut.run(api)
     elif args.commande == "capteurs":
         capteurs.lister(api)
     elif args.commande == "actionneurs":
