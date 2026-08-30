@@ -1,3 +1,2 @@
-architecture_cli.md
-commandes.md
-procedure.md
+__pycache__/
+*.pyc
