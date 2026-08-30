@@ -8,15 +8,15 @@ Exemple :
     python cli.py statut
 """
 
-from client import SAIClient
+from client import APIClient
 
 
-def run(client: SAIClient):
+def run(client: APIClient):
     """
     Récupère les statistiques du système et les affiche.
 
     Args:
-        client: Instance de SAIClient connectée.
+        client: Instance d'APIClient connectée.
     """
     try:
         # Récupération de toutes les ressources en un seul appel
