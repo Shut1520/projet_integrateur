@@ -1,7 +1,7 @@
 /**
  * Styles globaux de l'application SAI.
  * - Variables CSS pour les thèmes clair/sombre (palette verte agricole)
- * - Police principale Inter avec fallback système
+ * - Typographie : Fraunces (titres) + DM Sans (body/UI)
  * - Classes utilitaires : focus-halo, curseur personnalisé, scrollbar
  */
 @import "tailwindcss";
@@ -10,16 +10,17 @@
 
 @layer base {
   :root {
+    --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+    --font-heading: 'Fraunces', Georgia, serif;
+
     --color-primary: #2E7D32;
     --color-primary-light: #E8F5E9;
     --color-primary-dark: #1B5E20;
     --color-secondary: #E8F5E9;
-    --color-tertiary: #1B5E20;
     --color-surface: #F5F7F2;
     --color-card: #FFFFFF;
     --color-text-primary: #1A1A1A;
     --color-text-secondary: #5A5A5A;
-    --color-text-muted: #BDBDBD;
     --color-border: #E0E0E0;
     --color-success: #43A047;
     --color-warning: #FB8C00;
@@ -40,7 +41,6 @@
     --color-surface-container-low: #1c2128;
     --color-surface-container: #22272e;
     --color-surface-container-high: #2d333b;
-    --color-surface-container-highest: #373e47;
     --color-border-default: #30363D;
     --color-text-primary: #F0F0F0;
     --color-text-secondary: #8B949E;
@@ -63,7 +63,7 @@ body {
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
 }
 
 /* Material Symbols alignment helper */

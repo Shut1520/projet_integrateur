@@ -54,7 +54,7 @@ export const GaugeCard = ({
             {title}
           </span>
           {parcelleNom && (
-            <span className="text-[9px] text-[#5A5A5A] dark:text-[#8B949E] mt-0.5">
+            <span className="text-[10px] text-[#5A5A5A] dark:text-[#8B949E] mt-0.5">
               {parcelleNom}
             </span>
           )}
@@ -63,7 +63,7 @@ export const GaugeCard = ({
       </div>
 
       <div className="flex items-baseline gap-1 mb-1">
-        <span className="text-2xl font-black text-[#1A1A1A] dark:text-white tracking-tight">
+        <span className="text-2xl font-black text-[#1A1A1A] dark:text-white tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
           {value}
         </span>
         <span className="text-xs font-semibold text-[#5A5A5A] dark:text-[#8B949E]">

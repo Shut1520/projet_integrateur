@@ -261,7 +261,7 @@ export const History = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E0E0E0] dark:border-[#30363D]">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight flex items-center gap-2">
+           <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight flex items-center gap-2" style={{ fontFamily: 'var(--font-heading)' }}>
             <HistoryIcon className="w-6 h-6 text-[#2E7D32]" />
             <span>Historique des Mesures</span>
           </h1>
@@ -409,6 +409,7 @@ export const History = () => {
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={safeCurrentPage === 1}
+                aria-label="Page précédente"
                 className="p-1.5 rounded-lg border border-[#E0E0E0] dark:border-[#30363D] disabled:opacity-40"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -416,6 +417,7 @@ export const History = () => {
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={safeCurrentPage === totalPages}
+                aria-label="Page suivante"
                 className="p-1.5 rounded-lg border border-[#E0E0E0] dark:border-[#30363D] disabled:opacity-40"
               >
                 <ChevronRight className="w-4 h-4" />

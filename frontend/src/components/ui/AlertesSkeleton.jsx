@@ -13,7 +13,7 @@ export const AlertesSkeleton = () => {
       </div>
 
       {/* Summary bar skeleton */}
-      <div className="bg-white dark:bg-[#161B22] p-4 rounded-xl border border-[#E0E0E0] dark:border-[#30363D]">
+      <div className="bg-white dark:bg-[#161B22] p-4 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D]">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="flex items-center gap-3">
@@ -28,7 +28,7 @@ export const AlertesSkeleton = () => {
       </div>
 
       {/* Filters skeleton */}
-      <div className="bg-white dark:bg-[#161B22] p-4 rounded-xl border border-[#E0E0E0] dark:border-[#30363D]">
+      <div className="bg-white dark:bg-[#161B22] p-4 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D]">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="h-9 flex-1 bg-[#E0E0E0] dark:bg-[#30363D] rounded-lg" />
           <div className="h-9 w-36 bg-[#E0E0E0] dark:bg-[#30363D] rounded-lg" />

@@ -312,7 +312,7 @@ export const Parcelles = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E0E0E0] dark:border-[#30363D]">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight flex items-center gap-2">
+           <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight flex items-center gap-2" style={{ fontFamily: 'var(--font-heading)' }}>
             <Sprout className="w-6 h-6 text-[#2E7D32]" />
             <span>Gestion des Parcelles</span>
           </h1>
@@ -465,6 +465,7 @@ export const Parcelles = () => {
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); openDetail(p); }}
+                    aria-label="Voir les détails"
                     className="p-1.5 text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#F5F7F2] dark:hover:bg-[#22272e] rounded-lg"
                     title="Voir les details"
                   >
@@ -535,6 +536,7 @@ export const Parcelles = () => {
                         )}
                         <button
                           onClick={() => navigate('/capteurs')}
+                          aria-label="Voir les capteurs"
                           className="p-1 text-[#5A5A5A] dark:text-[#8B949E] hover:bg-gray-100 dark:hover:bg-[#22272e] rounded-lg"
                         >
                           <ChevronRight className="w-3.5 h-3.5" />
@@ -578,6 +580,7 @@ export const Parcelles = () => {
                         )}
                         <button
                           onClick={() => navigate('/actionneurs')}
+                          aria-label="Voir les actionneurs"
                           className="p-1 text-[#5A5A5A] dark:text-[#8B949E] hover:bg-gray-100 dark:hover:bg-[#22272e] rounded-lg"
                         >
                           <ChevronRight className="w-3.5 h-3.5" />

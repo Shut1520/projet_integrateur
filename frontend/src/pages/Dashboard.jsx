@@ -391,7 +391,7 @@ export const Dashboard = () => {
       {/* Header avec indicateur MAJ */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight">
+           <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
             Vue d'ensemble
           </h1>
           <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1 font-medium">
@@ -598,7 +598,7 @@ export const Dashboard = () => {
                           <p className={`text-xs font-bold ${SEVERITE_TEXT[sev] || SEVERITE_TEXT.basse}`}>
                             {a.type_alerte || a.type}
                           </p>
-                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${SEVERITE_BADGE[sev] || SEVERITE_BADGE.basse}`}>
+                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${SEVERITE_BADGE[sev] || SEVERITE_BADGE.basse}`}>
                             {sev}
                           </span>
                         </div>
@@ -657,6 +657,9 @@ export const Dashboard = () => {
 
                     <button
                       onClick={() => handleToggleActuator(act)}
+                      role="switch"
+                      aria-checked={isOn}
+                      aria-label={`Actionneur ${act.nom}`}
                       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
                         isOn ? 'bg-[#2E7D32]' : 'bg-gray-300 dark:bg-gray-700'
                       }`}

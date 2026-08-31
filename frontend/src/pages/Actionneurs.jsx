@@ -287,7 +287,7 @@ export const Actionneurs = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E0E0E0] dark:border-[#30363D]">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight flex items-center gap-2">
+           <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight flex items-center gap-2" style={{ fontFamily: 'var(--font-heading)' }}>
             <Zap className="w-6 h-6 text-[#2E7D32]" />
             <span>Controle des Actionneurs</span>
           </h1>
@@ -435,6 +435,7 @@ export const Actionneurs = () => {
                       {isAdmin && (
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDelete(act); }}
+                          aria-label="Supprimer"
                           className="p-1.5 text-[#E53935] hover:bg-[#E53935]/10 rounded-lg"
                           title="Supprimer"
                         >
@@ -443,6 +444,7 @@ export const Actionneurs = () => {
                       )}
                       <button
                         onClick={(e) => { e.stopPropagation(); openDetail(act); }}
+                        aria-label="Voir les détails"
                         className="p-1.5 text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#F5F7F2] dark:hover:bg-[#22272e] rounded-lg"
                         title="Voir les details"
                       >

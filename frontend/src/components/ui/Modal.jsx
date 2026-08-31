@@ -98,6 +98,9 @@ export const Modal = ({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
       style={{
         transition: 'opacity 200ms var(--ease-out)',
         opacity: mounted ? 1 : 0,
@@ -126,9 +129,10 @@ export const Modal = ({
       >
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-[#E0E0E0] dark:border-[#30363D] flex items-center justify-between shrink-0">
-          <h3 className="font-bold text-base text-[#1A1A1A] dark:text-white">{title}</h3>
+          <h3 id="modal-title" className="font-bold text-base text-[#1A1A1A] dark:text-white">{title}</h3>
           <button
             onClick={handleClose}
+            aria-label="Fermer"
             className="btn-press p-1.5 rounded-lg text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#1A1A1A] dark:hover:text-white hover:bg-[#f2f4ef] dark:hover:bg-[#22272e] transition-colors"
           >
             <X className="w-5 h-5" />

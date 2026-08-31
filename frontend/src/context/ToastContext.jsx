@@ -109,6 +109,7 @@ export const ToastProvider = ({ children }) => {
 
             <button
               onClick={() => removeToast(toast.id)}
+              aria-label="Fermer"
               className="btn-press text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#1A1A1A] dark:hover:text-white p-0.5"
             >
               <X className="w-4 h-4" />

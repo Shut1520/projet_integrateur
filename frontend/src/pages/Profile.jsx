@@ -183,7 +183,7 @@ export const Profile = () => {
   return (
     <div className="space-y-6">
       <div className="pb-2 border-b border-[#E0E0E0] dark:border-[#30363D]">
-        <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight flex items-center gap-2">
+         <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight flex items-center gap-2" style={{ fontFamily: 'var(--font-heading)' }}>
           <UserCircle className="w-6 h-6 text-[#2E7D32]" />
           <span>Mon Profil & Sécurité</span>
         </h1>
@@ -205,7 +205,7 @@ export const Profile = () => {
               </div>
             </div>
             <div>
-              <h2 className="text-lg font-black text-[#1A1A1A] dark:text-white">{user?.nom}</h2>
+               <h2 className="text-lg font-black text-[#1A1A1A] dark:text-white" style={{ fontFamily: 'var(--font-heading)' }}>{user?.nom}</h2>
               <span className="inline-block text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#2E7D32]/10 text-[#2E7D32] mt-1">
                 {roleLabel}
               </span>
@@ -288,6 +288,7 @@ export const Profile = () => {
                   setKeyName('');
                   setIsApiKeyModalOpen(true);
                 }}
+                aria-label="Générer une clé"
                 className="p-1.5 bg-[#2E7D32] hover:bg-[#256629] text-white rounded-lg shadow-md"
                 title="Générer une clé"
               >
@@ -324,6 +325,7 @@ export const Profile = () => {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleCopyKey(k.keyFull || k.cle_api)}
+                        aria-label="Copier"
                         className="p-1.5 text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#1A1A1A]"
                         title="Copier"
                       >
@@ -365,6 +367,7 @@ export const Profile = () => {
               <span className="truncate">{generatedKey.keyFull}</span>
               <button
                 onClick={() => handleCopyKey(generatedKey.keyFull)}
+                aria-label="Copier la clé"
                 className="p-1.5 bg-[#2E7D32] text-white rounded-lg shrink-0"
               >
                 <Copy className="w-3.5 h-3.5" />

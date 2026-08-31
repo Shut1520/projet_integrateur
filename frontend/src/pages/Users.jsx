@@ -229,7 +229,7 @@ export const UsersPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E0E0E0] dark:border-[#30363D]">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight flex items-center gap-2">
+           <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight flex items-center gap-2" style={{ fontFamily: 'var(--font-heading)' }}>
             <UsersIcon className="w-6 h-6 text-[#2E7D32]" />
             <span>Gestion des Utilisateurs</span>
           </h1>
@@ -264,7 +264,7 @@ export const UsersPage = () => {
             </div>
 
             <div className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] shadow-xs flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center font-bold text-lg">
+              <div className="w-12 h-12 rounded-xl bg-[#8E24AA]/10 text-[#8E24AA] flex items-center justify-center font-bold text-lg">
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div>
@@ -274,7 +274,7 @@ export const UsersPage = () => {
             </div>
 
             <div className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] shadow-xs flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold text-lg">
+              <div className="w-12 h-12 rounded-xl bg-[#1E88E5]/10 text-[#1E88E5] flex items-center justify-center font-bold text-lg">
                 <UserCheck className="w-6 h-6" />
               </div>
               <div>
@@ -347,8 +347,8 @@ export const UsersPage = () => {
                         <span
                           className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
                             u.role === 'admin'
-                              ? 'bg-purple-500/10 text-purple-600'
-                              : 'bg-blue-500/10 text-blue-600'
+                              ? 'bg-[#8E24AA]/10 text-[#8E24AA]'
+                              : 'bg-[#1E88E5]/10 text-[#1E88E5]'
                           }`}
                         >
                           {u.role === 'admin' ? <ShieldCheck className="w-3 h-3" /> : <UserCheck className="w-3 h-3" />}
@@ -379,6 +379,7 @@ export const UsersPage = () => {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => handleToggleUser(u)}
+                            aria-label="Activer/Désactiver"
                             className={`p-1.5 rounded-lg ${
                               u.actif
                                 ? 'text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#E53935] hover:bg-[#E53935]/10'
@@ -390,6 +391,7 @@ export const UsersPage = () => {
                           </button>
                           <button
                             onClick={() => handleOpenEditModal(u)}
+                            aria-label="Modifier"
                             className="p-1.5 rounded-lg text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#2E7D32] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"
                             title="Modifier"
                           >
@@ -397,6 +399,7 @@ export const UsersPage = () => {
                           </button>
                           <button
                             onClick={() => handleDeleteUser(u.id)}
+                            aria-label="Supprimer"
                             className="p-1.5 rounded-lg text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#E53935] hover:bg-[#E53935]/10"
                             title="Supprimer"
                           >
