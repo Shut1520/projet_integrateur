@@ -78,7 +78,7 @@ export const Register = () => {
               alt="SAI Logo"
               className="h-20 object-contain mx-auto "
             />
-          <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight">
+          <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
             Inscription SAI
           </h1>
         </div>
