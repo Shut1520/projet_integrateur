@@ -162,6 +162,12 @@ def evaluer_parcelle(db: Session, parcelle_id: int) -> dict:
                 actionneur.etat = "actif"
                 resultats["actions_declenchees"] += 1
                 resultats["details"].append(f"Actionneur {actionneur.nom} active")
+                # Logger l'activation automatique
+                from services.historique_service import enregistrer
+                enregistrer(
+                    db, "activation", "actionneur", actionneur.id, 0,
+                    f"Auto: {seuil.type_mesure} {direction} | Mesure: {mesure.valeur}{seuil.unite}",
+                )
 
     return resultats
 

@@ -30,6 +30,7 @@ from routes.alertes import router as alertes_router
 from routes.seuils import router as seuils_router
 from routes.tokens import router as tokens_router
 from routes.auth import router as auth_router
+from routes.historique import router as historique_router
 
 # ─── Creation de l'application ───
 app = FastAPI(
@@ -66,6 +67,7 @@ app.include_router(alertes_router)
 app.include_router(seuils_router)
 app.include_router(tokens_router)
 app.include_router(auth_router)
+app.include_router(historique_router)
 
 
 # ─── Route de sante (health check) ───

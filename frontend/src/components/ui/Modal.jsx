@@ -31,7 +31,22 @@ export const Modal = ({
   const [mounted, setMounted] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
 
-  // Gérer l'entrée avec un léger délai pour déclencher la transition
+  // Ref pour onClose afin que handleClose soit stable (pas de re-render du parent)
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Fermeture animée : d'abord monter l'animation de sortie, puis retirer du DOM
+  const handleClose = useCallback(() => {
+    setMounted(false);
+    setTimeout(() => {
+      setShouldRender(false);
+      onCloseRef.current();
+    }, 150); // Durée sortie = 150ms (plus rapide que l'entrée)
+  }, []);
+
+  // Gérer l'ouverture ET la fermeture via le prop isOpen
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
@@ -41,17 +56,15 @@ export const Modal = ({
           setMounted(true);
         });
       });
+    } else if (shouldRender) {
+      // Fermeture animée quand le parent passe isOpen à false
+      setMounted(false);
+      const timer = setTimeout(() => {
+        setShouldRender(false);
+      }, 150);
+      return () => clearTimeout(timer);
     }
-  }, [isOpen]);
-
-  // Fermeture animée : d'abord monter l'animation de sortie, puis retirer du DOM
-  const handleClose = useCallback(() => {
-    setMounted(false);
-    setTimeout(() => {
-      setShouldRender(false);
-      onClose();
-    }, 150); // Durée sortie = 150ms (plus rapide que l'entrée)
-  }, [onClose]);
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Focus trap + fermeture par Échap + blocage scroll body
   useEffect(() => {
@@ -79,12 +92,17 @@ export const Modal = ({
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleKeyDown);
-      // Focus premier élément focusable
+      // Focus premier champ de saisie, sinon premier élément focusable
       requestAnimationFrame(() => {
-        const focusable = modalRef.current?.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        if (focusable?.length) focusable[0].focus();
+        const inputEl = modalRef.current?.querySelector('input, select, textarea');
+        if (inputEl) {
+          inputEl.focus();
+        } else {
+          const focusable = modalRef.current?.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          if (focusable?.length) focusable[0].focus();
+        }
       });
     }
     return () => {

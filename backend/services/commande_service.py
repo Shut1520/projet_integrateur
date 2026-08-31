@@ -60,6 +60,14 @@ def creer_commande(
         id_actionneur=id_actionneur,
     )
     db.add(commande)
+    db.flush()
+    # Logger la commande si source web/cli
+    if source in ("web", "cli") and id_utilisateur:
+        from services.historique_service import enregistrer
+        enregistrer(
+            db, "commande", "actionneur", id_actionneur, id_utilisateur,
+            f"Action: {type_action} | Source: {source} | Cible: {actionneur.nom}",
+        )
     db.commit()
     db.refresh(commande)
     return commande

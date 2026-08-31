@@ -10,6 +10,7 @@ from models.actionneur import Actionneur
 from models.utilisateur import Utilisateur
 from schemas.actionneur import ActionneurCreate, ActionneurUpdate, ActionneurResponse
 from auth import get_utilisateur_connecte
+from services.historique_service import enregistrer
 
 router = APIRouter(prefix="/api/actionneurs", tags=["Actionneurs"])
 
@@ -50,6 +51,8 @@ def creer_actionneur(
     """Ajoute un nouvel actionneur a une parcelle."""
     actionneur = Actionneur(**data.model_dump())
     db.add(actionneur)
+    db.flush()
+    enregistrer(db, "creation", "actionneur", actionneur.id, utilisateur.id, f"Nom: {actionneur.nom}")
     db.commit()
     db.refresh(actionneur)
     return actionneur
@@ -64,9 +67,15 @@ def modifier_actionneur(
 ):
     """Met a jour un actionneur existant."""
     actionneur = _get_ou_404(db, id)
-    # Mise a jour partielle : seuls les champs fournis sont modifies
-    for champ, valeur in data.model_dump(exclude_unset=True).items():
+    champs_modifies = data.model_dump(exclude_unset=True)
+    ancien_etat = actionneur.etat
+    for champ, valeur in champs_modifies.items():
         setattr(actionneur, champ, valeur)
+    details = "; ".join(f"{k}: {v}" for k, v in champs_modifies.items()) if champs_modifies else None
+    enregistrer(db, "modification", "actionneur", actionneur.id, utilisateur.id, details)
+    if "etat" in champs_modifies and ancien_etat != actionneur.etat:
+        type_act = "activation" if actionneur.etat == "actif" else "desactivation"
+        enregistrer(db, type_act, "actionneur", actionneur.id, utilisateur.id, f"{ancien_etat} -> {actionneur.etat}")
     db.commit()
     db.refresh(actionneur)
     return actionneur
@@ -80,9 +89,10 @@ def supprimer_actionneur(
 ):
     """Supprime un actionneur et ses commandes associees (CASCADE manuel)."""
     actionneur = _get_ou_404(db, id)
-    # Supprimer d'abord les commandes liees (la FK n'a pas ON DELETE CASCADE)
+    nom = actionneur.nom
+    enregistrer(db, "suppression", "actionneur", id, utilisateur.id, f"Nom: {nom}")
     from models.commande import Commande
     db.query(Commande).filter(Commande.id_actionneur == id).delete(synchronize_session=False)
     db.delete(actionneur)
     db.commit()
-    return None  # 204 = pas de contenu dans la reponse
+    return None

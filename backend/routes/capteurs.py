@@ -10,6 +10,7 @@ from models.capteur import Capteur
 from models.utilisateur import Utilisateur
 from schemas.capteur import CapteurCreate, CapteurUpdate, CapteurResponse
 from auth import get_utilisateur_connecte
+from services.historique_service import enregistrer
 
 router = APIRouter(prefix="/api/capteurs", tags=["Capteurs"])
 
@@ -50,6 +51,8 @@ def creer_capteur(
     """Ajoute un nouveau capteur a une parcelle."""
     capteur = Capteur(**data.model_dump())
     db.add(capteur)
+    db.flush()
+    enregistrer(db, "creation", "capteur", capteur.id, utilisateur.id, f"Nom: {capteur.nom}")
     db.commit()
     db.refresh(capteur)
     return capteur
@@ -64,9 +67,11 @@ def modifier_capteur(
 ):
     """Met a jour un capteur existant."""
     capteur = _get_ou_404(db, id)
-    # Mise a jour partielle : seuls les champs fournis sont modifies
-    for champ, valeur in data.model_dump(exclude_unset=True).items():
+    champs_modifies = data.model_dump(exclude_unset=True)
+    for champ, valeur in champs_modifies.items():
         setattr(capteur, champ, valeur)
+    details = "; ".join(f"{k}: {v}" for k, v in champs_modifies.items()) if champs_modifies else None
+    enregistrer(db, "modification", "capteur", capteur.id, utilisateur.id, details)
     db.commit()
     db.refresh(capteur)
     return capteur
@@ -80,6 +85,8 @@ def supprimer_capteur(
 ):
     """Supprime un capteur et ses mesures associees (CASCADE)."""
     capteur = _get_ou_404(db, id)
+    nom = capteur.nom
+    enregistrer(db, "suppression", "capteur", id, utilisateur.id, f"Nom: {nom}")
     db.delete(capteur)
     db.commit()
-    return None  # 204 = pas de contenu dans la reponse
+    return None

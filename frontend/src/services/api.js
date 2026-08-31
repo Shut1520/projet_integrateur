@@ -229,4 +229,10 @@ export const apiService = {
   async revokeToken(id) {
     await apiClient.delete(`/tokens/${id}`);
   },
+
+  // ─── Historique ───
+  async getHistorique(params = {}) {
+    const response = await apiClient.get('/historique', { params });
+    return asArray(response.data);
+  },
 };

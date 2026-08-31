@@ -15,6 +15,7 @@ from .action import Action
 from .alerte import Alerte
 from .seuil import Seuil
 from .token import Token
+from .historique import HistoriqueAction
 
 __all__ = [
     "Utilisateur",
@@ -27,4 +28,5 @@ __all__ = [
     "Alerte",
     "Seuil",
     "Token",
+    "HistoriqueAction",
 ]

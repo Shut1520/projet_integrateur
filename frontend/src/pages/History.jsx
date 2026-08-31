@@ -1,7 +1,6 @@
 /**
- * Page d'historique des mesures.
- * Affiche un graphique d'évolution temporelle et un tableau paginé
- * des relevés de capteurs avec filtrage, recherche et export CSV.
+ * Page d'historique.
+ * Affiche deux onglets : Mesures (releves de capteurs) et Actions (audit trail).
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { apiService } from '../services/api';
@@ -18,6 +17,8 @@ import {
   ChevronLeft,
   ChevronRight,
   TrendingUp,
+  Activity,
+  ClipboardList,
 } from 'lucide-react';
 
 import {
@@ -37,10 +38,33 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 const PAGE_SIZES = [10, 15, 25, 50];
 
+const TYPE_ACTION_COLORS = {
+  creation: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  modification: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  suppression: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  activation: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
+  desactivation: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+  commande: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+};
+
+const TYPE_ACTION_LABELS = {
+  creation: 'Creation',
+  modification: 'Modification',
+  suppression: 'Suppression',
+  activation: 'Activation',
+  desactivation: 'Desactivation',
+  commande: 'Commande',
+};
+
+const ENTITE_LABELS = {
+  parcelle: 'Parcelle',
+  capteur: 'Capteur',
+  actionneur: 'Actionneur',
+};
+
 /**
- * Page Historique des Mesures.
- * Charge jusqu'à 500 mesures, les enrichit avec les noms de capteurs
- * et parcelles, puis offre filtrage, pagination et graphique.
+ * Page Historique.
+ * Charge mesures + actions et offre filtrage, pagination, graphique.
  */
 export const History = () => {
   const { addToast } = useToast();
@@ -48,19 +72,23 @@ export const History = () => {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Filtres persistés dans l'URL
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'mesures');
   const [selectedCapteur, setSelectedCapteur] = useState(searchParams.get('capteur') || 'Tous');
   const [selectedParcelle, setSelectedParcelle] = useState(searchParams.get('parcelle') || 'Toutes');
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
   const [pageSize, setPageSize] = useState(Number(searchParams.get('pageSize')) || 15);
 
+  // Filtres specifiques aux actions
+  const [selectedEntite, setSelectedEntite] = useState(searchParams.get('entite') || 'Toutes');
+  const [selectedTypeAction, setSelectedTypeAction] = useState(searchParams.get('type') || 'Tous');
+
   const [mesures, setMesures] = useState([]);
   const [capteurs, setCapteurs] = useState([]);
   const [parcelles, setParcelles] = useState([]);
+  const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Met à jour l'URL quand les filtres changent
   const updateParams = (key, value) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
@@ -77,14 +105,16 @@ export const History = () => {
   useEffect(() => {
     async function fetchAll() {
       try {
-        const [m, c, p] = await Promise.all([
+        const [m, c, p, a] = await Promise.all([
           apiService.getMesures({ limit: 500 }),
           apiService.getCapteurs(),
           apiService.getParcelles(),
+          apiService.getHistorique({ limit: 200 }),
         ]);
         setMesures(Array.isArray(m) ? m : []);
         setCapteurs(Array.isArray(c) ? c : []);
         setParcelles(Array.isArray(p) ? p : []);
+        setActions(Array.isArray(a) ? a : []);
 
         const initialSensor = searchParams.get('capteur');
         if (initialSensor) {
@@ -111,6 +141,7 @@ export const History = () => {
     [parcelles]
   );
 
+  // ─── Donnees MESURES ───
   const enrichMesure = (m) => {
     const cap = capteurById[m.id_capteur];
     const parc = cap ? parcelleById[cap.id_parcelle] : null;
@@ -125,7 +156,7 @@ export const History = () => {
 
   const enriched = useMemo(() => mesures.map(enrichMesure), [mesures, capteurById, parcelleById]);
 
-  const filtered = useMemo(() => {
+  const filteredMesures = useMemo(() => {
     return enriched.filter((m) => {
       const matchSearch =
         (m.capteur_nom || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -137,13 +168,29 @@ export const History = () => {
     });
   }, [enriched, search, selectedCapteur, selectedParcelle]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  // ─── Donnees ACTIONS ───
+  const filteredActions = useMemo(() => {
+    return actions.filter((a) => {
+      const matchSearch =
+        (a.details || '').toLowerCase().includes(search.toLowerCase()) ||
+        (a.utilisateur_nom || '').toLowerCase().includes(search.toLowerCase()) ||
+        (ENTITE_LABELS[a.entite] || '').toLowerCase().includes(search.toLowerCase());
+      const matchEntite = selectedEntite === 'Toutes' || a.entite === selectedEntite.toLowerCase();
+      const matchType = selectedTypeAction === 'Tous' || a.type_action === selectedTypeAction.toLowerCase();
+      return matchSearch && matchEntite && matchType;
+    });
+  }, [actions, search, selectedEntite, selectedTypeAction]);
+
+  // ─── Pagination unifiee ───
+  const currentData = activeTab === 'mesures' ? filteredMesures : filteredActions;
+  const totalPages = Math.max(1, Math.ceil(currentData.length / pageSize));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const startIndex = (safeCurrentPage - 1) * pageSize;
-  const pageItems = filtered.slice(startIndex, startIndex + pageSize);
+  const pageItems = currentData.slice(startIndex, startIndex + pageSize);
 
+  // ─── Graphique (mesures uniquement) ───
   const chartData = useMemo(() => {
-    const sorted = [...filtered].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const sorted = [...filteredMesures].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
     if (sorted.length === 0) return { labels: [], datasets: [] };
 
     const recent = sorted.slice(-50);
@@ -177,7 +224,7 @@ export const History = () => {
     }));
 
     return { labels, datasets };
-  }, [filtered]);
+  }, [filteredMesures]);
 
   const isDark = theme === 'dark';
   const chartOptions = {
@@ -211,24 +258,51 @@ export const History = () => {
   };
 
   const handleExportCSV = () => {
-    if (filtered.length === 0) {
-      addToast({ type: 'warning', title: 'Export vide', message: 'Aucune mesure à exporter avec les filtres actuels.' });
-      return;
+    if (activeTab === 'mesures') {
+      if (filteredMesures.length === 0) {
+        addToast({ type: 'warning', title: 'Export vide', message: 'Aucune mesure a exporter.' });
+        return;
+      }
+      const headers = ['ID', 'Capteur', 'Parcelle', 'Valeur', 'Unite', 'Source', 'Date et Heure'];
+      const rows = filteredMesures.map((m) => [m.id, m.capteur_nom, m.parcelle_nom, m.valeur, m.unite, m.source || 'esp32', formatDate(m.timestamp)]);
+      const csvLines = [headers.map(escapeCSV).join(';'), ...rows.map((row) => row.map(escapeCSV).join(';'))];
+      const csvContent = '\uFEFF' + csvLines.join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `sai_mesures_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      addToast({ type: 'success', title: 'Export CSV', message: `${filteredMesures.length} mesure(s) exportee(s).` });
+    } else {
+      if (filteredActions.length === 0) {
+        addToast({ type: 'warning', title: 'Export vide', message: 'Aucune action a exporter.' });
+        return;
+      }
+      const headers = ['ID', 'Date', 'Utilisateur', 'Action', 'Entite', 'ID Entite', 'Details'];
+      const rows = filteredActions.map((a) => [a.id, formatDate(a.created_at), a.utilisateur_nom, TYPE_ACTION_LABELS[a.type_action] || a.type_action, ENTITE_LABELS[a.entite] || a.entite, a.entite_id, a.details || '']);
+      const csvLines = [headers.map(escapeCSV).join(';'), ...rows.map((row) => row.map(escapeCSV).join(';'))];
+      const csvContent = '\uFEFF' + csvLines.join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `sai_actions_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      addToast({ type: 'success', title: 'Export CSV', message: `${filteredActions.length} action(s) exportee(s).` });
     }
-    const headers = ['ID', 'Capteur', 'Parcelle', 'Valeur', 'Unite', 'Source', 'Date et Heure'];
-    const rows = filtered.map((m) => [m.id, m.capteur_nom, m.parcelle_nom, m.valeur, m.unite, m.source || 'esp32', formatDate(m.timestamp)]);
-    const csvLines = [headers.map(escapeCSV).join(';'), ...rows.map((row) => row.map(escapeCSV).join(';'))];
-    const csvContent = '\uFEFF' + csvLines.join('\r\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `sai_historique_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    addToast({ type: 'success', title: 'Export CSV', message: `${filtered.length} mesure${filtered.length > 1 ? 's' : ''} exportée${filtered.length > 1 ? 's' : ''}.` });
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+    updateParams('tab', tab);
   };
 
   const handleCapteurChange = (value) => {
@@ -263,10 +337,10 @@ export const History = () => {
         <div>
            <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight flex items-center gap-2" style={{ fontFamily: 'var(--font-heading)' }}>
             <HistoryIcon className="w-6 h-6 text-[#2E7D32]" />
-            <span>Historique des Mesures</span>
+            <span>Historique</span>
           </h1>
           <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1 font-medium">
-            Consultation, filtrage et export des données temporelles
+            Consultation, filtrage et export des donnees
           </p>
         </div>
         <button
@@ -278,33 +352,91 @@ export const History = () => {
         </button>
       </div>
 
+      {/* Onglets */}
+      <div className="flex gap-1 p-1 bg-[#F5F7F2] dark:bg-[#0D1117] rounded-xl border border-[#E0E0E0] dark:border-[#30363D] w-fit">
+        <button
+          onClick={() => handleTabChange('mesures')}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-colors ${
+            activeTab === 'mesures'
+              ? 'bg-white dark:bg-[#161B22] text-[#1A1A1A] dark:text-white shadow-sm'
+              : 'text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#1A1A1A] dark:hover:text-white'
+          }`}
+        >
+          <TrendingUp className="w-4 h-4" />
+          Mesures ({mesures.length})
+        </button>
+        <button
+          onClick={() => handleTabChange('actions')}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-colors ${
+            activeTab === 'actions'
+              ? 'bg-white dark:bg-[#161B22] text-[#1A1A1A] dark:text-white shadow-sm'
+              : 'text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#1A1A1A] dark:hover:text-white'
+          }`}
+        >
+          <ClipboardList className="w-4 h-4" />
+          Actions ({actions.length})
+        </button>
+      </div>
+
+      {/* Filtres */}
       <div className="bg-white dark:bg-[#161B22] p-4 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 text-xs font-bold text-[#1A1A1A] dark:text-white mr-2">
           <Filter className="w-4 h-4 text-[#2E7D32]" />
           <span>Filtres :</span>
         </div>
 
-        <select
-          value={selectedCapteur}
-          onChange={(e) => handleCapteurChange(e.target.value)}
-          className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
-        >
-          <option value="Tous">Tous les capteurs</option>
-          {capteurs.map((c) => (
-            <option key={c.id} value={c.id}>{c.nom}</option>
-          ))}
-        </select>
+        {activeTab === 'mesures' ? (
+          <>
+            <select
+              value={selectedCapteur}
+              onChange={(e) => handleCapteurChange(e.target.value)}
+              className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
+            >
+              <option value="Tous">Tous les capteurs</option>
+              {capteurs.map((c) => (
+                <option key={c.id} value={c.id}>{c.nom}</option>
+              ))}
+            </select>
 
-        <select
-          value={selectedParcelle}
-          onChange={(e) => handleParcelleChange(e.target.value)}
-          className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
-        >
-          <option value="Toutes">Toutes les parcelles</option>
-          {parcelles.map((p) => (
-            <option key={p.id} value={p.id}>{p.nom}</option>
-          ))}
-        </select>
+            <select
+              value={selectedParcelle}
+              onChange={(e) => handleParcelleChange(e.target.value)}
+              className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
+            >
+              <option value="Toutes">Toutes les parcelles</option>
+              {parcelles.map((p) => (
+                <option key={p.id} value={p.id}>{p.nom}</option>
+              ))}
+            </select>
+          </>
+        ) : (
+          <>
+            <select
+              value={selectedEntite}
+              onChange={(e) => { setSelectedEntite(e.target.value); setCurrentPage(1); }}
+              className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
+            >
+              <option value="Toutes">Toutes les entites</option>
+              <option value="Parcelle">Parcelle</option>
+              <option value="Capteur">Capteur</option>
+              <option value="Actionneur">Actionneur</option>
+            </select>
+
+            <select
+              value={selectedTypeAction}
+              onChange={(e) => { setSelectedTypeAction(e.target.value); setCurrentPage(1); }}
+              className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
+            >
+              <option value="Tous">Toutes les actions</option>
+              <option value="Creation">Creation</option>
+              <option value="Modification">Modification</option>
+              <option value="Suppression">Suppression</option>
+              <option value="Activation">Activation</option>
+              <option value="Desactivation">Desactivation</option>
+              <option value="Commande">Commande</option>
+            </select>
+          </>
+        )}
 
         <div className="relative flex-1 min-w-[200px] ml-auto">
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] dark:text-[#8B949E]" />
@@ -318,31 +450,35 @@ export const History = () => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D]">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-sm text-[#1A1A1A] dark:text-white flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-[#2E7D32]" />
-            <span>Tendances récentes</span>
-          </h3>
+      {/* Graphique (mesures uniquement) */}
+      {activeTab === 'mesures' && (
+        <div className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D]">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-sm text-[#1A1A1A] dark:text-white flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-[#2E7D32]" />
+              <span>Tendances recentes</span>
+            </h3>
+          </div>
+          <div className="h-60 w-full">
+            {chartData.datasets.length > 0 ? (
+              <Line data={chartData} options={chartOptions} />
+            ) : (
+              <div className="h-full flex items-center justify-center text-sm text-[#5A5A5A] dark:text-[#8B949E]">
+                Aucune mesure a afficher pour le moment
+              </div>
+            )}
+          </div>
         </div>
-        <div className="h-60 w-full">
-          {chartData.datasets.length > 0 ? (
-            <Line data={chartData} options={chartOptions} />
-          ) : (
-            <div className="h-full flex items-center justify-center text-sm text-[#5A5A5A] dark:text-[#8B949E]">
-              Aucune mesure à afficher pour le moment
-            </div>
-          )}
-        </div>
-      </div>
+      )}
 
+      {/* Tableau */}
       <div className="bg-white dark:bg-[#161B22] rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] overflow-hidden">
         <div className="px-5 py-4 border-b border-[#E0E0E0] dark:border-[#30363D] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h3 className="font-bold text-sm text-[#1A1A1A] dark:text-white">
-            Relevés ({filtered.length})
+            {activeTab === 'mesures' ? `Releves (${filteredMesures.length})` : `Actions (${filteredActions.length})`}
           </h3>
           <div className="flex items-center gap-3 text-xs text-[#5A5A5A] dark:text-[#8B949E]">
-            <span>Affichage {startIndex + 1}-{Math.min(startIndex + pageSize, filtered.length)} sur {filtered.length}</span>
+            <span>Affichage {startIndex + 1}-{Math.min(startIndex + pageSize, currentData.length)} sur {currentData.length}</span>
             <select
               value={pageSize}
               onChange={(e) => handlePageSizeChange(Number(e.target.value))}
@@ -357,46 +493,83 @@ export const History = () => {
 
         {pageItems.length === 0 ? (
           <div className="p-12 text-center text-sm text-[#5A5A5A] dark:text-[#8B949E]">
-            {filtered.length === 0 && (search || selectedCapteur !== 'Tous' || selectedParcelle !== 'Toutes')
-              ? 'Aucune mesure ne correspond aux filtres.'
-              : 'Aucune mesure trouvée.'}
+            {currentData.length === 0 && (search || (activeTab === 'mesures' && (selectedCapteur !== 'Tous' || selectedParcelle !== 'Toutes')) || (activeTab === 'actions' && (selectedEntite !== 'Toutes' || selectedTypeAction !== 'Tous')))
+              ? `Aucun(e) ${activeTab === 'mesures' ? 'releve' : 'enregistrement'} ne correspond aux filtres.`
+              : `Aucun(e) ${activeTab === 'mesures' ? 'releve' : 'enregistrement'} trouve(e).`}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[#F5F7F2] dark:bg-[#0D1117] text-[#5A5A5A] dark:text-[#8B949E] font-bold uppercase tracking-wider border-b border-[#E0E0E0] dark:border-[#30363D]">
-                <tr>
-                  <th className="px-5 py-3">Date & Heure</th>
-                  <th className="px-5 py-3">Capteur</th>
-                  <th className="px-5 py-3">Parcelle</th>
-                  <th className="px-5 py-3">Valeur</th>
-                  <th className="px-5 py-3">Source</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageItems.map((m) => (
-                  <tr key={m.id} className="border-b border-[#E0E0E0] dark:border-[#30363D] hover:bg-[#F5F7F2] dark:hover:bg-[#0D1117]">
-                    <td className="px-5 py-3 font-mono text-[#5A5A5A] dark:text-[#8B949E]">
-                      {formatDate(m.timestamp)}
-                    </td>
-                    <td className="px-5 py-3 font-bold text-[#1A1A1A] dark:text-white">
-                      {m.capteur_nom}
-                    </td>
-                    <td className="px-5 py-3 text-[#5A5A5A] dark:text-[#8B949E]">
-                      {m.parcelle_nom}
-                    </td>
-                    <td className="px-5 py-3 font-extrabold text-[#1A1A1A] dark:text-white">
-                      {m.valeur} <span className="text-[10px] text-[#5A5A5A]">{m.unite}</span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#5A5A5A]/10 text-[#5A5A5A]">
-                        {m.source || 'esp32'}
-                      </span>
-                    </td>
+            {activeTab === 'mesures' ? (
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#F5F7F2] dark:bg-[#0D1117] text-[#5A5A5A] dark:text-[#8B949E] font-bold uppercase tracking-wider border-b border-[#E0E0E0] dark:border-[#30363D]">
+                  <tr>
+                    <th className="px-5 py-3">Date & Heure</th>
+                    <th className="px-5 py-3">Capteur</th>
+                    <th className="px-5 py-3">Parcelle</th>
+                    <th className="px-5 py-3">Valeur</th>
+                    <th className="px-5 py-3">Source</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {pageItems.map((m) => (
+                    <tr key={m.id} className="border-b border-[#E0E0E0] dark:border-[#30363D] hover:bg-[#F5F7F2] dark:hover:bg-[#0D1117]">
+                      <td className="px-5 py-3 font-mono text-[#5A5A5A] dark:text-[#8B949E]">
+                        {formatDate(m.timestamp)}
+                      </td>
+                      <td className="px-5 py-3 font-bold text-[#1A1A1A] dark:text-white">
+                        {m.capteur_nom}
+                      </td>
+                      <td className="px-5 py-3 text-[#5A5A5A] dark:text-[#8B949E]">
+                        {m.parcelle_nom}
+                      </td>
+                      <td className="px-5 py-3 font-extrabold text-[#1A1A1A] dark:text-white">
+                        {m.valeur} <span className="text-[10px] text-[#5A5A5A]">{m.unite}</span>
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#5A5A5A]/10 text-[#5A5A5A]">
+                          {m.source || 'esp32'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#F5F7F2] dark:bg-[#0D1117] text-[#5A5A5A] dark:text-[#8B949E] font-bold uppercase tracking-wider border-b border-[#E0E0E0] dark:border-[#30363D]">
+                  <tr>
+                    <th className="px-5 py-3">Date & Heure</th>
+                    <th className="px-5 py-3">Utilisateur</th>
+                    <th className="px-5 py-3">Action</th>
+                    <th className="px-5 py-3">Entite</th>
+                    <th className="px-5 py-3">Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pageItems.map((a) => (
+                    <tr key={a.id} className="border-b border-[#E0E0E0] dark:border-[#30363D] hover:bg-[#F5F7F2] dark:hover:bg-[#0D1117]">
+                      <td className="px-5 py-3 font-mono text-[#5A5A5A] dark:text-[#8B949E]">
+                        {formatDate(a.created_at)}
+                      </td>
+                      <td className="px-5 py-3 font-bold text-[#1A1A1A] dark:text-white">
+                        {a.utilisateur_nom}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${TYPE_ACTION_COLORS[a.type_action] || 'bg-gray-100 text-gray-800'}`}>
+                          {TYPE_ACTION_LABELS[a.type_action] || a.type_action}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-[#5A5A5A] dark:text-[#8B949E]">
+                        {ENTITE_LABELS[a.entite] || a.entite} #{a.entite_id}
+                      </td>
+                      <td className="px-5 py-3 text-[#5A5A5A] dark:text-[#8B949E] max-w-[300px] truncate">
+                        {a.details || '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
 
@@ -409,7 +582,7 @@ export const History = () => {
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={safeCurrentPage === 1}
-                aria-label="Page précédente"
+                aria-label="Page precedente"
                 className="p-1.5 rounded-lg border border-[#E0E0E0] dark:border-[#30363D] disabled:opacity-40"
               >
                 <ChevronLeft className="w-4 h-4" />

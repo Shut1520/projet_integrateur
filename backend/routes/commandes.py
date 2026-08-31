@@ -57,14 +57,15 @@ def creer_commande_route(
     Si la source est 'auto', id_utilisateur doit etre None.
     Une action sera creee automatiquement des que l'ESP32 confirme l'execution.
     """
-    return creer_commande(
+    commande = creer_commande(
         db=db,
         type_action=data.type_action,
         source=data.source,
         id_actionneur=data.id_actionneur,
-        id_utilisateur=data.id_utilisateur,
+        id_utilisateur=data.id_utilisateur if data.source == "auto" else (data.id_utilisateur or utilisateur.id),
         valeur_parametre=data.valeur_parametre,
     )
+    return commande
 
 
 @router.put("/{id}", response_model=CommandeResponse)

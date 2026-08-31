@@ -18,6 +18,7 @@ from schemas.actionneur import ActionneurResponse
 from schemas.alerte import AlerteResponse
 from schemas.seuil import SeuilResponse
 from auth import get_utilisateur_connecte
+from services.historique_service import enregistrer
 
 router = APIRouter(prefix="/api/parcelles", tags=["Parcelles"])
 
@@ -58,6 +59,8 @@ def creer_parcelle(
     """Cree une nouvelle parcelle rattachee a un utilisateur."""
     parcelle = Parcelle(**data.model_dump())
     db.add(parcelle)
+    db.flush()
+    enregistrer(db, "creation", "parcelle", parcelle.id, utilisateur.id, f"Nom: {parcelle.nom}")
     db.commit()
     db.refresh(parcelle)
     return parcelle
@@ -72,9 +75,11 @@ def modifier_parcelle(
 ):
     """Met a jour une parcelle existante."""
     parcelle = _get_ou_404(db, id)
-    # Mise a jour partielle : seuls les champs fournis sont modifies
-    for champ, valeur in data.model_dump(exclude_unset=True).items():
+    champs_modifies = data.model_dump(exclude_unset=True)
+    for champ, valeur in champs_modifies.items():
         setattr(parcelle, champ, valeur)
+    details = "; ".join(f"{k}: {v}" for k, v in champs_modifies.items()) if champs_modifies else None
+    enregistrer(db, "modification", "parcelle", parcelle.id, utilisateur.id, details)
     db.commit()
     db.refresh(parcelle)
     return parcelle
@@ -88,9 +93,11 @@ def supprimer_parcelle(
 ):
     """Supprime une parcelle et tous ses capteurs/actionneurs/seuils (CASCADE)."""
     parcelle = _get_ou_404(db, id)
+    nom = parcelle.nom
+    enregistrer(db, "suppression", "parcelle", id, utilisateur.id, f"Nom: {nom}")
     db.delete(parcelle)
     db.commit()
-    return None  # 204 = pas de contenu dans la reponse
+    return None
 
 
 # ─── Routes filles : capteurs, actionneurs, alertes, seuils ───
