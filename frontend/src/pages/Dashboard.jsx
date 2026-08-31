@@ -487,7 +487,7 @@ export const Dashboard = () => {
       </div>
 
       {/* Graphique + Alertes/Actionneurs */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 card-stagger">
         {/* Graphique multi-capteurs */}
         <div className="lg:col-span-8 bg-white dark:bg-[#161B22] p-5 rounded-xl border border-[#E0E0E0] dark:border-[#30363D] shadow-sm flex flex-col">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -657,14 +657,16 @@ export const Dashboard = () => {
 
                     <button
                       onClick={() => handleToggleActuator(act)}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
                         isOn ? 'bg-[#2E7D32]' : 'bg-gray-300 dark:bg-gray-700'
                       }`}
+                      style={{ transitionTimingFunction: 'var(--ease-out)' }}
                     >
                       <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ${
                           isOn ? 'translate-x-5' : 'translate-x-0'
                         }`}
+                        style={{ transitionTimingFunction: 'var(--ease-out)' }}
                       />
                     </button>
                   </div>

@@ -62,7 +62,9 @@ export const Login = () => {
 
   return (
     <div className="min-h-screen bg-[#F5F7F2] dark:bg-[#0D1117] flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white dark:bg-[#161B22] border border-[#E0E0E0] dark:border-[#30363D] rounded-3xl p-8 shadow-xl">
+      <div className="w-full max-w-md bg-white dark:bg-[#161B22] border border-[#E0E0E0] dark:border-[#30363D] rounded-3xl p-8 shadow-xl"
+        style={{ animation: 'card-enter 400ms var(--ease-out)' }}
+      >
         {/* Brand Header */}
           <div className="text-center mb-8">
             <img

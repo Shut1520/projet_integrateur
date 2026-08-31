@@ -52,7 +52,8 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
       {mobileOpen && (
         <div
           onClick={onCloseMobile}
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-xs transition-opacity"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-xs"
+          style={{ transition: 'opacity 200ms var(--ease-out)' }}
         />
       )}
 
