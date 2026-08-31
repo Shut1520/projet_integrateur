@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { ThresholdsSkeleton } from '../components/ui/ThresholdsSkeleton';
 import { Sliders, Save, Thermometer, Droplets, Wind, Sun, Waves } from 'lucide-react';
 
 // Correspondance type_mesure → icône et couleur pour l'affichage
@@ -35,6 +36,7 @@ export const Thresholds = () => {
   const { addToast } = useToast();
   const [seuils, setSeuils] = useState([]);
   const [parcelles, setParcelles] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const loadData = async () => {
@@ -52,6 +54,8 @@ export const Thresholds = () => {
         title: 'Erreur de chargement',
         message: 'Impossible de charger les seuils.',
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -147,7 +151,9 @@ export const Thresholds = () => {
         </button>
       </div>
 
-      {seuils.length === 0 ? (
+      {loading ? (
+        <ThresholdsSkeleton />
+      ) : seuils.length === 0 ? (
         <div className="bg-white dark:bg-[#161B22] p-12 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] text-center">
           <Sliders className="w-12 h-12 text-[#5A5A5A] dark:text-[#8B949E] mx-auto mb-3" />
           <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">Aucun seuil configuré</p>
