@@ -7,7 +7,9 @@ import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../context/ToastContext';
+import { useSearchParams } from 'react-router-dom';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { UsersSkeleton } from '../components/ui/UsersSkeleton';
 import {
   Users as UsersIcon,
   Plus,
@@ -27,9 +29,23 @@ import {
  */
 export const UsersPage = () => {
   const { addToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [users, setUsers] = useState([]);
-  const [search, setSearch] = useState('');
-  const [selectedRoleFilter, setSelectedRoleFilter] = useState('Tous');
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState(searchParams.get('q') || '');
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState(searchParams.get('role') || 'Tous');
+
+  const updateParams = (key, value) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (!value || value === 'Tous') {
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+      return next;
+    });
+  };
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,6 +68,8 @@ export const UsersPage = () => {
     } catch (err) {
       console.error(err);
       setUsers([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -181,6 +199,16 @@ export const UsersPage = () => {
   // Libellé français du rôle
   const roleLabel = (r) => (r === 'admin' ? 'Administrateur' : r === 'agriculteur' ? 'Agriculteur' : r);
 
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    updateParams('q', value);
+  };
+
+  const handleRoleFilterChange = (value) => {
+    setSelectedRoleFilter(value);
+    updateParams('role', value);
+  };
+
   const safeUsers = Array.isArray(users) ? users : [];
 
   // Filtrage combiné par recherche texte et par rôle
@@ -219,164 +247,171 @@ export const UsersPage = () => {
         </button>
       </div>
 
-      {/* Bento Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[#2E7D32]/10 text-[#2E7D32] flex items-center justify-center font-bold text-lg">
-            <UsersIcon className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E]">Total Utilisateurs</p>
-            <h3 className="text-xl font-black text-[#1A1A1A] dark:text-white">{users.length}</h3>
-          </div>
-        </div>
+      {loading ? (
+        <UsersSkeleton />
+      ) : (
+        <React.Fragment>
+          {/* Bento Stats Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] shadow-xs flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-[#2E7D32]/10 text-[#2E7D32] flex items-center justify-center font-bold text-lg">
+                <UsersIcon className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E]">Total Utilisateurs</p>
+                <h3 className="text-xl font-black text-[#1A1A1A] dark:text-white">{users.length}</h3>
+              </div>
+            </div>
 
-        <div className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center font-bold text-lg">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E]">Administrateurs</p>
-            <h3 className="text-xl font-black text-[#1A1A1A] dark:text-white">{adminsCount}</h3>
-          </div>
-        </div>
+            <div className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] shadow-xs flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center font-bold text-lg">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E]">Administrateurs</p>
+                <h3 className="text-xl font-black text-[#1A1A1A] dark:text-white">{adminsCount}</h3>
+              </div>
+            </div>
 
-        <div className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold text-lg">
-            <UserCheck className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E]">Agriculteurs / Ops</p>
-            <h3 className="text-xl font-black text-[#1A1A1A] dark:text-white">{agriculteursCount}</h3>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter and Table Container */}
-      <div className="bg-white dark:bg-[#161B22] rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] shadow-xs overflow-hidden">
-        {/* Controls Bar */}
-        <div className="p-4 border-b border-[#E0E0E0] dark:border-[#30363D] flex flex-wrap items-center justify-between gap-3">
-          <div className="relative flex-1 min-w-[240px]">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5A5A5A] dark:text-[#8B949E]" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher par nom ou email..."
-              className="w-full pl-10 pr-4 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
-            />
+            <div className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] shadow-xs flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold text-lg">
+                <UserCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E]">Agriculteurs / Ops</p>
+                <h3 className="text-xl font-black text-[#1A1A1A] dark:text-white">{agriculteursCount}</h3>
+              </div>
+            </div>
           </div>
 
-          <select
-            value={selectedRoleFilter}
-            onChange={(e) => setSelectedRoleFilter(e.target.value)}
-            className="px-3.5 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none font-medium"
-          >
-            <option value="Tous">Tous les rôles</option>
-            <option value="admin">Administrateur</option>
-            <option value="agriculteur">Agriculteur</option>
-          </select>
-        </div>
+          {/* Filter and Table Container */}
+          <div className="bg-white dark:bg-[#161B22] rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] shadow-xs overflow-hidden">
+            {/* Controls Bar */}
+            <div className="p-4 border-b border-[#E0E0E0] dark:border-[#30363D] flex flex-wrap items-center justify-between gap-3">
+              <div className="relative flex-1 min-w-[240px]">
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5A5A5A] dark:text-[#8B949E]" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  placeholder="Rechercher par nom ou email..."
+                  className="w-full pl-10 pr-4 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none"
+                />
+              </div>
 
-        {/* Users Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#F5F7F2] dark:bg-[#0D1117] text-[#5A5A5A] dark:text-[#8B949E] font-bold uppercase tracking-wider border-b border-[#E0E0E0] dark:border-[#30363D]">
-              <tr>
-                <th className="px-5 py-3">Utilisateur</th>
-                <th className="px-5 py-3">Rôle</th>
-                <th className="px-5 py-3">Dernière Connexion</th>
-                <th className="px-5 py-3">Statut</th>
-                <th className="px-5 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E0E0E0] dark:divide-[#30363D]">
-              {filteredUsers.map((u) => (
-                <tr
-                  key={u.id}
-                  className="hover:bg-[#F5F7F2]/60 dark:hover:bg-[#22272e]/50 transition-colors"
-                >
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#2E7D32]/10 text-[#2E7D32] flex items-center justify-center font-bold text-xs shrink-0">
-                        {u.nom.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-bold text-[#1A1A1A] dark:text-white">{u.nom}</p>
-                        <p className="text-[11px] text-[#5A5A5A] dark:text-[#8B949E] flex items-center gap-1">
-                          <Mail className="w-3 h-3" />
-                          <span>{u.email}</span>
-                        </p>
-                      </div>
-                    </div>
-                  </td>
+              <select
+                value={selectedRoleFilter}
+                onChange={(e) => handleRoleFilterChange(e.target.value)}
+                className="px-3.5 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none font-medium"
+              >
+                <option value="Tous">Tous les rôles</option>
+                <option value="admin">Administrateur</option>
+                <option value="agriculteur">Agriculteur</option>
+              </select>
+            </div>
 
-                  <td className="px-5 py-3.5">
-                    <span
-                      className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                        u.role === 'admin'
-                          ? 'bg-purple-500/10 text-purple-600'
-                          : 'bg-blue-500/10 text-blue-600'
-                      }`}
+            {/* Users Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#F5F7F2] dark:bg-[#0D1117] text-[#5A5A5A] dark:text-[#8B949E] font-bold uppercase tracking-wider border-b border-[#E0E0E0] dark:border-[#30363D]">
+                  <tr>
+                    <th className="px-5 py-3">Utilisateur</th>
+                    <th className="px-5 py-3">Rôle</th>
+                    <th className="px-5 py-3">Dernière Connexion</th>
+                    <th className="px-5 py-3">Statut</th>
+                    <th className="px-5 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E0E0E0] dark:divide-[#30363D]">
+                  {filteredUsers.map((u) => (
+                    <tr
+                      key={u.id}
+                      className="hover:bg-[#F5F7F2]/60 dark:hover:bg-[#22272e]/50 transition-colors"
                     >
-                      {roleLabel(u.role)}
-                    </span>
-                  </td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-[#2E7D32]/10 text-[#2E7D32] flex items-center justify-center font-bold text-xs shrink-0">
+                            {u.nom.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-bold text-[#1A1A1A] dark:text-white">{u.nom}</p>
+                            <p className="text-[11px] text-[#5A5A5A] dark:text-[#8B949E] flex items-center gap-1">
+                              <Mail className="w-3 h-3" />
+                              <span>{u.email}</span>
+                            </p>
+                          </div>
+                        </div>
+                      </td>
 
-                  <td className="px-5 py-3.5 text-[#5A5A5A] dark:text-[#8B949E]">
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>{u.created_at ? new Date(u.created_at).toLocaleDateString('fr-FR') : '—'}</span>
-                    </div>
-                  </td>
+                      <td className="px-5 py-3.5">
+                        <span
+                          className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                            u.role === 'admin'
+                              ? 'bg-purple-500/10 text-purple-600'
+                              : 'bg-blue-500/10 text-blue-600'
+                          }`}
+                        >
+                          {u.role === 'admin' ? <ShieldCheck className="w-3 h-3" /> : <UserCheck className="w-3 h-3" />}
+                          {roleLabel(u.role)}
+                        </span>
+                      </td>
 
-                  <td className="px-5 py-3.5">
-                    <span
-                      className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                        u.actif
-                          ? 'bg-[#2E7D32]/10 text-[#2E7D32]'
-                          : 'bg-[#E53935]/10 text-[#E53935]'
-                      }`}
-                    >
-                      {u.actif ? 'Actif' : 'Inactif'}
-                    </span>
-                  </td>
+                      <td className="px-5 py-3.5 text-[#5A5A5A] dark:text-[#8B949E]">
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>{u.created_at ? new Date(u.created_at).toLocaleDateString('fr-FR') : '—'}</span>
+                        </div>
+                      </td>
 
-                  <td className="px-5 py-3.5 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => handleToggleUser(u)}
-                        className={`p-1.5 rounded-lg ${
-                          u.actif
-                            ? 'text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#E53935] hover:bg-[#E53935]/10'
-                            : 'text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#2E7D32] hover:bg-[#2E7D32]/10'
-                        }`}
-                        title={u.actif ? 'Désactiver' : 'Activer'}
-                      >
-                        <Power className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleOpenEditModal(u)}
-                        className="p-1.5 rounded-lg text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#2E7D32] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"
-                        title="Modifier"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteUser(u.id)}
-                        className="p-1.5 rounded-lg text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#E53935] hover:bg-[#E53935]/10"
-                        title="Supprimer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                      <td className="px-5 py-3.5">
+                        <span
+                          className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                            u.actif
+                              ? 'bg-[#2E7D32]/10 text-[#2E7D32]'
+                              : 'bg-[#E53935]/10 text-[#E53935]'
+                          }`}
+                        >
+                          {u.actif ? 'Actif' : 'Inactif'}
+                        </span>
+                      </td>
+
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleToggleUser(u)}
+                            className={`p-1.5 rounded-lg ${
+                              u.actif
+                                ? 'text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#E53935] hover:bg-[#E53935]/10'
+                                : 'text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#2E7D32] hover:bg-[#2E7D32]/10'
+                            }`}
+                            title={u.actif ? 'Désactiver' : 'Activer'}
+                          >
+                            <Power className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleOpenEditModal(u)}
+                            className="p-1.5 rounded-lg text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#2E7D32] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"
+                            title="Modifier"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(u.id)}
+                            className="p-1.5 rounded-lg text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#E53935] hover:bg-[#E53935]/10"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </React.Fragment>
+      )}
 
       {/* User Modal */}
       <Modal
