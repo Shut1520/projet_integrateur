@@ -146,7 +146,7 @@ export const Alertes = () => {
       {!loading && <AlertSummaryBar alertes={alertes} />}
 
       {/* Filtres */}
-      <div className="bg-white dark:bg-[#161B22] p-4 rounded-xl border border-[#E0E0E0] dark:border-[#30363D] shadow-sm">
+      <div className="bg-white dark:bg-[#161B22] p-4 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] shadow-sm">
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Recherche texte */}
           <div className="relative flex-1">
@@ -194,7 +194,7 @@ export const Alertes = () => {
         {loading ? (
           <AlertesSkeleton />
         ) : alertesFiltrees.length === 0 ? (
-          <div className="bg-white dark:bg-[#161B22] p-12 rounded-xl border border-[#E0E0E0] dark:border-[#30363D] text-center">
+          <div className="bg-white dark:bg-[#161B22] p-12 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] text-center">
             <CheckCircle className="w-12 h-12 text-[#2E7D32] mx-auto mb-3 opacity-50" />
             <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">Aucune alerte</p>
             <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1">
