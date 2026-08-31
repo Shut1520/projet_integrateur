@@ -6,6 +6,9 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { useSearchParams } from 'react-router-dom';
+import { AlertesSkeleton } from '../components/ui/AlertesSkeleton';
+import { AlertSummaryBar } from '../components/ui/AlertSummaryBar';
 import {
   AlertTriangle,
   CheckCircle,
@@ -29,11 +32,24 @@ const ETAT_COLORS = {
 
 export const Alertes = () => {
   const { addToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [alertes, setAlertes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filtreEtat, setFiltreEtat] = useState('');
-  const [filtreSeverite, setFiltreSeverite] = useState('');
-  const [recherche, setRecherche] = useState('');
+  const [filtreEtat, setFiltreEtat] = useState(searchParams.get('etat') || '');
+  const [filtreSeverite, setFiltreSeverite] = useState(searchParams.get('severite') || '');
+  const [recherche, setRecherche] = useState(searchParams.get('q') || '');
+
+  const updateParams = (key, value) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (!value) {
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+      return next;
+    });
+  };
 
   const loadAlertes = async () => {
     setLoading(true);
@@ -79,6 +95,21 @@ export const Alertes = () => {
     }
   };
 
+  const handleFiltreEtat = (value) => {
+    setFiltreEtat(value);
+    updateParams('etat', value);
+  };
+
+  const handleFiltreSeverite = (value) => {
+    setFiltreSeverite(value);
+    updateParams('severite', value);
+  };
+
+  const handleRecherche = (value) => {
+    setRecherche(value);
+    updateParams('q', value);
+  };
+
   const alertesFiltrees = alertes.filter((a) => {
     if (!recherche) return true;
     const q = recherche.toLowerCase();
@@ -93,8 +124,9 @@ export const Alertes = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight">
-            Alertes
+          <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight flex items-center gap-2">
+            <AlertTriangle className="w-6 h-6 text-[#E53935]" />
+            <span>Alertes</span>
           </h1>
           <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1 font-medium">
             Surveillance des événements anormaux détectés par le système.
@@ -110,6 +142,9 @@ export const Alertes = () => {
         </button>
       </div>
 
+      {/* Summary bar */}
+      {!loading && <AlertSummaryBar alertes={alertes} />}
+
       {/* Filtres */}
       <div className="bg-white dark:bg-[#161B22] p-4 rounded-xl border border-[#E0E0E0] dark:border-[#30363D] shadow-sm">
         <div className="flex flex-col sm:flex-row gap-3">
@@ -119,7 +154,7 @@ export const Alertes = () => {
             <input
               type="text"
               value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
+              onChange={(e) => handleRecherche(e.target.value)}
               placeholder="Rechercher par type ou message..."
               className="w-full pl-9 pr-3 py-2 text-xs rounded-lg bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white placeholder-[#5A5A5A] dark:placeholder-[#8B949E] focus:outline-none"
             />
@@ -130,7 +165,7 @@ export const Alertes = () => {
             <Filter className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] dark:text-[#8B949E]" />
             <select
               value={filtreEtat}
-              onChange={(e) => setFiltreEtat(e.target.value)}
+              onChange={(e) => handleFiltreEtat(e.target.value)}
               className="pl-8 pr-8 py-2 text-xs rounded-lg bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none appearance-none cursor-pointer"
             >
               <option value="">Tous les états</option>
@@ -143,7 +178,7 @@ export const Alertes = () => {
           {/* Filtre sévérité */}
           <select
             value={filtreSeverite}
-            onChange={(e) => setFiltreSeverite(e.target.value)}
+            onChange={(e) => handleFiltreSeverite(e.target.value)}
             className="px-3 py-2 text-xs rounded-lg bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] text-[#1A1A1A] dark:text-white focus:outline-none appearance-none cursor-pointer"
           >
             <option value="">Toutes les sévérités</option>
@@ -157,10 +192,7 @@ export const Alertes = () => {
       {/* Liste des alertes */}
       <div className="space-y-3">
         {loading ? (
-          <div className="py-12 text-center">
-            <div className="w-8 h-8 border-4 border-[#2E7D32] border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-3">Chargement des alertes...</p>
-          </div>
+          <AlertesSkeleton />
         ) : alertesFiltrees.length === 0 ? (
           <div className="bg-white dark:bg-[#161B22] p-12 rounded-xl border border-[#E0E0E0] dark:border-[#30363D] text-center">
             <CheckCircle className="w-12 h-12 text-[#2E7D32] mx-auto mb-3 opacity-50" />
@@ -175,11 +207,15 @@ export const Alertes = () => {
           alertesFiltrees.map((a) => (
             <div
               key={a.id}
-              className="bg-white dark:bg-[#161B22] p-4 rounded-xl border border-[#E0E0E0] dark:border-[#30363D] shadow-sm"
+              className={`bg-white dark:bg-[#161B22] p-4 rounded-xl border shadow-sm transition-colors ${
+                a.etat === 'active'
+                  ? 'border-l-4 border-l-[#E53935] border border-[#E0E0E0] dark:border-[#30363D]'
+                  : 'border border-[#E0E0E0] dark:border-[#30363D]'
+              }`}
             >
               <div className="flex items-start gap-4">
                 <div className="shrink-0 mt-0.5">
-                  <AlertTriangle className="w-5 h-5 text-[#E53935]" />
+                  <AlertTriangle className={`w-5 h-5 ${a.etat === 'active' ? 'text-[#E53935]' : 'text-[#5A5A5A] dark:text-[#8B949E]'}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -192,6 +228,11 @@ export const Alertes = () => {
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${ETAT_COLORS[a.etat] || 'bg-gray-100 text-gray-600'}`}>
                       {a.etat}
                     </span>
+                    {a.etat === 'active' && (
+                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#E53935] text-white animate-pulse">
+                        Nouveau
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1 leading-relaxed">
                     {a.message}

@@ -9,7 +9,9 @@ import { apiService } from '../services/api';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ParcellesSkeleton } from '../components/ui/ParcellesSkeleton';
+import { ParcelleSummaryBar } from '../components/ui/ParcelleSummaryBar';
 import {
   Sprout,
   Plus,
@@ -44,15 +46,31 @@ export const Parcelles = () => {
   const { user, hasRole } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [parcelles, setParcelles] = useState([]);
   const [utilisateurs, setUtilisateurs] = useState([]);
+  const [capteursAll, setCapteursAll] = useState([]);
+  const [actionneursAll, setActionneursAll] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingParcelle, setEditingParcelle] = useState(null);
 
-  // Filtres
-  const [search, setSearch] = useState('');
-  const [filterTypeCulture, setFilterTypeCulture] = useState('Tous');
-  const [filterProprietaire, setFilterProprietaire] = useState('Tous');
+  // Filtres persistés dans l'URL
+  const [search, setSearch] = useState(searchParams.get('q') || '');
+  const [filterTypeCulture, setFilterTypeCulture] = useState(searchParams.get('type') || 'Tous');
+  const [filterProprietaire, setFilterProprietaire] = useState(searchParams.get('proprietaire') || 'Tous');
+
+  const updateParams = (key, value) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (!value || value === 'Tous') {
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+      return next;
+    });
+  };
 
   // Etats locaux du formulaire
   const [nom, setNom] = useState('');
@@ -64,8 +82,6 @@ export const Parcelles = () => {
 
   // Modal detail parcelle
   const [detailParcelle, setDetailParcelle] = useState(null);
-  const [capteursAll, setCapteursAll] = useState([]);
-  const [actionneursAll, setActionneursAll] = useState([]);
 
   // Modal reassignation
   const [reassignModal, setReassignModal] = useState({ open: false, type: null, item: null, newParcelleId: '' });
@@ -95,6 +111,8 @@ export const Parcelles = () => {
         title: 'Erreur de chargement',
         message: 'Impossible de charger les parcelles.',
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -246,6 +264,21 @@ export const Parcelles = () => {
     return p?.nom || '—';
   };
 
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    updateParams('q', value);
+  };
+
+  const handleTypeFilterChange = (value) => {
+    setFilterTypeCulture(value);
+    updateParams('type', value);
+  };
+
+  const handleProprietaireFilterChange = (value) => {
+    setFilterProprietaire(value);
+    updateParams('proprietaire', value);
+  };
+
   // Liste des types de culture uniques presents dans les donnees
   const uniqueTypes = useMemo(() => {
     const types = parcelles.map((p) => p.type_culture).filter(Boolean);
@@ -306,7 +339,7 @@ export const Parcelles = () => {
 
           <select
             value={filterTypeCulture}
-            onChange={(e) => setFilterTypeCulture(e.target.value)}
+            onChange={(e) => handleTypeFilterChange(e.target.value)}
             className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
           >
             <option value="Tous">Tous les types</option>
@@ -318,7 +351,7 @@ export const Parcelles = () => {
           {isAdmin && utilisateurs.length > 0 && (
             <select
               value={filterProprietaire}
-              onChange={(e) => setFilterProprietaire(e.target.value)}
+              onChange={(e) => handleProprietaireFilterChange(e.target.value)}
               className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
             >
               <option value="Tous">Tous les proprietaires</option>
@@ -333,7 +366,7 @@ export const Parcelles = () => {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Rechercher une parcelle..."
               className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none"
             />
@@ -341,21 +374,27 @@ export const Parcelles = () => {
         </div>
       )}
 
-      {filtered.length === 0 ? (
-        <div className="bg-white dark:bg-[#161B22] p-12 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] text-center">
-          <Sprout className="w-12 h-12 text-[#5A5A5A] dark:text-[#8B949E] mx-auto mb-3" />
-          <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">
-            {parcelles.length === 0 ? 'Aucune parcelle' : 'Aucune parcelle ne correspond aux filtres'}
-          </p>
-          <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1">
-            {parcelles.length === 0
-              ? 'Commencez par creer votre premiere parcelle.'
-              : 'Essayez de modifier vos criteres de recherche.'}
-          </p>
-        </div>
+      {loading ? (
+        <ParcellesSkeleton />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 card-stagger">
-          {filtered.map((p) => {
+        <React.Fragment>
+          <ParcelleSummaryBar parcelles={parcelles} capteurs={capteursAll} actionneurs={actionneursAll} />
+
+          {filtered.length === 0 ? (
+            <div className="bg-white dark:bg-[#161B22] p-12 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] text-center">
+              <Sprout className="w-12 h-12 text-[#5A5A5A] dark:text-[#8B949E] mx-auto mb-3" />
+              <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">
+                {parcelles.length === 0 ? 'Aucune parcelle' : 'Aucune parcelle ne correspond aux filtres'}
+              </p>
+              <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1">
+                {parcelles.length === 0
+                  ? 'Commencez par creer votre premiere parcelle.'
+                  : 'Essayez de modifier vos criteres de recherche.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 card-stagger">
+              {filtered.map((p) => {
             const nbCapteurs = capteursAll.filter((c) => c.id_parcelle === p.id).length;
             const nbActionneurs = actionneursAll.filter((a) => a.id_parcelle === p.id).length;
             return (
@@ -435,7 +474,9 @@ export const Parcelles = () => {
               </div>
             );
           })}
-        </div>
+          </div>
+          )}
+        </React.Fragment>
       )}
 
       {/* ═══ Modal Detail Parcelle ═══ */}

@@ -9,7 +9,7 @@
  * - Backdrop : fade in/out
  * - Close button : scale(0.9) on :active
  */
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { X } from 'lucide-react';
 
 /**
@@ -27,6 +27,7 @@ export const Modal = ({
   children,
   maxWidth = 'max-w-lg',
 }) => {
+  const modalRef = useRef(null);
   const [mounted, setMounted] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
 
@@ -52,14 +53,39 @@ export const Modal = ({
     }, 150); // Durée sortie = 150ms (plus rapide que l'entrée)
   }, [onClose]);
 
-  // Fermeture par la touche Échap et blocage du scroll body quand ouverte
+  // Focus trap + fermeture par Échap + blocage scroll body
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') handleClose();
+      if (e.key === 'Escape') {
+        handleClose();
+        return;
+      }
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleKeyDown);
+      // Focus premier élément focusable
+      requestAnimationFrame(() => {
+        const focusable = modalRef.current?.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable?.length) focusable[0].focus();
+      });
     }
     return () => {
       document.body.style.overflow = 'unset';
@@ -89,6 +115,7 @@ export const Modal = ({
 
       {/* Modal Content */}
       <div
+        ref={modalRef}
         className={`relative bg-white dark:bg-[#161B22] border border-[#E0E0E0] dark:border-[#30363D] w-full ${maxWidth} rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]`}
         onClick={(e) => e.stopPropagation()}
         style={{

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 
 /**
@@ -26,6 +26,7 @@ export const ConfirmModal = ({
   onConfirm,
   onCancel,
 }) => {
+  const modalRef = useRef(null);
   const [mounted, setMounted] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
 
@@ -50,11 +51,35 @@ export const ConfirmModal = ({
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') handleClose();
+      if (e.key === 'Escape') {
+        handleClose();
+        return;
+      }
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     if (open) {
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleKeyDown);
+      requestAnimationFrame(() => {
+        const focusable = modalRef.current?.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable?.length) focusable[focusable.length - 1].focus();
+      });
     }
     return () => {
       document.body.style.overflow = 'unset';
@@ -78,6 +103,7 @@ export const ConfirmModal = ({
 
       {/* Modal */}
       <div
+        ref={modalRef}
         className="relative bg-white dark:bg-[#1c2128] rounded-2xl shadow-2xl border border-[#E0E0E0] dark:border-[#30363D] w-full max-w-sm p-6"
         style={{
           transition: 'transform 150ms var(--ease-out), opacity 150ms var(--ease-out)',

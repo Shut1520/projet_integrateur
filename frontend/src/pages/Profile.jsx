@@ -12,6 +12,7 @@ import { Modal } from '../components/ui/Modal';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { useToast } from '../context/ToastContext';
 import { formatDate } from '../utils/formatters';
+import { ProfileSkeleton } from '../components/ui/ProfileSkeleton';
 import {
   UserCircle,
   Key,
@@ -174,6 +175,10 @@ export const Profile = () => {
 
   // Libellé du rôle utilisateur pour l'affichage
   const roleLabel = user?.role === 'admin' ? 'Administrateur' : user?.role === 'agriculteur' ? 'Agriculteur' : user?.role;
+
+  if (loadingTokens) {
+    return <ProfileSkeleton />;
+  }
 
   return (
     <div className="space-y-6">

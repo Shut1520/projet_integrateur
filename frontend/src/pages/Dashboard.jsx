@@ -6,6 +6,8 @@
  */
 import React, { useState, useEffect } from 'react';
 import { GaugeCard } from '../components/ui/GaugeCard';
+import { DashboardSkeleton } from '../components/ui/DashboardSkeleton';
+import { HealthSummaryBar } from '../components/ui/HealthSummaryBar';
 import { apiService } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
@@ -18,6 +20,7 @@ import {
   Droplets,
   Wind,
   Lightbulb,
+  ChevronRight,
 } from 'lucide-react';
 
 import {
@@ -45,6 +48,37 @@ ChartJS.register(
   Filler
 );
 
+// Configuration des capteurs pour le graphique
+const SENSOR_CONFIG = [
+  { key: 'dht22', label: 'Temp Air', color: '#2E7D32', bg: 'rgba(46, 125, 50, 0.1)', unit: '°C' },
+  { key: 'yl-69', label: 'Hum Sol', color: '#2563EB', bg: 'rgba(37, 99, 235, 0.08)', unit: '%' },
+  { key: 'bh1750', label: 'Luminosité', color: '#CA8A04', bg: 'rgba(202, 138, 4, 0.08)', unit: 'lx' },
+  { key: 'sen0159', label: 'CO2', color: '#059669', bg: 'rgba(5, 150, 105, 0.08)', unit: 'ppm' },
+  { key: 'niveau_eau', label: 'Niveau Eau', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)', unit: '%' },
+];
+
+// Sévérité des alertes → couleurs
+const SEVERITE_BORDER = {
+  critique: 'border-l-[#E53935]',
+  haute: 'border-l-[#FF8F00]',
+  basse: 'border-l-[#2563EB]',
+};
+const SEVERITE_BG = {
+  critique: 'bg-[#E53935]/5 border-[#E53935]/10',
+  haute: 'bg-[#FF8F00]/5 border-[#FF8F00]/10',
+  basse: 'bg-[#2563EB]/5 border-[#2563EB]/10',
+};
+const SEVERITE_TEXT = {
+  critique: 'text-[#E53935]',
+  haute: 'text-[#FF8F00]',
+  basse: 'text-[#2563EB]',
+};
+const SEVERITE_BADGE = {
+  critique: 'bg-[#E53935] text-white',
+  haute: 'bg-[#FF8F00] text-white',
+  basse: 'bg-[#2563EB] text-white',
+};
+
 /**
  * Composant principal du tableau de bord.
  * Charge les mesures de tous les types de capteurs, les actionneurs
@@ -58,6 +92,7 @@ export const Dashboard = () => {
   const [lastUpdateSecs, setLastUpdateSecs] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [chartRange, setChartRange] = useState('24h');
+  const [selectedSensors, setSelectedSensors] = useState(['dht22', 'yl-69']);
 
   // Mesures par type (capteur) pour les jauges
   const [gauges, setGauges] = useState({
@@ -68,13 +103,23 @@ export const Dashboard = () => {
     eau: null,
   });
 
+  // Mesures précédentes pour calculer les tendances
+  const [prevGauges, setPrevGauges] = useState({
+    temp: null,
+    humSol: null,
+    lux: null,
+    co2: null,
+    eau: null,
+  });
+
+  const [capteurs, setCapteurs] = useState([]);
   const [actionneurs, setActionneurs] = useState([]);
   const [alertes, setAlertes] = useState([]);
+  const [parcelles, setParcelles] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Données du graphique (remplaçent les données hardcodées)
-  const [chartDataTemp, setChartDataTemp] = useState([]);
-  const [chartDataHumSol, setChartDataHumSol] = useState([]);
+  // Données du graphique par capteur
+  const [chartDataMap, setChartDataMap] = useState({});
 
   // Map nom capteur → id (pour résoudre les filtres sans re-fetch)
   const [capteurMap, setCapteurMap] = useState({});
@@ -89,40 +134,55 @@ export const Dashboard = () => {
   };
 
   /**
+   * Extrait la mesure d'il y a ~24h pour calculer la tendance.
+   */
+  const findPreviousMesure = (mesures, capteurId) => {
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    return mesures
+      .filter((m) => m.id_capteur === capteurId && new Date(m.timestamp) <= yesterday)
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0] || null;
+  };
+
+  /**
    * Chargement complet des données du dashboard.
-   * 1 seul appel getMesures() pour les jauges + capteurs + actionneurs + alertes.
    */
   const loadData = async () => {
     try {
-      const [capteurs, acts, alts, mesures] = await Promise.all([
+      const [capteursData, acts, alts, mesures, parcellesData] = await Promise.all([
         apiService.getCapteurs(),
         apiService.getActionneurs(),
         apiService.getAlertes(),
         apiService.getMesures(),
+        apiService.getParcelles(),
       ]);
       // Construire la map nom → id
       const map = {};
-      const capteursList = Array.isArray(capteurs) ? capteurs : [];
+      const capteursList = Array.isArray(capteursData) ? capteursData : [];
       capteursList.forEach((c) => { map[c.nom] = c.id; });
       setCapteurMap(map);
+      setCapteurs(capteursList);
 
-      // Filtrer localement la dernière mesure par type (1 seul fetch, 5 filtres)
+      // Filtrer localement la dernière mesure par type + tendance
       const mesuresList = Array.isArray(mesures) ? mesures : [];
-      const mTemp = findLatestMesure(mesuresList, map['dht22']);
-      const mHum = findLatestMesure(mesuresList, map['yl-69']);
-      const mLux = findLatestMesure(mesuresList, map['bh1750']);
-      const mCo2 = findLatestMesure(mesuresList, map['sen0159']);
-      const mEau = findLatestMesure(mesuresList, map['niveau_eau']);
+
+      const sensorNames = ['dht22', 'yl-69', 'bh1750', 'sen0159', 'niveau_eau'];
+      const gaugeKeys = ['temp', 'humSol', 'lux', 'co2', 'eau'];
+      const newGauges = {};
+      const newPrev = {};
+
+      sensorNames.forEach((name, i) => {
+        const latest = findLatestMesure(mesuresList, map[name]);
+        const prev = findPreviousMesure(mesuresList, map[name]);
+        newGauges[gaugeKeys[i]] = latest?.valeur ?? null;
+        newPrev[gaugeKeys[i]] = prev?.valeur ?? null;
+      });
 
       setActionneurs(Array.isArray(acts) ? acts : []);
       setAlertes(Array.isArray(alts) ? alts.filter((a) => a.etat !== 'resolue') : []);
-      setGauges({
-        temp: mTemp?.valeur ?? null,
-        humSol: mHum?.valeur ?? null,
-        lux: mLux?.valeur ?? null,
-        co2: mCo2?.valeur ?? null,
-        eau: mEau?.valeur ?? null,
-      });
+      setParcelles(Array.isArray(parcellesData) ? parcellesData : []);
+      setGauges(newGauges);
+      setPrevGauges(newPrev);
       setLastUpdateSecs(0);
     } catch (err) {
       console.error('Erreur load Dashboard:', err);
@@ -133,11 +193,10 @@ export const Dashboard = () => {
 
   /**
    * Charge les données du graphique pour un type de capteur et une plage donnée.
-   * Utilise l'API getMesures avec filtre capteur_id et limite.
    */
-  const loadChartData = async (capteurNom, capteurMap, range) => {
+  const loadChartData = async (capteurNom, map, range) => {
     try {
-      const capteurId = capteurMap[capteurNom];
+      const capteurId = map[capteurNom];
       if (!capteurId) return [];
       const params = { capteur_id: capteurId, limite: range === '24h' ? 8 : 7 };
       if (range === '7j') {
@@ -157,21 +216,22 @@ export const Dashboard = () => {
   };
 
   /**
-   * Recharge les données du graphique quand la plage change.
-   * Réutilise la map capteurMap déjà construite par loadData().
+   * Recharge les données du graphique pour tous les capteurs sélectionnés.
    */
   const refreshChartData = async (range) => {
     const map = Object.keys(capteurMap).length > 0 ? capteurMap : null;
     if (!map) return;
-    const [temp, hum] = await Promise.all([
-      loadChartData('dht22', map, range),
-      loadChartData('yl-69', map, range),
-    ]);
-    setChartDataTemp(temp);
-    setChartDataHumSol(hum);
+    const results = await Promise.all(
+      SENSOR_CONFIG.map((s) => loadChartData(s.key, map, range))
+    );
+    const newData = {};
+    SENSOR_CONFIG.forEach((s, i) => {
+      newData[s.key] = results[i];
+    });
+    setChartDataMap(newData);
   };
 
-  // Initialisation : chargement des données + minuteur pour "dernière MAJ"
+  // Initialisation
   useEffect(() => {
     loadData().then(() => refreshChartData(chartRange));
     const interval = setInterval(() => {
@@ -180,14 +240,27 @@ export const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Rechargement du graphique quand la plage change
+  // Rechargement du graphique quand la plage ou les capteurs changent
   useEffect(() => {
     refreshChartData(chartRange);
   }, [chartRange]);
 
   /**
+   * Toggle un capteur dans la sélection du graphique.
+   */
+  const toggleSensor = (sensorKey) => {
+    setSelectedSensors((prev) => {
+      if (prev.includes(sensorKey)) {
+        // Ne pas désélectionner si c'est le dernier
+        if (prev.length === 1) return prev;
+        return prev.filter((k) => k !== sensorKey);
+      }
+      return [...prev, sensorKey];
+    });
+  };
+
+  /**
    * Rafraîchissement manuel des données avec spin animation.
-   * Affiche un toast de confirmation une fois les données rechargées.
    */
   const handleManualRefresh = async () => {
     setRefreshing(true);
@@ -205,9 +278,7 @@ export const Dashboard = () => {
     const nextEtat = act.etat === 'actif' ? 'inactif' : 'actif';
     const nextAction = nextEtat === 'actif' ? 'on' : 'off';
     try {
-      // 1. Mettre a jour l'etat de l'actionneur dans la BDD
       await apiService.updateActionneur(act.id, { etat: nextEtat });
-      // 2. Enregistrer la commande pour traçabilité / ESP32
       await apiService.commanderActionneur(act.id, nextAction);
       addToast({
         type: 'success',
@@ -221,8 +292,7 @@ export const Dashboard = () => {
   };
 
   /**
-   * Marque une alerte comme résolue côté backend
-   * et la retire de la liste affichée.
+   * Marque une alerte comme résolue côté backend.
    */
   const handleResolveAlerte = async (id) => {
     try {
@@ -234,33 +304,47 @@ export const Dashboard = () => {
     }
   };
 
-  // Configuration du graphique Chart.js selon le thème actuel
+  // Formatage de l'indicateur "dernière MAJ"
+  const formatLastUpdate = () => {
+    if (lastUpdateSecs < 5) return 'À l\'instant';
+    if (lastUpdateSecs < 60) return `Il y a ${lastUpdateSecs}s`;
+    return `Il y a ${Math.floor(lastUpdateSecs / 60)}min`;
+  };
+
+  const getLastUpdateColor = () => {
+    if (lastUpdateSecs < 30) return 'bg-[#2E7D32]/10 text-[#2E7D32]';
+    if (lastUpdateSecs < 300) return 'bg-[#FF8F00]/10 text-[#FF8F00]';
+    return 'bg-[#E53935]/10 text-[#E53935]';
+  };
+
+  // Calcul des tendances
+  const getTrend = (key) => {
+    const current = gauges[key];
+    const previous = prevGauges[key];
+    if (current == null || previous == null) return null;
+    return current - previous;
+  };
+
+  // Configuration du graphique Chart.js
   const isDark = theme === 'dark';
   const labels24h = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
   const labels7d = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
   const chartData = {
     labels: chartRange === '24h' ? labels24h : labels7d,
-    datasets: [
-      {
-        label: 'Température Air (°C)',
-        data: chartDataTemp.length > 0 ? chartDataTemp : (chartRange === '24h' ? labels24h : labels7d).map(() => null),
-        borderColor: '#2E7D32',
-        backgroundColor: 'rgba(46, 125, 50, 0.1)',
-        tension: 0.35,
-        fill: true,
-        spanGaps: true,
-      },
-      {
-        label: 'Humidité Sol (%)',
-        data: chartDataHumSol.length > 0 ? chartDataHumSol : (chartRange === '24h' ? labels24h : labels7d).map(() => null),
-        borderColor: '#2563EB',
-        backgroundColor: 'rgba(37, 99, 235, 0.08)',
-        tension: 0.35,
-        fill: true,
-        spanGaps: true,
-      },
-    ],
+    datasets: SENSOR_CONFIG.filter((s) => selectedSensors.includes(s.key)).map((s) => ({
+      label: `${s.label} (${s.unit})`,
+      data: chartDataMap[s.key]?.length > 0
+        ? chartDataMap[s.key]
+        : (chartRange === '24h' ? labels24h : labels7d).map(() => null),
+      borderColor: s.color,
+      backgroundColor: s.bg,
+      tension: 0.35,
+      fill: false,
+      spanGaps: true,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+    })),
   };
 
   const chartOptions = {
@@ -271,25 +355,40 @@ export const Dashboard = () => {
         position: 'top',
         labels: {
           color: isDark ? '#F0F0F0' : '#1A1A1A',
-          font: { family: 'Inter', size: 12 },
+          font: { family: 'Inter', size: 11 },
+          usePointStyle: true,
+          pointStyle: 'circle',
         },
       },
     },
     scales: {
       x: {
         grid: { color: isDark ? '#30363D' : '#E0E0E0' },
-        ticks: { color: isDark ? '#8B949E' : '#5A5A5A' },
+        ticks: { color: isDark ? '#8B949E' : '#5A5A5A', font: { size: 10 } },
       },
       y: {
         grid: { color: isDark ? '#30363D' : '#E0E0E0' },
-        ticks: { color: isDark ? '#8B949E' : '#5A5A5A' },
+        ticks: { color: isDark ? '#8B949E' : '#5A5A5A', font: { size: 10 } },
       },
     },
   };
 
+  // Sévérité maximale des alertes pour le style du panneau
+  const maxSeverite = alertes.some((a) => a.severite === 'critique')
+    ? 'critique'
+    : alertes.some((a) => a.severite === 'haute')
+    ? 'haute'
+    : alertes.length > 0
+    ? 'basse'
+    : null;
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
   return (
     <div className="space-y-6">
-      {/* Dashboard Top Header */}
+      {/* Header avec indicateur MAJ */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-[#1A1A1A] dark:text-white tracking-tight">
@@ -300,17 +399,25 @@ export const Dashboard = () => {
           </p>
         </div>
 
-        <button
-          onClick={handleManualRefresh}
-          disabled={refreshing}
-          className="btn-press px-3 py-1.5 bg-[#2E7D32] hover:bg-[#256629] text-white text-xs font-bold rounded-lg shadow-xs flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-          <span>Actualiser</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${getLastUpdateColor()}`}>
+            {formatLastUpdate()}
+          </span>
+          <button
+            onClick={handleManualRefresh}
+            disabled={refreshing}
+            className="btn-press px-3 py-1.5 bg-[#2E7D32] hover:bg-[#256629] text-white text-xs font-bold rounded-lg shadow-xs flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            <span>Actualiser</span>
+          </button>
+        </div>
       </div>
 
-      {/* Row 1: 5 Mini Gauges */}
+      {/* Bande résumé santé */}
+      <HealthSummaryBar capteurs={capteurs} alertes={alertes} parcelles={parcelles} />
+
+      {/* Jauges */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 card-stagger">
         <GaugeCard
           title="Température Air"
@@ -322,6 +429,8 @@ export const Dashboard = () => {
           status={gauges.temp == null ? 'Inconnu' : gauges.temp > 28 ? 'Alerte' : 'Normal'}
           parcelleNom="DHT22"
           onClick={() => navigate('/history?capteur=dht22')}
+          trend={getTrend('temp')}
+          trendLabel="vs hier"
         />
         <GaugeCard
           title="Humidité du Sol"
@@ -333,6 +442,8 @@ export const Dashboard = () => {
           status={gauges.humSol == null ? 'Inconnu' : gauges.humSol < 30 ? 'Alerte' : 'Normal'}
           parcelleNom="YL-69"
           onClick={() => navigate('/history?capteur=yl-69')}
+          trend={getTrend('humSol')}
+          trendLabel="vs hier"
         />
         <GaugeCard
           title="Luminosité"
@@ -344,6 +455,8 @@ export const Dashboard = () => {
           status={gauges.lux == null ? 'Inconnu' : 'Normal'}
           parcelleNom="BH1750"
           onClick={() => navigate('/history?capteur=bh1750')}
+          trend={getTrend('lux')}
+          trendLabel="vs hier"
         />
         <GaugeCard
           title="Taux de CO2"
@@ -355,6 +468,8 @@ export const Dashboard = () => {
           status={gauges.co2 == null ? 'Inconnu' : gauges.co2 > 800 ? 'Critique' : 'Normal'}
           parcelleNom="SEN0159"
           onClick={() => navigate('/history?capteur=sen0159')}
+          trend={getTrend('co2')}
+          trendLabel="vs hier"
         />
         <GaugeCard
           title="Niveau d'Eau"
@@ -366,19 +481,21 @@ export const Dashboard = () => {
           status={gauges.eau == null ? 'Inconnu' : gauges.eau < 20 ? 'Critique' : 'Normal'}
           parcelleNom="Capteur niveau"
           onClick={() => navigate('/history?capteur=niveau_eau')}
+          trend={getTrend('eau')}
+          trendLabel="vs hier"
         />
       </div>
 
-      {/* Row 2: Chart (Left 8 cols) & Alerts/Actuators (Right 4 cols) */}
+      {/* Graphique + Alertes/Actionneurs */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Main Temperature Chart */}
+        {/* Graphique multi-capteurs */}
         <div className="lg:col-span-8 bg-white dark:bg-[#161B22] p-5 rounded-xl border border-[#E0E0E0] dark:border-[#30363D] shadow-sm flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-[#1A1A1A] dark:text-white">Température (24h)</h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <h3 className="text-sm font-bold text-[#1A1A1A] dark:text-white">Évolution des mesures</h3>
             <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => setChartRange('24h')}
-                      className={`btn-press text-[10px] font-bold px-2.5 py-1 rounded-full transition-all ${
+              <button
+                onClick={() => setChartRange('24h')}
+                className={`btn-press text-[10px] font-bold px-2.5 py-1 rounded-full transition-all ${
                   chartRange === '24h'
                     ? 'bg-[#2E7D32] text-white'
                     : 'bg-gray-100 text-[#5A5A5A] dark:bg-gray-800 dark:text-[#8B949E] hover:text-[#1A1A1A] dark:hover:text-white'
@@ -386,9 +503,9 @@ export const Dashboard = () => {
               >
                 24h
               </button>
-                    <button
-                      onClick={() => setChartRange('7j')}
-                      className={`btn-press text-[10px] font-bold px-2.5 py-1 rounded-full transition-all ${
+              <button
+                onClick={() => setChartRange('7j')}
+                className={`btn-press text-[10px] font-bold px-2.5 py-1 rounded-full transition-all ${
                   chartRange === '7j'
                     ? 'bg-[#2E7D32] text-white'
                     : 'bg-gray-100 text-[#5A5A5A] dark:bg-gray-800 dark:text-[#8B949E] hover:text-[#1A1A1A] dark:hover:text-white'
@@ -399,53 +516,110 @@ export const Dashboard = () => {
             </div>
           </div>
 
+          {/* Pills sélection capteurs */}
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {SENSOR_CONFIG.map((s) => (
+              <button
+                key={s.key}
+                onClick={() => toggleSensor(s.key)}
+                className={`text-[10px] font-bold px-2.5 py-1 rounded-full transition-all border ${
+                  selectedSensors.includes(s.key)
+                    ? 'border-transparent text-white'
+                    : 'border-[#E0E0E0] dark:border-[#30363D] text-[#5A5A5A] dark:text-[#8B949E] hover:border-[#5A5A5A]'
+                }`}
+                style={selectedSensors.includes(s.key) ? { backgroundColor: s.color } : {}}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+
           <div className="h-72 w-full">
-            <Line data={chartData} options={chartOptions} />
+            {chartData.datasets.length > 0 ? (
+              <Line data={chartData} options={chartOptions} />
+            ) : (
+              <div className="h-full flex items-center justify-center text-sm text-[#5A5A5A] dark:text-[#8B949E]">
+                Sélectionnez au moins un capteur
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right Column: Alerts & Actuators */}
+        {/* Colonne droite : Alertes & Actionneurs */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Active Alerts Panel */}
-          <div className="bg-white dark:bg-[#161B22] p-4 rounded-xl border border-[#E0E0E0] dark:border-[#30363D] border-l-4 border-l-[#E53935] shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <AlertTriangle className="w-4 h-4 text-[#E53935]" />
-              <h3 className="font-bold text-sm text-[#1A1A1A] dark:text-white">Alertes Actives</h3>
+          {/* Panneau Alertes */}
+          <div className={`bg-white dark:bg-[#161B22] p-4 rounded-xl border border-[#E0E0E0] dark:border-[#30363D] border-l-4 shadow-sm ${
+            maxSeverite ? SEVERITE_BORDER[maxSeverite] : 'border-l-[#2E7D32]'
+          }`}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className={`w-4 h-4 ${maxSeverite ? SEVERITE_TEXT[maxSeverite] : 'text-[#2E7D32]'}`} />
+                <h3 className="font-bold text-sm text-[#1A1A1A] dark:text-white">
+                  Alertes Actives
+                  {alertes.length > 0 && (
+                    <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#E53935]/10 text-[#E53935]">
+                      {alertes.length}
+                    </span>
+                  )}
+                </h3>
+              </div>
+              {alertes.length > 3 && (
+                <button
+                  onClick={() => navigate('/alertes')}
+                  className="text-[10px] font-bold text-[#2E7D32] dark:text-[#66BB6A] hover:underline flex items-center gap-0.5"
+                >
+                  Voir toutes <ChevronRight className="w-3 h-3" />
+                </button>
+              )}
             </div>
 
             {alertes.length === 0 ? (
               <div className="py-6 text-center">
-                <p className="text-xs font-medium text-[#5A5A5A] dark:text-[#8B949E]">
-                  Aucune alerte active.
+                <div className="w-10 h-10 rounded-full bg-[#2E7D32]/10 flex items-center justify-center mx-auto mb-2">
+                  <AlertTriangle className="w-5 h-5 text-[#2E7D32]" />
+                </div>
+                <p className="text-xs font-bold text-[#2E7D32]">Aucune alerte active</p>
+                <p className="text-[10px] text-[#5A5A5A] dark:text-[#8B949E] mt-0.5">
+                  Tous les capteurs sont dans les seuils normaux.
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {alertes.map((a) => (
-                  <div
-                    key={a.id}
-                    className="p-3 rounded-lg bg-[#E53935]/5 border border-[#E53935]/10 flex items-start gap-3"
-                  >
-                    <AlertTriangle className="w-4 h-4 text-[#E53935] shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-[#E53935]">{a.type}</p>
-                      <p className="text-xs text-[#1A1A1A] dark:text-gray-200 mt-1 leading-snug">
-                        {a.message}
-                      </p>
-                    <button
-                      onClick={() => handleResolveAlerte(a.id)}
-                      className="btn-press mt-2 text-[11px] font-bold text-[#2E7D32] dark:text-[#66BB6A] hover:underline"
+              <div className="space-y-2.5">
+                {alertes.slice(0, 3).map((a) => {
+                  const sev = a.severite || 'basse';
+                  return (
+                    <div
+                      key={a.id}
+                      className={`p-3 rounded-lg border flex items-start gap-3 ${SEVERITE_BG[sev] || SEVERITE_BG.basse}`}
                     >
-                        Résoudre
-                      </button>
+                      <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${SEVERITE_TEXT[sev] || SEVERITE_TEXT.basse}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className={`text-xs font-bold ${SEVERITE_TEXT[sev] || SEVERITE_TEXT.basse}`}>
+                            {a.type_alerte || a.type}
+                          </p>
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${SEVERITE_BADGE[sev] || SEVERITE_BADGE.basse}`}>
+                            {sev}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#1A1A1A] dark:text-gray-200 mt-1 leading-snug">
+                          {a.message}
+                        </p>
+                        <button
+                          onClick={() => handleResolveAlerte(a.id)}
+                          className="btn-press mt-1.5 text-[10px] font-bold text-[#2E7D32] dark:text-[#66BB6A] hover:underline"
+                        >
+                          Résoudre
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
 
-          {/* Quick Actuators Panel */}
+          {/* Panneau Actionneurs */}
           <div className="bg-white dark:bg-[#161B22] p-4 rounded-xl border border-[#E0E0E0] dark:border-[#30363D] shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <Zap className="w-4 h-4 text-[#2E7D32]" />
@@ -466,8 +640,10 @@ export const Dashboard = () => {
                     className="flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#2E7D32]/10 flex items-center justify-center shrink-0">
-                        <ActIcon className="w-4 h-4 text-[#2E7D32]" />
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                        isOn ? 'bg-[#2E7D32]/10' : 'bg-[#5A5A5A]/10'
+                      }`}>
+                        <ActIcon className={`w-4 h-4 ${isOn ? 'text-[#2E7D32]' : 'text-[#5A5A5A]'}`} />
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-[#1A1A1A] dark:text-white">
@@ -494,6 +670,11 @@ export const Dashboard = () => {
                   </div>
                 );
               })}
+              {actionneurs.length === 0 && (
+                <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] text-center py-3">
+                  Aucun actionneur configuré
+                </p>
+              )}
             </div>
           </div>
         </div>
