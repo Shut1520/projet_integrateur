@@ -1,5 +1,5 @@
 import React from 'react';
-import { Thermometer, Droplets, Sun, Wind, Waves } from 'lucide-react';
+import { Thermometer, Droplets, Sun, Wind, Waves, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 export const GaugeCard = ({
   title,
@@ -11,6 +11,8 @@ export const GaugeCard = ({
   status = 'Normal',
   parcelleNom,
   onClick,
+  trend,
+  trendLabel,
 }) => {
   let Icon = Thermometer;
   let iconColor = 'text-amber-600';
@@ -60,7 +62,7 @@ export const GaugeCard = ({
         <Icon className={`w-4 h-4 ${iconColor}`} />
       </div>
 
-      <div className="flex items-baseline gap-1 mb-3">
+      <div className="flex items-baseline gap-1 mb-1">
         <span className="text-2xl font-black text-[#1A1A1A] dark:text-white tracking-tight">
           {value}
         </span>
@@ -68,6 +70,32 @@ export const GaugeCard = ({
           {unit}
         </span>
       </div>
+
+      {trend != null && (
+        <div className={`flex items-center gap-1 mb-2 text-[10px] font-bold ${
+          trend > 0
+            ? status === 'Alerte' || status === 'Critique'
+              ? 'text-[#E53935]'
+              : 'text-[#2E7D32]'
+            : trend < 0
+            ? status === 'Alerte' || status === 'Critique'
+              ? 'text-[#2E7D32]'
+              : 'text-[#E53935]'
+            : 'text-[#5A5A5A] dark:text-[#8B949E]'
+        }`}>
+          {trend > 0 ? (
+            <TrendingUp className="w-3 h-3" />
+          ) : trend < 0 ? (
+            <TrendingDown className="w-3 h-3" />
+          ) : (
+            <Minus className="w-3 h-3" />
+          )}
+          <span>
+            {trend > 0 ? '+' : ''}{typeof trend === 'number' ? trend.toFixed(1) : trend}{unit}
+            {trendLabel && ` ${trendLabel}`}
+          </span>
+        </div>
+      )}
 
       <div className="w-full h-1.5 rounded-full bg-[#F5F5F5] dark:bg-[#22272e] overflow-hidden">
         <div
