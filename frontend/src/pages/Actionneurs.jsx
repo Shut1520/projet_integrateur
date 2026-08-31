@@ -9,6 +9,9 @@ import { apiService } from '../services/api';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import { useSearchParams } from 'react-router-dom';
+import { ActionneursSkeleton } from '../components/ui/ActionneursSkeleton';
+import { ActionneurSummaryBar } from '../components/ui/ActionneurSummaryBar';
 import {
   Zap,
   Plus,
@@ -21,11 +24,26 @@ import {
   Eye,
   Calendar,
   MapPin,
+  Droplets,
+  Fan,
+  Lightbulb,
 } from 'lucide-react';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { formatDate } from '../utils/formatters';
 
 const TYPES_ACTIONNEUR = ['pompe', 'ventilation', 'eclairage'];
+
+const TYPE_ICONS = {
+  pompe: Droplets,
+  ventilation: Fan,
+  eclairage: Lightbulb,
+};
+
+const TYPE_COLORS = {
+  pompe: 'text-[#2563EB] bg-[#2563EB]/10',
+  ventilation: 'text-[#0891B2] bg-[#0891B2]/10',
+  eclairage: 'text-[#FF8F00] bg-[#FF8F00]/10',
+};
 
 /**
  * Page Controle des Actionneurs.
@@ -33,14 +51,28 @@ const TYPES_ACTIONNEUR = ['pompe', 'ventilation', 'eclairage'];
 export const Actionneurs = () => {
   const { user, hasRole } = useAuth();
   const { addToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [actionneurs, setActionneurs] = useState([]);
   const [parcelles, setParcelles] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Filtres
-  const [search, setSearch] = useState('');
-  const [parcelleFilter, setParcelleFilter] = useState('Toutes');
-  const [etatFilter, setEtatFilter] = useState('Tous');
+  // Filtres persistés dans l'URL
+  const [search, setSearch] = useState(searchParams.get('q') || '');
+  const [parcelleFilter, setParcelleFilter] = useState(searchParams.get('parcelle') || 'Toutes');
+  const [etatFilter, setEtatFilter] = useState(searchParams.get('etat') || 'Tous');
+
+  const updateParams = (key, value) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (!value || value === 'Toutes' || value === 'Tous') {
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+      return next;
+    });
+  };
 
   // Modales
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -77,6 +109,8 @@ export const Actionneurs = () => {
         title: 'Erreur de chargement',
         message: 'Impossible de charger les actionneurs.',
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -196,6 +230,21 @@ export const Actionneurs = () => {
     return p?.nom || '—';
   };
 
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    updateParams('q', value);
+  };
+
+  const handleParcelleFilterChange = (value) => {
+    setParcelleFilter(value);
+    updateParams('parcelle', value);
+  };
+
+  const handleEtatFilterChange = (value) => {
+    setEtatFilter(value);
+    updateParams('etat', value);
+  };
+
   const openDetail = (act) => {
     setDetailAct(act);
     setReassignParcelleId(String(act.id_parcelle));
@@ -267,7 +316,7 @@ export const Actionneurs = () => {
 
           <select
             value={parcelleFilter}
-            onChange={(e) => setParcelleFilter(e.target.value)}
+            onChange={(e) => handleParcelleFilterChange(e.target.value)}
             className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
           >
             <option value="Toutes">Toutes les parcelles</option>
@@ -278,7 +327,7 @@ export const Actionneurs = () => {
 
           <select
             value={etatFilter}
-            onChange={(e) => setEtatFilter(e.target.value)}
+            onChange={(e) => handleEtatFilterChange(e.target.value)}
             className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
           >
             <option value="Tous">Tous les etats</option>
@@ -291,7 +340,7 @@ export const Actionneurs = () => {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Rechercher un actionneur..."
               className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none"
             />
@@ -299,102 +348,113 @@ export const Actionneurs = () => {
         </div>
       )}
 
-      {filteredActionneurs.length === 0 ? (
-        <div className="bg-white dark:bg-[#161B22] p-12 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] text-center">
-          <Zap className="w-12 h-12 text-[#5A5A5A] dark:text-[#8B949E] mx-auto mb-3" />
-          <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">
-            {actionneurs.length === 0 ? 'Aucun actionneur' : 'Aucun actionneur ne correspond aux filtres'}
-          </p>
-          <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1">
-            {actionneurs.length === 0
-              ? 'Aucun actionneur n\'est encore enregistre.'
-              : 'Essayez de modifier vos criteres de recherche.'}
-          </p>
-        </div>
+      {loading ? (
+        <ActionneursSkeleton />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 card-stagger">
-          {filteredActionneurs.map((act) => {
-            const isOn = act.etat === 'actif';
-            return (
-              <div
-                key={act.id}
-                className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] hover:border-[#2E7D32]/50 hover:shadow-md transition-[border-color,box-shadow] duration-200 cursor-pointer"
-                onClick={() => openDetail(act)}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                        isOn ? 'bg-[#2E7D32]/10 text-[#2E7D32]' : 'bg-[#5A5A5A]/10 text-[#5A5A5A]'
-                      }`}
-                    >
-                      {isOn ? <Power className="w-5 h-5" /> : <PowerOff className="w-5 h-5" />}
+        <React.Fragment>
+          <ActionneurSummaryBar actionneurs={actionneurs} />
+
+          {filteredActionneurs.length === 0 ? (
+            <div className="bg-white dark:bg-[#161B22] p-12 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] text-center">
+              <Zap className="w-12 h-12 text-[#5A5A5A] dark:text-[#8B949E] mx-auto mb-3" />
+              <p className="text-sm font-bold text-[#1A1A1A] dark:text-white">
+                {actionneurs.length === 0 ? 'Aucun actionneur' : 'Aucun actionneur ne correspond aux filtres'}
+              </p>
+              <p className="text-xs text-[#5A5A5A] dark:text-[#8B949E] mt-1">
+                {actionneurs.length === 0
+                  ? 'Aucun actionneur n\'est encore enregistre.'
+                  : 'Essayez de modifier vos criteres de recherche.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 card-stagger">
+              {filteredActionneurs.map((act) => {
+                const isOn = act.etat === 'actif';
+                return (
+                  <div
+                    key={act.id}
+                    className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] hover:border-[#2E7D32]/50 hover:shadow-md transition-[border-color,box-shadow] duration-200 cursor-pointer"
+                    onClick={() => openDetail(act)}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                            isOn ? 'bg-[#2E7D32]/10 text-[#2E7D32]' : 'bg-[#5A5A5A]/10 text-[#5A5A5A]'
+                          }`}
+                        >
+                          {isOn ? <Power className="w-5 h-5" /> : <PowerOff className="w-5 h-5" />}
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-[#1A1A1A] dark:text-white">{act.nom}</h3>
+                          <p className="text-[10px] text-[#5A5A5A] dark:text-[#8B949E] font-medium">
+                            {getParcelleName(act.id_parcelle)} • GPIO {act.gpio}
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          isOn
+                            ? 'bg-[#43A047]/10 text-[#43A047]'
+                            : 'bg-[#5A5A5A]/10 text-[#5A5A5A]'
+                        }`}
+                      >
+                        {isOn ? 'ACTIF' : 'INACTIF'}
+                      </span>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-[#1A1A1A] dark:text-white">{act.nom}</h3>
-                      <p className="text-[10px] text-[#5A5A5A] dark:text-[#8B949E] font-medium">
-                        {getParcelleName(act.id_parcelle)} • GPIO {act.gpio}
-                      </p>
+
+                    <div className="text-[10px] text-[#5A5A5A] dark:text-[#8B949E] mb-3 flex items-center gap-2">
+                      <span className={`inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-full ${TYPE_COLORS[act.type] || 'bg-[#5A5A5A]/10 text-[#5A5A5A]'}`}>
+                        {React.createElement(TYPE_ICONS[act.type] || Zap, { className: 'w-3 h-3' })}
+                        {act.type || '—'}
+                      </span>
+                      {act.reference && (
+                        <span>Ref: {act.reference}</span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-3 border-t border-[#E0E0E0] dark:border-[#30363D]">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleToggle(act); }}
+                        className={`btn-press flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold rounded-lg ${
+                          isOn
+                            ? 'text-[#E53935] hover:bg-[#E53935]/10'
+                            : 'text-[#2E7D32] hover:bg-[#2E7D32]/10'
+                        }`}
+                      >
+                        <Power className="w-3.5 h-3.5" />
+                        {isOn ? 'Arreter' : 'Activer'}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleOpenSchedule(act); }}
+                        className="btn-press flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-[#1E88E5] hover:bg-[#1E88E5]/10 rounded-lg"
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                        Programmer
+                      </button>
+                      {isAdmin && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(act); }}
+                          className="p-1.5 text-[#E53935] hover:bg-[#E53935]/10 rounded-lg"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); openDetail(act); }}
+                        className="p-1.5 text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#F5F7F2] dark:hover:bg-[#22272e] rounded-lg"
+                        title="Voir les details"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      isOn
-                        ? 'bg-[#43A047]/10 text-[#43A047]'
-                        : 'bg-[#5A5A5A]/10 text-[#5A5A5A]'
-                    }`}
-                  >
-                    {isOn ? 'ACTIF' : 'INACTIF'}
-                  </span>
-                </div>
-
-                <div className="text-[10px] text-[#5A5A5A] dark:text-[#8B949E] mb-3">
-                  <span className="font-bold">Type :</span> {act.type || '—'}
-                  {act.reference && (
-                    <> • <span className="font-bold">Ref :</span> {act.reference}</>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 pt-3 border-t border-[#E0E0E0] dark:border-[#30363D]">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleToggle(act); }}
-                    className={`btn-press flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold rounded-lg ${
-                      isOn
-                        ? 'text-[#E53935] hover:bg-[#E53935]/10'
-                        : 'text-[#2E7D32] hover:bg-[#2E7D32]/10'
-                    }`}
-                  >
-                    <Power className="w-3.5 h-3.5" />
-                    {isOn ? 'Arreter' : 'Activer'}
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleOpenSchedule(act); }}
-                    className="btn-press flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-[#1E88E5] hover:bg-[#1E88E5]/10 rounded-lg"
-                  >
-                    <Clock className="w-3.5 h-3.5" />
-                    Programmer
-                  </button>
-                  {isAdmin && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDelete(act); }}
-                      className="p-1.5 text-[#E53935] hover:bg-[#E53935]/10 rounded-lg"
-                      title="Supprimer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); openDetail(act); }}
-                    className="p-1.5 text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#F5F7F2] dark:hover:bg-[#22272e] rounded-lg"
-                    title="Voir les details"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
+          )}
+        </React.Fragment>
       )}
 
       {/* ═══ Modal Detail Actionneur ═══ */}
