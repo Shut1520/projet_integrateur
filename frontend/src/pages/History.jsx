@@ -9,6 +9,7 @@ import { formatDate } from '../utils/formatters';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSearchParams } from 'react-router-dom';
+import { HistorySkeleton } from '../components/ui/HistorySkeleton';
 import {
   Download,
   Filter,
@@ -34,8 +35,7 @@ import { Line } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
-// Nombre de mesures affichées par page dans le tableau
-const ITEMS_PER_PAGE = 8;
+const PAGE_SIZES = [10, 15, 25, 50];
 
 /**
  * Page Historique des Mesures.
@@ -46,17 +46,33 @@ export const History = () => {
   const { addToast } = useToast();
   const { theme } = useTheme();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Filtres persistés dans l'URL
+  const [selectedCapteur, setSelectedCapteur] = useState(searchParams.get('capteur') || 'Tous');
+  const [selectedParcelle, setSelectedParcelle] = useState(searchParams.get('parcelle') || 'Toutes');
+  const [search, setSearch] = useState(searchParams.get('q') || '');
+  const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
+  const [pageSize, setPageSize] = useState(Number(searchParams.get('pageSize')) || 15);
+
   const [mesures, setMesures] = useState([]);
   const [capteurs, setCapteurs] = useState([]);
   const [parcelles, setParcelles] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [searchParams] = useSearchParams();
-  const initialSensor = searchParams.get('capteur') || '';
-
-  const [search, setSearch] = useState('');
-  const [selectedCapteur, setSelectedCapteur] = useState('Tous');
-  const [selectedParcelle, setSelectedParcelle] = useState('Toutes');
-  const [currentPage, setCurrentPage] = useState(1);
+  // Met à jour l'URL quand les filtres changent
+  const updateParams = (key, value) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value === 'Tous' || value === 'Toutes' || value === '' || value === 1) {
+        next.delete(key);
+      } else {
+        next.set(key, String(value));
+      }
+      next.delete('page');
+      return next;
+    });
+  };
 
   useEffect(() => {
     async function fetchAll() {
@@ -70,20 +86,22 @@ export const History = () => {
         setCapteurs(Array.isArray(c) ? c : []);
         setParcelles(Array.isArray(p) ? p : []);
 
+        const initialSensor = searchParams.get('capteur');
         if (initialSensor) {
           const match = (Array.isArray(c) ? c : []).find(
             (cap) => cap.nom && cap.nom.toLowerCase() === initialSensor.toLowerCase()
           );
-          if (match) setSelectedCapteur(match.id);
+          if (match) setSelectedCapteur(String(match.id));
         }
       } catch (err) {
         console.error('Erreur History:', err);
+      } finally {
+        setLoading(false);
       }
     }
     fetchAll();
   }, []);
 
-  // Index de résolution rapide : ID capteur → objet capteur complet
   const capteurById = useMemo(
     () => Object.fromEntries(capteurs.map((c) => [c.id, c])),
     [capteurs]
@@ -93,9 +111,6 @@ export const History = () => {
     [parcelles]
   );
 
-  /**
-   * Enrichit une mesure brute avec les noms résolus de capteur et parcelle.
-   */
   const enrichMesure = (m) => {
     const cap = capteurById[m.id_capteur];
     const parc = cap ? parcelleById[cap.id_parcelle] : null;
@@ -110,7 +125,6 @@ export const History = () => {
 
   const enriched = useMemo(() => mesures.map(enrichMesure), [mesures, capteurById, parcelleById]);
 
-  // Application combinée des filtres (recherche texte, capteur, parcelle)
   const filtered = useMemo(() => {
     return enriched.filter((m) => {
       const matchSearch =
@@ -123,49 +137,32 @@ export const History = () => {
     });
   }, [enriched, search, selectedCapteur, selectedParcelle]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
-  const pageItems = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * pageSize;
+  const pageItems = filtered.slice(startIndex, startIndex + pageSize);
 
-  // Construction du jeu de données pour le graphique Chart.js
-  // Synchronise avec les données FILTREES et groupe par CAPTEUR.
-  // Chaque dataset est aligné sur les mêmes labels (timestamps) pour éviter le décalage.
   const chartData = useMemo(() => {
-    // On prend les données filtrées, triées chronologiquement
     const sorted = [...filtered].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    if (sorted.length === 0) return { labels: [], datasets: [] };
 
-    if (sorted.length === 0) {
-      return { labels: [], datasets: [] };
-    }
-
-    // On limite à 50 points maximum pour la lisibilité
     const recent = sorted.slice(-50);
-
-    // Labels = timestamps uniques formatés
     const labels = recent.map((m) => {
       const d = new Date(m.timestamp);
       return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
     });
 
-    // Index rapide : timestamp brut -> index dans le tableau recent
     const tsToIndex = {};
     recent.forEach((m, idx) => { tsToIndex[m.timestamp] = idx; });
 
-    // Groupe par capteur
     const byCapteur = {};
     recent.forEach((m) => {
       const key = m.capteur_nom || `Capteur #${m.id_capteur}`;
       if (!byCapteur[key]) byCapteur[key] = new Array(recent.length).fill(null);
-      const idx = tsToIndex[m.timestamp];
-      byCapteur[key][idx] = m.valeur;
+      byCapteur[key][tsToIndex[m.timestamp]] = m.valeur;
     });
 
-    const colors = [
-      '#2E7D32', '#2563EB', '#D97706', '#E53935', '#0891B2',
-      '#8E24AA', '#FB8C00', '#43A047',
-    ];
+    const colors = ['#2E7D32', '#2563EB', '#D97706', '#E53935', '#0891B2', '#8E24AA', '#FB8C00', '#43A047'];
 
     const datasets = Object.entries(byCapteur).map(([nom, data], i) => ({
       label: nom,
@@ -176,13 +173,12 @@ export const History = () => {
       fill: false,
       pointRadius: 3,
       pointHoverRadius: 5,
-      spanGaps: true, // Relie les points même s'il y a des null entre eux
+      spanGaps: true,
     }));
 
     return { labels, datasets };
   }, [filtered]);
 
-  // Options du graphique adaptées au thème clair/sombre
   const isDark = theme === 'dark';
   const chartOptions = {
     responsive: true,
@@ -190,10 +186,7 @@ export const History = () => {
     plugins: {
       legend: {
         position: 'top',
-        labels: {
-          color: isDark ? '#F0F0F0' : '#1A1A1A',
-          font: { family: 'Inter', size: 12 },
-        },
+        labels: { color: isDark ? '#F0F0F0' : '#1A1A1A', font: { family: 'Inter', size: 12 } },
       },
     },
     scales: {
@@ -208,11 +201,6 @@ export const History = () => {
     },
   };
 
-  /**
-   * Échappe une valeur CSV selon la RFC 4180.
-   * - Si la valeur contient des guillemets, des virgules ou des sauts de ligne,
-   *   elle est entourée de guillemets et les guillemets internes sont doublés.
-   */
   const escapeCSV = (value) => {
     if (value == null) return '';
     const str = String(value);
@@ -222,31 +210,15 @@ export const History = () => {
     return str;
   };
 
-  /**
-   * Exporte les données filtrées en CSV proprement formaté.
-   * Ajoute un BOM UTF-8 pour Excel, des en-têtes français clairs,
-   * et échappe correctement les valeurs.
-   */
   const handleExportCSV = () => {
     if (filtered.length === 0) {
       addToast({ type: 'warning', title: 'Export vide', message: 'Aucune mesure à exporter avec les filtres actuels.' });
       return;
     }
-
     const headers = ['ID', 'Capteur', 'Parcelle', 'Valeur', 'Unite', 'Source', 'Date et Heure'];
-    const rows = filtered.map((m) => [
-      m.id,
-      m.capteur_nom,
-      m.parcelle_nom,
-      m.valeur,
-      m.unite,
-      m.source || 'esp32',
-      formatDate(m.timestamp),
-    ]);
-
+    const rows = filtered.map((m) => [m.id, m.capteur_nom, m.parcelle_nom, m.valeur, m.unite, m.source || 'esp32', formatDate(m.timestamp)]);
     const csvLines = [headers.map(escapeCSV).join(';'), ...rows.map((row) => row.map(escapeCSV).join(';'))];
     const csvContent = '\uFEFF' + csvLines.join('\r\n');
-
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -256,13 +228,34 @@ export const History = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-
-    addToast({
-      type: 'success',
-      title: 'Export CSV',
-      message: `${filtered.length} mesure${filtered.length > 1 ? 's' : ''} exportée${filtered.length > 1 ? 's' : ''}.`,
-    });
+    addToast({ type: 'success', title: 'Export CSV', message: `${filtered.length} mesure${filtered.length > 1 ? 's' : ''} exportée${filtered.length > 1 ? 's' : ''}.` });
   };
+
+  const handleCapteurChange = (value) => {
+    setSelectedCapteur(value);
+    setCurrentPage(1);
+    updateParams('capteur', value);
+  };
+
+  const handleParcelleChange = (value) => {
+    setSelectedParcelle(value);
+    setCurrentPage(1);
+    updateParams('parcelle', value);
+  };
+
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  };
+
+  if (loading) {
+    return <HistorySkeleton />;
+  }
 
   return (
     <div className="space-y-6">
@@ -293,7 +286,7 @@ export const History = () => {
 
         <select
           value={selectedCapteur}
-          onChange={(e) => { setSelectedCapteur(e.target.value); setCurrentPage(1); }}
+          onChange={(e) => handleCapteurChange(e.target.value)}
           className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
         >
           <option value="Tous">Tous les capteurs</option>
@@ -304,7 +297,7 @@ export const History = () => {
 
         <select
           value={selectedParcelle}
-          onChange={(e) => { setSelectedParcelle(e.target.value); setCurrentPage(1); }}
+          onChange={(e) => handleParcelleChange(e.target.value)}
           className="px-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
         >
           <option value="Toutes">Toutes les parcelles</option>
@@ -318,7 +311,7 @@ export const History = () => {
           <input
             type="text"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Rechercher..."
             className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D] focus:outline-none"
           />
@@ -344,15 +337,29 @@ export const History = () => {
       </div>
 
       <div className="bg-white dark:bg-[#161B22] rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] overflow-hidden">
-        <div className="px-5 py-4 border-b border-[#E0E0E0] dark:border-[#30363D] flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-[#E0E0E0] dark:border-[#30363D] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h3 className="font-bold text-sm text-[#1A1A1A] dark:text-white">
             Relevés ({filtered.length})
           </h3>
+          <div className="flex items-center gap-3 text-xs text-[#5A5A5A] dark:text-[#8B949E]">
+            <span>Affichage {startIndex + 1}-{Math.min(startIndex + pageSize, filtered.length)} sur {filtered.length}</span>
+            <select
+              value={pageSize}
+              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+              className="px-2 py-1 text-xs rounded-lg bg-[#F5F7F2] dark:bg-[#0D1117] border border-[#E0E0E0] dark:border-[#30363D]"
+            >
+              {PAGE_SIZES.map((s) => (
+                <option key={s} value={s}>{s} / page</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {pageItems.length === 0 ? (
           <div className="p-12 text-center text-sm text-[#5A5A5A] dark:text-[#8B949E]">
-            Aucune mesure trouvée
+            {filtered.length === 0 && (search || selectedCapteur !== 'Tous' || selectedParcelle !== 'Toutes')
+              ? 'Aucune mesure ne correspond aux filtres.'
+              : 'Aucune mesure trouvée.'}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -396,19 +403,19 @@ export const History = () => {
         {totalPages > 1 && (
           <div className="px-5 py-3 flex items-center justify-between border-t border-[#E0E0E0] dark:border-[#30363D]">
             <span className="text-xs text-[#5A5A5A] dark:text-[#8B949E]">
-              Page {currentPage} / {totalPages}
+              Page {safeCurrentPage} / {totalPages}
             </span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
+                disabled={safeCurrentPage === 1}
                 className="p-1.5 rounded-lg border border-[#E0E0E0] dark:border-[#30363D] disabled:opacity-40"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
+                disabled={safeCurrentPage === totalPages}
                 className="p-1.5 rounded-lg border border-[#E0E0E0] dark:border-[#30363D] disabled:opacity-40"
               >
                 <ChevronRight className="w-4 h-4" />
