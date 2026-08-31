@@ -39,35 +39,34 @@ export const TopBar = ({ onToggleMobileMenu }) => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const searchRef = useRef(null);
   const allData = useRef({ parcelles: [], capteurs: [], actionneurs: [] });
+  const searchDataLoaded = useRef(false);
 
-  // Chargement initial des données pour la recherche
+  // Filtrage des résultats avec debounce 300ms — charge les données au premier besoin
   useEffect(() => {
-    async function loadSearchData() {
-      try {
-        const [parcelles, capteurs, actionneurs] = await Promise.all([
-          apiService.getParcelles(),
-          apiService.getCapteurs(),
-          apiService.getActionneurs(),
-        ]);
-        allData.current = {
-          parcelles: Array.isArray(parcelles) ? parcelles : [],
-          capteurs: Array.isArray(capteurs) ? capteurs : [],
-          actionneurs: Array.isArray(actionneurs) ? actionneurs : [],
-        };
-      } catch (err) {
-        console.error('Erreur chargement données recherche:', err);
-      }
-    }
-    loadSearchData();
-  }, []);
-
-  // Filtrage des résultats avec debounce 300ms
-  useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       if (searchQuery.length < 2) {
         setSearchResults({ parcelles: [], capteurs: [], actionneurs: [] });
         setShowSearchResults(false);
         return;
+      }
+      // Charger les données une seule fois, au premier debounce
+      if (!searchDataLoaded.current) {
+        try {
+          const [parcelles, capteurs, actionneurs] = await Promise.all([
+            apiService.getParcelles(),
+            apiService.getCapteurs(),
+            apiService.getActionneurs(),
+          ]);
+          allData.current = {
+            parcelles: Array.isArray(parcelles) ? parcelles : [],
+            capteurs: Array.isArray(capteurs) ? capteurs : [],
+            actionneurs: Array.isArray(actionneurs) ? actionneurs : [],
+          };
+          searchDataLoaded.current = true;
+        } catch (err) {
+          console.error('Erreur chargement données recherche:', err);
+          return;
+        }
       }
       const q = searchQuery.toLowerCase();
       setSearchResults({
@@ -91,7 +90,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Récupération des alertes actives avec polling toutes les 5 secondes
+  // Récupération des alertes actives avec polling toutes les 30 secondes
   useEffect(() => {
     async function fetchAlertes() {
       try {
