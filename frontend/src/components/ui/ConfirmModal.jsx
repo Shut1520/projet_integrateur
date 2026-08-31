@@ -1,12 +1,18 @@
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 
 /**
  * Modal de confirmation réutilisable.
+ * Animations — philosophie Emil Kowalski :
+ * - Entrance : 150ms ease-out (plus rapide que Modal standard)
+ * - Exit : 100ms ease-out
+ * - Close button : scale(0.9) on :active
+ * - Confirm/Cancel buttons : scale(0.97) on :active
+ *
  * @param {boolean} open - Affiche ou masque la modal
  * @param {string} title - Titre de la confirmation
  * @param {string} message - Message descriptif
- * @param {string} confirmLabel - Texte du bouton confirmer (défaut: "Confirmer")
+ * @param {string} confirmLabel - Texte du bouton confirmer (défaut: "Supprimer")
  * @param {string} confirmColor - Classe Tailwind du bouton confirmer (défaut: rouge)
  * @param {function} onConfirm - Callback appelé au clic sur confirmer
  * @param {function} onCancel - Callback appelé au clic sur annuler / overlay
@@ -20,22 +26,69 @@ export const ConfirmModal = ({
   onConfirm,
   onCancel,
 }) => {
-  if (!open) return null;
+  const [mounted, setMounted] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setShouldRender(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setMounted(true);
+        });
+      });
+    }
+  }, [open]);
+
+  const handleClose = useCallback(() => {
+    setMounted(false);
+    setTimeout(() => {
+      setShouldRender(false);
+      onCancel();
+    }, 100);
+  }, [onCancel]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    if (open) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open, handleClose]);
+
+  if (!shouldRender) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Overlay */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
-        onClick={onCancel}
+        className="absolute inset-0 bg-black/50 backdrop-blur-xs"
+        style={{
+          transition: 'opacity 150ms var(--ease-out)',
+          opacity: mounted ? 1 : 0,
+        }}
+        onClick={handleClose}
       />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-[#1c2128] rounded-2xl shadow-2xl border border-[#E0E0E0] dark:border-[#30363D] w-full max-w-sm p-6 animate-in fade-in zoom-in-95 duration-150">
+      <div
+        className="relative bg-white dark:bg-[#1c2128] rounded-2xl shadow-2xl border border-[#E0E0E0] dark:border-[#30363D] w-full max-w-sm p-6"
+        style={{
+          transition: 'transform 150ms var(--ease-out), opacity 150ms var(--ease-out)',
+          transform: mounted ? 'scale(1)' : 'scale(0.95)',
+          opacity: mounted ? 1 : 0,
+        }}
+      >
         {/* Close button */}
         <button
-          onClick={onCancel}
-          className="absolute top-3 right-3 p-1 rounded-lg text-[#5A5A5A] dark:text-[#8B949E] hover:bg-gray-100 dark:hover:bg-[#22272e] transition-colors"
+          onClick={handleClose}
+          className="btn-press absolute top-3 right-3 p-1 rounded-lg text-[#5A5A5A] dark:text-[#8B949E] hover:bg-gray-100 dark:hover:bg-[#22272e] transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -58,14 +111,14 @@ export const ConfirmModal = ({
         {/* Buttons */}
         <div className="flex items-center gap-3">
           <button
-            onClick={onCancel}
-            className="flex-1 px-4 py-2.5 text-sm font-semibold text-[#5A5A5A] dark:text-[#8B949E] bg-gray-100 dark:bg-[#22272e] hover:bg-gray-200 dark:hover:bg-[#2d333b] rounded-xl transition-colors"
+            onClick={handleClose}
+            className="btn-press flex-1 px-4 py-2.5 text-sm font-semibold text-[#5A5A5A] dark:text-[#8B949E] bg-gray-100 dark:bg-[#22272e] hover:bg-gray-200 dark:hover:bg-[#2d333b] rounded-xl transition-colors"
           >
             Annuler
           </button>
           <button
-            onClick={() => { onConfirm(); onCancel(); }}
-            className={`flex-1 px-4 py-2.5 text-sm font-bold text-white rounded-xl transition-colors ${confirmColor}`}
+            onClick={() => { onConfirm(); handleClose(); }}
+            className={`btn-press flex-1 px-4 py-2.5 text-sm font-bold text-white rounded-xl transition-colors ${confirmColor}`}
           >
             {confirmLabel}
           </button>

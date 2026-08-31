@@ -289,7 +289,7 @@ export const Parcelles = () => {
         </div>
         <button
           onClick={openCreate}
-          className="px-4 py-2 bg-[#2E7D32] hover:bg-[#256629] text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-2"
+          className="btn-press px-4 py-2 bg-[#2E7D32] hover:bg-[#256629] text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           <span>Nouvelle parcelle</span>
@@ -354,14 +354,14 @@ export const Parcelles = () => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 card-stagger">
           {filtered.map((p) => {
             const nbCapteurs = capteursAll.filter((c) => c.id_parcelle === p.id).length;
             const nbActionneurs = actionneursAll.filter((a) => a.id_parcelle === p.id).length;
             return (
               <div
                 key={p.id}
-                className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] hover:border-[#2E7D32]/50 hover:shadow-md transition-all cursor-pointer"
+                className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] hover:border-[#2E7D32]/50 hover:shadow-md transition-[border-color,box-shadow] duration-200 cursor-pointer"
                 onClick={() => openDetail(p)}
               >
                 <div className="flex items-start justify-between mb-3">
@@ -412,14 +412,14 @@ export const Parcelles = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={(e) => { e.stopPropagation(); openEdit(p); }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-[#2E7D32] hover:bg-[#2E7D32]/10 rounded-lg"
+                    className="btn-press flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-[#2E7D32] hover:bg-[#2E7D32]/10 rounded-lg"
                   >
                     <Edit className="w-3.5 h-3.5" />
                     Modifier
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDelete(p); }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-[#E53935] hover:bg-[#E53935]/10 rounded-lg"
+                    className="btn-press flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-[#E53935] hover:bg-[#E53935]/10 rounded-lg"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Supprimer
@@ -569,13 +569,13 @@ export const Parcelles = () => {
           <div className="flex gap-2 pt-2">
             <button
               onClick={() => setReassignModal({ open: false, type: null, item: null, newParcelleId: '' })}
-              className="flex-1 py-2.5 text-sm font-bold rounded-xl border border-[#E0E0E0] dark:border-[#30363D] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"
+              className="btn-press flex-1 py-2.5 text-sm font-bold rounded-xl border border-[#E0E0E0] dark:border-[#30363D] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"
             >
               Annuler
             </button>
             <button
               onClick={handleConfirmReassign}
-              className="flex-1 py-2.5 text-sm font-bold text-white bg-[#1E88E5] hover:bg-[#1565C0] rounded-xl"
+              className="btn-press flex-1 py-2.5 text-sm font-bold text-white bg-[#1E88E5] hover:bg-[#1565C0] rounded-xl"
             >
               Reaffecter
             </button>
@@ -656,16 +656,16 @@ export const Parcelles = () => {
           )}
 
           <div className="flex gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="flex-1 py-2.5 text-sm font-bold rounded-xl border border-[#E0E0E0] dark:border-[#30363D] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"
-            >
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="btn-press flex-1 py-2.5 text-sm font-bold rounded-xl border border-[#E0E0E0] dark:border-[#30363D] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"
+              >
               Annuler
             </button>
             <button
               type="submit"
-              className="flex-1 py-2.5 text-sm font-bold text-white bg-[#2E7D32] hover:bg-[#256629] rounded-xl"
+              className="btn-press flex-1 py-2.5 text-sm font-bold text-white bg-[#2E7D32] hover:bg-[#256629] rounded-xl"
             >
               {editingParcelle ? 'Mettre a jour' : 'Creer'}
             </button>

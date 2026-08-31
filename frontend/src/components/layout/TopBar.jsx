@@ -121,7 +121,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
       <div className="flex items-center gap-3 flex-1 max-w-xl">
         <button
           onClick={onToggleMobileMenu}
-          className="lg:hidden p-2 rounded-xl text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#E8F5E9] dark:hover:bg-[#22272e]"
+          className="btn-press lg:hidden p-2 rounded-xl text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#E8F5E9] dark:hover:bg-[#22272e]"
           aria-label="Menu"
         >
           <Menu className="w-5 h-5" />
@@ -142,7 +142,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
 
           {/* Dropdown résultats de recherche */}
           {showSearchResults && searchQuery.length >= 2 && (
-            <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-[#161B22] border border-[#E0E0E0] dark:border-[#30363D] rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto">
+            <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-[#161B22] border border-[#E0E0E0] dark:border-[#30363D] rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto dropdown-enter">
               {searchResults.parcelles.length === 0 && searchResults.capteurs.length === 0 && searchResults.actionneurs.length === 0 ? (
                 <div className="p-4 text-center text-xs text-[#5A5A5A] dark:text-[#8B949E]">
                   Aucun résultat pour "{searchQuery}"
@@ -209,7 +209,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
         <button
           onClick={toggleTheme}
           title={theme === 'dark' ? 'Passer au mode clair' : 'Passer au mode sombre'}
-          className="p-2 rounded-xl text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#E8F5E9] dark:hover:bg-[#22272e] transition-colors"
+          className="btn-press p-2 rounded-xl text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#E8F5E9] dark:hover:bg-[#22272e] transition-colors"
         >
           {theme === 'dark' ? (
             <Sun className="w-5 h-5 text-amber-400" />
@@ -222,7 +222,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
         <div className="relative">
           <button
             onClick={() => setShowAlertModal(!showAlertModal)}
-            className="p-2 rounded-xl text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#E8F5E9] dark:hover:bg-[#22272e] transition-colors relative"
+            className="btn-press p-2 rounded-xl text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#E8F5E9] dark:hover:bg-[#22272e] transition-colors relative"
             title="Alertes actives"
           >
             <Bell className="w-5 h-5" />
@@ -233,7 +233,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
 
           {/* Notifications Dropdown Modal */}
           {showAlertModal && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-[#161B22] border border-[#E0E0E0] dark:border-[#30363D] rounded-2xl shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-2">
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-[#161B22] border border-[#E0E0E0] dark:border-[#30363D] rounded-2xl shadow-xl z-50 p-4 dropdown-enter">
               <div className="flex items-center justify-between pb-3 border-b border-[#E0E0E0] dark:border-[#30363D] mb-3">
                 <div className="flex items-center gap-2">
                   <Bell className="w-4 h-4 text-[#E53935]" />

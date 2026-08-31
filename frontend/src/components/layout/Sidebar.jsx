@@ -58,9 +58,10 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
 
       {/* Sidebar container */}
       <aside
-        className={`fixed lg:relative inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#161B22] border-r border-[#E0E0E0] dark:border-[#30363D] h-full overflow-hidden flex flex-col justify-between transform transition-transform duration-300 ease-in-out ${
+        className={`fixed lg:relative inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#161B22] border-r border-[#E0E0E0] dark:border-[#30363D] h-full overflow-hidden flex flex-col justify-between transform transition-transform duration-300 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
+        style={{ transitionTimingFunction: 'var(--ease-out)' }}
       >
         <div>
           {/* Brand Logo Header */}
@@ -150,7 +151,7 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
           <button
             onClick={logout}
             title="Déconnexion"
-            className="shrink-0 p-2.5 rounded-xl text-[#E53935] hover:bg-[#E53935]/10 transition-colors"
+            className="btn-press shrink-0 p-2.5 rounded-xl text-[#E53935] hover:bg-[#E53935]/10 transition-colors"
           >
             <LogOut className="w-4 h-4" />
           </button>

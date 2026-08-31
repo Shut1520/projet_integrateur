@@ -37,10 +37,10 @@ export const BottomNav = () => {
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all ${
+                `flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all hover-lift ${
                   isActive
                     ? 'text-[#2E7D32] dark:text-[#66BB6A] font-bold'
-                    : 'text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#1A1A1A] dark:hover:text-white'
+                    : 'text-[#5A5A5A] dark:text-[#8B949E]'
                 }`
               }
             >

@@ -191,7 +191,7 @@ export const Capteurs = () => {
         </div>
         <button
           onClick={openCreate}
-          className="px-4 py-2 bg-[#2E7D32] hover:bg-[#256629] text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-2"
+          className="btn-press px-4 py-2 bg-[#2E7D32] hover:bg-[#256629] text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           <span>Ajouter un capteur</span>
@@ -241,7 +241,7 @@ export const Capteurs = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 card-stagger">
         {filtered.length === 0 ? (
           <div className="col-span-full bg-white dark:bg-[#161B22] p-12 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] text-center">
             <Cpu className="w-12 h-12 text-[#5A5A5A] dark:text-[#8B949E] mx-auto mb-3" />
@@ -260,7 +260,7 @@ export const Capteurs = () => {
             return (
               <div
                 key={cap.id}
-                className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] hover:border-[#2E7D32]/50 hover:shadow-md transition-all cursor-pointer"
+                className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] hover:border-[#2E7D32]/50 hover:shadow-md transition-[border-color,box-shadow] duration-200 cursor-pointer"
                 onClick={() => openDetail(cap)}
               >
                 <div className="flex items-start justify-between mb-3">
@@ -302,14 +302,14 @@ export const Capteurs = () => {
                 <div className="flex items-center gap-2 mt-4 pt-3 border-t border-[#E0E0E0] dark:border-[#30363D]">
                   <button
                     onClick={(e) => { e.stopPropagation(); openEdit(cap); }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-[#2E7D32] hover:bg-[#2E7D32]/10 rounded-lg"
+                    className="btn-press flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-[#2E7D32] hover:bg-[#2E7D32]/10 rounded-lg"
                   >
                     <Edit className="w-3.5 h-3.5" />
                     Modifier
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDelete(cap); }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-[#E53935] hover:bg-[#E53935]/10 rounded-lg"
+                    className="btn-press flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-[#E53935] hover:bg-[#E53935]/10 rounded-lg"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Supprimer
@@ -509,13 +509,13 @@ export const Capteurs = () => {
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 py-2.5 text-sm font-bold rounded-xl border border-[#E0E0E0] dark:border-[#30363D] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"
+              className="btn-press flex-1 py-2.5 text-sm font-bold rounded-xl border border-[#E0E0E0] dark:border-[#30363D] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="flex-1 py-2.5 text-sm font-bold text-white bg-[#2E7D32] hover:bg-[#256629] rounded-xl"
+              className="btn-press flex-1 py-2.5 text-sm font-bold text-white bg-[#2E7D32] hover:bg-[#256629] rounded-xl"
             >
               {editingCapteur ? 'Mettre a jour' : 'Creer'}
             </button>

@@ -43,7 +43,8 @@ export const GaugeCard = ({
   return (
     <div
       onClick={onClick}
-      className={`bg-white dark:bg-[#161B22] p-4 rounded-xl border border-[#E0E0E0] dark:border-[#30363D] shadow-sm flex flex-col justify-between transition-all ${onClick ? 'cursor-pointer hover:border-[#2E7D32]/50 hover:shadow-md' : ''}`}
+      className={`bg-white dark:bg-[#161B22] p-4 rounded-xl border border-[#E0E0E0] dark:border-[#30363D] shadow-sm flex flex-col justify-between transition-shadow duration-200 ${onClick ? 'btn-press cursor-pointer hover:border-[#2E7D32]/50 hover:shadow-md' : ''}`}
+      style={{ transitionTimingFunction: 'var(--ease-out)' }}
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex flex-col">
@@ -70,8 +71,8 @@ export const GaugeCard = ({
 
       <div className="w-full h-1.5 rounded-full bg-[#F5F5F5] dark:bg-[#22272e] overflow-hidden">
         <div
-          className="h-full rounded-full transition-all duration-500 ease-out"
-          style={{ width: `${percentage}%`, backgroundColor: gaugeColor }}
+          className="h-full rounded-full transition-[width] duration-500"
+          style={{ width: `${percentage}%`, backgroundColor: gaugeColor, transitionTimingFunction: 'var(--ease-out)' }}
         />
       </div>
     </div>
