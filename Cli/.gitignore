@@ -1,5 +1,6 @@
 __pycache__/
 *.pyc
+config.json
 architecture_cli.md
 commandes.md
 procedure.md
