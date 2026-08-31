@@ -208,6 +208,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
         {/* Dark / Light Toggle */}
         <button
           onClick={toggleTheme}
+          aria-label={theme === 'dark' ? 'Passer au mode clair' : 'Passer au mode sombre'}
           title={theme === 'dark' ? 'Passer au mode clair' : 'Passer au mode sombre'}
           className="btn-press p-2 rounded-xl text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#E8F5E9] dark:hover:bg-[#22272e] transition-colors"
         >
@@ -223,6 +224,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
           <button
             onClick={() => setShowAlertModal(!showAlertModal)}
             className="btn-press p-2 rounded-xl text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#E8F5E9] dark:hover:bg-[#22272e] transition-colors relative"
+            aria-label="Alertes actives"
             title="Alertes actives"
           >
             <Bell className="w-5 h-5" />
@@ -243,6 +245,7 @@ export const TopBar = ({ onToggleMobileMenu }) => {
                 </div>
                 <button
                   onClick={() => setShowAlertModal(false)}
+                  aria-label="Fermer"
                   className="text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#1A1A1A] dark:hover:text-white"
                 >
                   <X className="w-4 h-4" />

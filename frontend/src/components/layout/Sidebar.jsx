@@ -81,6 +81,7 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
 
             <button
               onClick={onCloseMobile}
+              aria-label="Fermer le menu"
               className="lg:hidden text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#1A1A1A] dark:hover:text-white"
             >
               <X className="w-5 h-5" />
@@ -151,6 +152,7 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
 
           <button
             onClick={logout}
+            aria-label="Déconnexion"
             title="Déconnexion"
             className="btn-press shrink-0 p-2.5 rounded-xl text-[#E53935] hover:bg-[#E53935]/10 transition-colors"
           >

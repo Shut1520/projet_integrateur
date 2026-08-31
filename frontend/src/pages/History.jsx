@@ -409,6 +409,7 @@ export const History = () => {
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={safeCurrentPage === 1}
+                aria-label="Page précédente"
                 className="p-1.5 rounded-lg border border-[#E0E0E0] dark:border-[#30363D] disabled:opacity-40"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -416,6 +417,7 @@ export const History = () => {
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={safeCurrentPage === totalPages}
+                aria-label="Page suivante"
                 className="p-1.5 rounded-lg border border-[#E0E0E0] dark:border-[#30363D] disabled:opacity-40"
               >
                 <ChevronRight className="w-4 h-4" />

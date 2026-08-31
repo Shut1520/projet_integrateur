@@ -370,6 +370,7 @@ export const Capteurs = () => {
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); openDetail(cap); }}
+                        aria-label="Voir les détails"
                         className="p-1.5 text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#F5F7F2] dark:hover:bg-[#22272e] rounded-lg"
                         title="Voir les details"
                       >

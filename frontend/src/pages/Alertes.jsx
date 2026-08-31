@@ -248,6 +248,7 @@ export const Alertes = () => {
                   {a.etat === 'active' && (
                     <button
                       onClick={() => handleReconnaitre(a.id)}
+                      aria-label="Reconnaître"
                       className="p-1.5 rounded-lg text-[#FF8F00] hover:bg-[#FF8F00]/10 transition-colors"
                       title="Reconnaitre"
                     >
@@ -257,6 +258,7 @@ export const Alertes = () => {
                   {a.etat !== 'resolue' && (
                     <button
                       onClick={() => handleResoudre(a.id)}
+                      aria-label="Résoudre"
                       className="p-1.5 rounded-lg text-[#2E7D32] hover:bg-[#2E7D32]/10 transition-colors"
                       title="Résoudre"
                     >

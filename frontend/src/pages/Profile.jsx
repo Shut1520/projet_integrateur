@@ -288,6 +288,7 @@ export const Profile = () => {
                   setKeyName('');
                   setIsApiKeyModalOpen(true);
                 }}
+                aria-label="Générer une clé"
                 className="p-1.5 bg-[#2E7D32] hover:bg-[#256629] text-white rounded-lg shadow-md"
                 title="Générer une clé"
               >
@@ -324,6 +325,7 @@ export const Profile = () => {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleCopyKey(k.keyFull || k.cle_api)}
+                        aria-label="Copier"
                         className="p-1.5 text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#1A1A1A]"
                         title="Copier"
                       >
@@ -365,6 +367,7 @@ export const Profile = () => {
               <span className="truncate">{generatedKey.keyFull}</span>
               <button
                 onClick={() => handleCopyKey(generatedKey.keyFull)}
+                aria-label="Copier la clé"
                 className="p-1.5 bg-[#2E7D32] text-white rounded-lg shrink-0"
               >
                 <Copy className="w-3.5 h-3.5" />

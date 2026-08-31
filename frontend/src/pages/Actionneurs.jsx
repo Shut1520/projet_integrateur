@@ -435,6 +435,7 @@ export const Actionneurs = () => {
                       {isAdmin && (
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDelete(act); }}
+                          aria-label="Supprimer"
                           className="p-1.5 text-[#E53935] hover:bg-[#E53935]/10 rounded-lg"
                           title="Supprimer"
                         >
@@ -443,6 +444,7 @@ export const Actionneurs = () => {
                       )}
                       <button
                         onClick={(e) => { e.stopPropagation(); openDetail(act); }}
+                        aria-label="Voir les détails"
                         className="p-1.5 text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#F5F7F2] dark:hover:bg-[#22272e] rounded-lg"
                         title="Voir les details"
                       >

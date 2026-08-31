@@ -379,6 +379,7 @@ export const UsersPage = () => {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => handleToggleUser(u)}
+                            aria-label="Activer/Désactiver"
                             className={`p-1.5 rounded-lg ${
                               u.actif
                                 ? 'text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#E53935] hover:bg-[#E53935]/10'
@@ -390,6 +391,7 @@ export const UsersPage = () => {
                           </button>
                           <button
                             onClick={() => handleOpenEditModal(u)}
+                            aria-label="Modifier"
                             className="p-1.5 rounded-lg text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#2E7D32] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"
                             title="Modifier"
                           >
@@ -397,6 +399,7 @@ export const UsersPage = () => {
                           </button>
                           <button
                             onClick={() => handleDeleteUser(u.id)}
+                            aria-label="Supprimer"
                             className="p-1.5 rounded-lg text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#E53935] hover:bg-[#E53935]/10"
                             title="Supprimer"
                           >

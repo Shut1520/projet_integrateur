@@ -465,6 +465,7 @@ export const Parcelles = () => {
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); openDetail(p); }}
+                    aria-label="Voir les détails"
                     className="p-1.5 text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#F5F7F2] dark:hover:bg-[#22272e] rounded-lg"
                     title="Voir les details"
                   >
@@ -535,6 +536,7 @@ export const Parcelles = () => {
                         )}
                         <button
                           onClick={() => navigate('/capteurs')}
+                          aria-label="Voir les capteurs"
                           className="p-1 text-[#5A5A5A] dark:text-[#8B949E] hover:bg-gray-100 dark:hover:bg-[#22272e] rounded-lg"
                         >
                           <ChevronRight className="w-3.5 h-3.5" />
@@ -578,6 +580,7 @@ export const Parcelles = () => {
                         )}
                         <button
                           onClick={() => navigate('/actionneurs')}
+                          aria-label="Voir les actionneurs"
                           className="p-1 text-[#5A5A5A] dark:text-[#8B949E] hover:bg-gray-100 dark:hover:bg-[#22272e] rounded-lg"
                         >
                           <ChevronRight className="w-3.5 h-3.5" />

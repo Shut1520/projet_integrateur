@@ -90,7 +90,7 @@ export const ConfirmModal = ({
   if (!shouldRender) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-xs"
@@ -114,6 +114,7 @@ export const ConfirmModal = ({
         {/* Close button */}
         <button
           onClick={handleClose}
+          aria-label="Fermer"
           className="btn-press absolute top-3 right-3 p-1 rounded-lg text-[#5A5A5A] dark:text-[#8B949E] hover:bg-gray-100 dark:hover:bg-[#22272e] transition-colors"
         >
           <X className="w-4 h-4" />
@@ -125,7 +126,7 @@ export const ConfirmModal = ({
         </div>
 
         {/* Title */}
-        <h3 className="text-center text-base font-bold text-[#1A1A1A] dark:text-white mb-2">
+        <h3 id="confirm-modal-title" className="text-center text-base font-bold text-[#1A1A1A] dark:text-white mb-2">
           {title}
         </h3>
 

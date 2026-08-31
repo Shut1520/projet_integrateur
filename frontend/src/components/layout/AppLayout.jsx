@@ -19,6 +19,12 @@ export const AppLayout = ({ children }) => {
 
   return (
     <div className="h-screen overflow-hidden bg-[#F5F7F2] dark:bg-[#0D1117] text-[#1A1A1A] dark:text-[#F0F0F0] flex flex-col font-sans transition-colors duration-200">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-[#2E7D32] focus:text-white focus:rounded-xl focus:font-bold focus:shadow-lg"
+      >
+        Aller au contenu principal
+      </a>
       <div className="flex flex-1 h-full overflow-hidden">
         {/* Desktop & Mobile Sidebar */}
         <Sidebar
@@ -30,7 +36,7 @@ export const AppLayout = ({ children }) => {
         <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
           <TopBar onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)} />
 
-          <main className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-8">
+          <main id="main-content" className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24 lg:pb-8">
             {children || <Outlet />}
           </main>
         </div>
