@@ -303,7 +303,7 @@ export const Dashboard = () => {
         <button
           onClick={handleManualRefresh}
           disabled={refreshing}
-          className="px-3 py-1.5 bg-[#2E7D32] hover:bg-[#256629] text-white text-xs font-bold rounded-lg shadow-xs flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+          className="btn-press px-3 py-1.5 bg-[#2E7D32] hover:bg-[#256629] text-white text-xs font-bold rounded-lg shadow-xs flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
           <span>Actualiser</span>
@@ -311,7 +311,7 @@ export const Dashboard = () => {
       </div>
 
       {/* Row 1: 5 Mini Gauges */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 card-stagger">
         <GaugeCard
           title="Température Air"
           value={gauges.temp ?? '—'}
@@ -376,9 +376,9 @@ export const Dashboard = () => {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-[#1A1A1A] dark:text-white">Température (24h)</h3>
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => setChartRange('24h')}
-                className={`text-[10px] font-bold px-2.5 py-1 rounded-full transition-all ${
+                    <button
+                      onClick={() => setChartRange('24h')}
+                      className={`btn-press text-[10px] font-bold px-2.5 py-1 rounded-full transition-all ${
                   chartRange === '24h'
                     ? 'bg-[#2E7D32] text-white'
                     : 'bg-gray-100 text-[#5A5A5A] dark:bg-gray-800 dark:text-[#8B949E] hover:text-[#1A1A1A] dark:hover:text-white'
@@ -386,9 +386,9 @@ export const Dashboard = () => {
               >
                 24h
               </button>
-              <button
-                onClick={() => setChartRange('7j')}
-                className={`text-[10px] font-bold px-2.5 py-1 rounded-full transition-all ${
+                    <button
+                      onClick={() => setChartRange('7j')}
+                      className={`btn-press text-[10px] font-bold px-2.5 py-1 rounded-full transition-all ${
                   chartRange === '7j'
                     ? 'bg-[#2E7D32] text-white'
                     : 'bg-gray-100 text-[#5A5A5A] dark:bg-gray-800 dark:text-[#8B949E] hover:text-[#1A1A1A] dark:hover:text-white'
@@ -432,10 +432,10 @@ export const Dashboard = () => {
                       <p className="text-xs text-[#1A1A1A] dark:text-gray-200 mt-1 leading-snug">
                         {a.message}
                       </p>
-                      <button
-                        onClick={() => handleResolveAlerte(a.id)}
-                        className="mt-2 text-[11px] font-bold text-[#2E7D32] dark:text-[#66BB6A] hover:underline"
-                      >
+                    <button
+                      onClick={() => handleResolveAlerte(a.id)}
+                      className="btn-press mt-2 text-[11px] font-bold text-[#2E7D32] dark:text-[#66BB6A] hover:underline"
+                    >
                         Résoudre
                       </button>
                     </div>

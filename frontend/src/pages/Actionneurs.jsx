@@ -249,7 +249,7 @@ export const Actionneurs = () => {
         {isAdmin && (
           <button
             onClick={openCreate}
-            className="px-4 py-2 bg-[#2E7D32] hover:bg-[#256629] text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-2"
+            className="btn-press px-4 py-2 bg-[#2E7D32] hover:bg-[#256629] text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span>Ajouter</span>
@@ -312,13 +312,13 @@ export const Actionneurs = () => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 card-stagger">
           {filteredActionneurs.map((act) => {
             const isOn = act.etat === 'actif';
             return (
               <div
                 key={act.id}
-                className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] hover:border-[#2E7D32]/50 hover:shadow-md transition-all cursor-pointer"
+                className="bg-white dark:bg-[#161B22] p-5 rounded-2xl border border-[#E0E0E0] dark:border-[#30363D] hover:border-[#2E7D32]/50 hover:shadow-md transition-[border-color,box-shadow] duration-200 cursor-pointer"
                 onClick={() => openDetail(act)}
               >
                 <div className="flex items-start justify-between mb-3">
@@ -358,7 +358,7 @@ export const Actionneurs = () => {
                 <div className="flex items-center gap-2 pt-3 border-t border-[#E0E0E0] dark:border-[#30363D]">
                   <button
                     onClick={(e) => { e.stopPropagation(); handleToggle(act); }}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold rounded-lg ${
+                    className={`btn-press flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold rounded-lg ${
                       isOn
                         ? 'text-[#E53935] hover:bg-[#E53935]/10'
                         : 'text-[#2E7D32] hover:bg-[#2E7D32]/10'
@@ -369,7 +369,7 @@ export const Actionneurs = () => {
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleOpenSchedule(act); }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-[#1E88E5] hover:bg-[#1E88E5]/10 rounded-lg"
+                    className="btn-press flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-[#1E88E5] hover:bg-[#1E88E5]/10 rounded-lg"
                   >
                     <Clock className="w-3.5 h-3.5" />
                     Programmer
@@ -527,14 +527,14 @@ export const Actionneurs = () => {
             <button
               type="button"
               onClick={() => setIsScheduleOpen(false)}
-              className="flex-1 py-2.5 text-sm font-bold rounded-xl border border-[#E0E0E0] dark:border-[#30363D] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"
+              className="btn-press flex-1 py-2.5 text-sm font-bold rounded-xl border border-[#E0E0E0] dark:border-[#30363D] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"
             >
               Annuler
             </button>
             <button
               type="button"
               onClick={handleConfirmSchedule}
-              className="flex-1 py-2.5 text-sm font-bold text-white bg-[#2E7D32] hover:bg-[#256629] rounded-xl"
+              className="btn-press flex-1 py-2.5 text-sm font-bold text-white bg-[#2E7D32] hover:bg-[#256629] rounded-xl"
             >
               Programmer
             </button>
@@ -614,13 +614,13 @@ export const Actionneurs = () => {
             <button
               type="button"
               onClick={() => setIsAddOpen(false)}
-              className="flex-1 py-2.5 text-sm font-bold rounded-xl border border-[#E0E0E0] dark:border-[#30363D] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"
+              className="btn-press flex-1 py-2.5 text-sm font-bold rounded-xl border border-[#E0E0E0] dark:border-[#30363D] hover:bg-[#f2f4ef] dark:hover:bg-[#22272e]"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="flex-1 py-2.5 text-sm font-bold text-white bg-[#2E7D32] hover:bg-[#256629] rounded-xl"
+              className="btn-press flex-1 py-2.5 text-sm font-bold text-white bg-[#2E7D32] hover:bg-[#256629] rounded-xl"
             >
               Creer
             </button>
