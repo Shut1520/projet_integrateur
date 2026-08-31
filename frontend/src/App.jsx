@@ -21,6 +21,7 @@ import { UsersPage } from './pages/Users';
 import { Capteurs } from './pages/Capteurs';
 import { Profile } from './pages/Profile';
 import { Alertes } from './pages/Alertes';
+import { NotFound } from './pages/NotFound';
 
 /**
  * Route protégée : redirige vers /login si l'utilisateur n'est pas authentifié.
@@ -97,8 +98,8 @@ export default function App() {
                 <Route path="/profile" element={<Profile />} />
               </Route>
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              {/* Fallback 404 */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </ToastProvider>
