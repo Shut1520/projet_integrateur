@@ -99,10 +99,10 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
                   to={item.to}
                   onClick={onCloseMobile}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all border-l-[3px] ${
                       isActive
-                        ? 'bg-[#2E7D32] text-white shadow-sm shadow-[#2E7D32]/30'
-                        : 'text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#E8F5E9] dark:hover:bg-[#22272e] hover:text-[#1A1A1A] dark:hover:text-white'
+                        ? 'border-l-[#2E7D32] bg-[#2E7D32]/10 text-[#2E7D32] dark:text-[#66BB6A] dark:bg-[#2E7D32]/15'
+                        : 'border-l-transparent text-[#5A5A5A] dark:text-[#8B949E] hover:bg-[#E8F5E9] dark:hover:bg-[#22272e] hover:text-[#1A1A1A] dark:hover:text-white'
                     }`
                   }
                 >
