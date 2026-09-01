@@ -5,9 +5,13 @@ __pycache__/
 venv/
 .env
 
+#Documentation
+Documentation/note.md
+
 # IDE
 .vscode/
 .idea/
+.obsidian
 *.sw?
 
 # OS

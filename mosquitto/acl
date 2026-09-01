@@ -1,0 +1,34 @@
+# acl — Controle d'acces par topic (fichier acl de Mosquitto).
+#
+# Syntaxe :
+#   user <nom>
+#   topic [read|write|readwrite] <pattern>
+#
+# Utilisateurs :
+#   sai_backend  : subscriber backend (recoit mesures) + publisher alertes.
+#   sai_esp32    : publisher ESP32 (envoie mesures + alertes).
+#   sai_frontend : frontend web (lecture temps reel sur ws://localhost:9001).
+
+# Topics spec (Documents/choix_technologique) :
+#   sai/<parcelle>/capteurs/<type>   (mesures publiees par ESP32)
+#   sai/<parcelle>/actionneurs/<id>  (statut publie par ESP32 / broker)
+#   sai/<parcelle>/alertes           (alertes)
+#   sai/<parcelle>/commandes         (commandes vers ESP32)
+
+# ─── Backend (subscriber + publisher) : lit tout, ecrit actionneurs + alertes ───
+user sai_backend
+topic read sai/#
+topic write sai/+/actionneurs/#
+topic write sai/+/alertes
+
+# ─── ESP32 (publisher) : ecrit mesures + alertes, lit commandes ───
+user sai_esp32
+topic read sai/+/commandes
+topic write sai/+/capteurs/#
+topic write sai/+/alertes
+
+# ─── Frontend web (temps reel) : lit tout ───
+user sai_frontend
+topic read sai/#
+
+# ─── Aucun acces par defaut pour les autres ───

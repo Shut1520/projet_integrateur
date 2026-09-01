@@ -21,7 +21,7 @@ from schemas.utilisateur import (
     UtilisateurUpdate,
     UtilisateurResponse,
 )
-from auth import get_utilisateur_connecte
+from auth import exiger_admin
 
 # ─── Routeur avec prefixe et tag pour la doc automatique ───
 # # Toutes les routes de ce fichier commenceront par `/api/utilisateurs`.
@@ -48,7 +48,7 @@ def _get_ou_404(db: Session, id: int) -> Utilisateur:
 @router.get("", response_model=list[UtilisateurResponse])
 def lister_utilisateurs(
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """
     Retourne la liste de tous les utilisateurs.
@@ -63,7 +63,7 @@ def lister_utilisateurs(
 def lire_utilisateur(
     id: int,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """
     Retourne un utilisateur specifique par son ID.
@@ -78,7 +78,7 @@ def lire_utilisateur(
 def creer_utilisateur(
     data: UtilisateurCreate,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """
     Crée un nouvel utilisateur.
@@ -119,7 +119,7 @@ def modifier_utilisateur(
     id: int,
     data: UtilisateurUpdate,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """
     Modifie un utilisateur existant.
@@ -151,7 +151,7 @@ def modifier_utilisateur(
 def basculer_etat_utilisateur(
     id: int,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """
     Bascule l'état actif/inactif d'un utilisateur.
@@ -179,7 +179,7 @@ def basculer_etat_utilisateur(
 def supprimer_utilisateur(
     id: int,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """
     Supprime un utilisateur.

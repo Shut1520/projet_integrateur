@@ -71,6 +71,9 @@ def creer_alerte(
     db.add(alerte)
     db.commit()
     db.refresh(alerte)
+    # Temps reel : notifie le frontend via MQTT (best effort, jamais bloquant)
+    from services.mqtt_service import publier_alerte
+    publier_alerte(alerte, db)
     return alerte
 
 

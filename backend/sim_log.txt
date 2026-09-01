@@ -1,0 +1,1078 @@
+Connecting: localhost:8883 (TLS=True) as sai_backend
+Publication mesures -> sai/serre-a/capteurs/telemetrie (toutes les 3s)
+Publication alertes  -> sai/serre-a/alertes (toutes les 10s)
+Ctrl+C pour arreter.
+  + mesures 18:31:25
+  + mesures 18:31:28
+  + mesures 18:31:31
+  + mesures 18:31:34
+  + mesures 18:31:37
+  ! alerte publiee #12
+  + mesures 18:31:40
+  + mesures 18:31:43
+  + mesures 18:31:46
+  + mesures 18:31:49
+  ! alerte publiee #24
+  + mesures 18:31:52
+  + mesures 18:31:55
+  + mesures 18:31:58
+  + mesures 18:32:01
+  ! alerte publiee #36
+  + mesures 18:32:04
+  + mesures 18:32:07
+  + mesures 18:32:10
+  + mesures 18:32:13
+  ! alerte publiee #48
+  + mesures 18:32:16
+  + mesures 18:32:19
+  + mesures 18:32:22
+  + mesures 18:32:25
+  ! alerte publiee #60
+  + mesures 18:32:28
+  + mesures 18:32:31
+  + mesures 18:32:34
+  + mesures 18:32:37
+  ! alerte publiee #72
+  + mesures 18:32:40
+  + mesures 18:32:43
+  + mesures 18:32:46
+  + mesures 18:32:49
+  ! alerte publiee #84
+  + mesures 18:32:52
+  + mesures 18:32:55
+  + mesures 18:32:58
+  + mesures 18:33:01
+  ! alerte publiee #96
+  + mesures 18:33:04
+  + mesures 18:33:07
+  + mesures 18:33:10
+  + mesures 18:33:13
+  ! alerte publiee #108
+  + mesures 18:33:16
+  + mesures 18:33:19
+  + mesures 18:33:22
+  + mesures 18:33:25
+  ! alerte publiee #120
+  + mesures 18:33:28
+  + mesures 18:33:31
+  + mesures 18:33:34
+  + mesures 18:33:37
+  ! alerte publiee #132
+  + mesures 18:33:40
+  + mesures 18:33:43
+  + mesures 18:33:46
+  + mesures 18:33:49
+  ! alerte publiee #144
+  + mesures 18:33:53
+  + mesures 18:33:56
+  + mesures 18:33:59
+  + mesures 18:34:02
+  ! alerte publiee #156
+  + mesures 18:34:05
+  + mesures 18:34:08
+  + mesures 18:34:11
+  + mesures 18:34:14
+  ! alerte publiee #168
+  + mesures 18:34:17
+  + mesures 18:34:20
+  + mesures 18:34:23
+  + mesures 18:34:26
+  ! alerte publiee #180
+  + mesures 18:34:29
+  + mesures 18:34:32
+  + mesures 18:34:35
+  + mesures 18:34:38
+  ! alerte publiee #192
+  + mesures 18:34:41
+  + mesures 18:34:44
+  + mesures 18:34:47
+  + mesures 18:34:50
+  ! alerte publiee #204
+  + mesures 18:34:53
+  + mesures 18:34:56
+  + mesures 18:34:59
+  + mesures 18:35:02
+  ! alerte publiee #216
+  + mesures 18:35:05
+  + mesures 18:35:08
+  + mesures 18:35:11
+  + mesures 18:35:14
+  ! alerte publiee #228
+  + mesures 18:35:17
+  + mesures 18:35:20
+  + mesures 18:35:23
+  ! alerte publiee #238
+  + mesures 18:35:26
+  + mesures 18:35:29
+  + mesures 18:35:32
+  + mesures 18:35:35
+  ! alerte publiee #250
+  + mesures 18:35:38
+  + mesures 18:35:41
+  + mesures 18:35:44
+  + mesures 18:35:47
+  ! alerte publiee #262
+  + mesures 18:35:50
+  + mesures 18:35:53
+  + mesures 18:35:56
+  + mesures 18:35:59
+  ! alerte publiee #274
+  + mesures 18:36:02
+  + mesures 18:36:05
+  + mesures 18:36:08
+  + mesures 18:36:11
+  ! alerte publiee #286
+  + mesures 18:36:14
+  + mesures 18:36:17
+  + mesures 18:36:20
+  + mesures 18:36:23
+  ! alerte publiee #298
+  + mesures 18:36:26
+  + mesures 18:36:29
+  + mesures 18:36:32
+  + mesures 18:36:35
+  ! alerte publiee #310
+  + mesures 18:36:38
+  + mesures 18:36:41
+  + mesures 18:36:44
+  + mesures 18:36:47
+  ! alerte publiee #322
+  + mesures 18:36:50
+  + mesures 18:36:53
+  + mesures 18:36:56
+  + mesures 18:36:59
+  ! alerte publiee #334
+  + mesures 18:37:02
+  + mesures 18:37:05
+  + mesures 18:37:08
+  + mesures 18:37:11
+  ! alerte publiee #346
+  + mesures 18:37:14
+  + mesures 18:37:17
+  + mesures 18:37:20
+  + mesures 18:37:23
+  ! alerte publiee #358
+  + mesures 18:37:26
+  + mesures 18:37:29
+  + mesures 18:37:32
+  + mesures 18:37:35
+  ! alerte publiee #370
+  + mesures 18:37:38
+  + mesures 18:37:41
+  + mesures 18:37:44
+  + mesures 18:37:47
+  ! alerte publiee #382
+  + mesures 18:37:50
+  + mesures 18:37:53
+  + mesures 18:37:56
+  + mesures 18:37:59
+  ! alerte publiee #394
+  + mesures 18:38:02
+  + mesures 18:38:05
+  + mesures 18:38:08
+  + mesures 18:38:11
+  ! alerte publiee #406
+  + mesures 18:38:14
+  + mesures 18:38:17
+  + mesures 18:38:20
+  + mesures 18:38:23
+  ! alerte publiee #418
+  + mesures 18:38:26
+  + mesures 18:38:29
+  + mesures 18:38:32
+  + mesures 18:38:35
+  ! alerte publiee #430
+  + mesures 18:38:38
+  + mesures 18:38:41
+  + mesures 18:38:44
+  + mesures 18:38:47
+  ! alerte publiee #442
+  + mesures 18:38:50
+  + mesures 18:38:53
+  + mesures 18:38:56
+  + mesures 18:38:59
+  ! alerte publiee #454
+  + mesures 18:39:02
+  + mesures 18:39:05
+  + mesures 18:39:08
+  + mesures 18:39:11
+  ! alerte publiee #466
+  + mesures 18:39:14
+  + mesures 18:39:17
+  + mesures 18:39:20
+  + mesures 18:39:23
+  ! alerte publiee #478
+  + mesures 18:39:26
+  + mesures 18:39:29
+  + mesures 18:39:32
+  + mesures 18:39:35
+  ! alerte publiee #490
+  + mesures 18:39:38
+  + mesures 18:39:41
+  + mesures 18:39:45
+  + mesures 18:39:48
+  ! alerte publiee #502
+  + mesures 18:39:51
+  + mesures 18:39:54
+  + mesures 18:39:57
+  + mesures 18:40:00
+  ! alerte publiee #514
+  + mesures 18:40:03
+  + mesures 18:40:06
+  + mesures 18:40:09
+  + mesures 18:40:12
+  ! alerte publiee #526
+  + mesures 18:40:15
+  + mesures 18:40:18
+  + mesures 18:40:21
+  + mesures 18:40:24
+  ! alerte publiee #538
+  + mesures 18:40:27
+  + mesures 18:40:30
+  + mesures 18:40:33
+  + mesures 18:40:36
+  ! alerte publiee #550
+  + mesures 18:40:39
+  + mesures 18:40:42
+  + mesures 18:40:45
+  + mesures 18:40:48
+  ! alerte publiee #562
+  + mesures 18:40:51
+  + mesures 18:40:54
+  + mesures 18:40:57
+  + mesures 18:41:00
+  ! alerte publiee #574
+  + mesures 18:41:03
+  + mesures 18:41:06
+  + mesures 18:41:09
+  + mesures 18:41:12
+  ! alerte publiee #586
+  + mesures 18:41:15
+  + mesures 18:41:18
+  + mesures 18:41:21
+  + mesures 18:41:24
+  ! alerte publiee #598
+  + mesures 18:41:27
+  + mesures 18:41:30
+  + mesures 18:41:33
+  + mesures 18:41:36
+  ! alerte publiee #610
+  + mesures 18:41:39
+  + mesures 18:41:42
+  + mesures 18:41:45
+  + mesures 18:41:48
+  ! alerte publiee #622
+  + mesures 18:41:51
+  + mesures 18:41:54
+  + mesures 18:41:57
+  + mesures 18:42:00
+  ! alerte publiee #634
+  + mesures 18:42:03
+  + mesures 18:42:06
+  + mesures 18:42:09
+  + mesures 18:42:12
+  ! alerte publiee #646
+  + mesures 18:42:15
+  + mesures 18:42:18
+  + mesures 18:42:21
+  + mesures 18:42:24
+  ! alerte publiee #658
+  + mesures 18:42:27
+  + mesures 18:42:30
+  + mesures 18:42:33
+  + mesures 18:42:36
+  ! alerte publiee #670
+  + mesures 18:42:39
+  + mesures 18:42:42
+  + mesures 18:42:45
+  + mesures 18:42:48
+  ! alerte publiee #682
+  + mesures 18:42:51
+  + mesures 18:42:54
+  + mesures 18:42:57
+  + mesures 18:43:00
+  ! alerte publiee #694
+  + mesures 18:43:03
+  + mesures 18:43:06
+  + mesures 18:43:09
+  + mesures 18:43:12
+  ! alerte publiee #706
+  + mesures 18:43:15
+  + mesures 18:43:18
+  + mesures 18:43:21
+  + mesures 18:43:24
+  ! alerte publiee #718
+  + mesures 18:43:27
+  + mesures 18:43:30
+  + mesures 18:43:33
+  + mesures 18:43:36
+  ! alerte publiee #730
+  + mesures 18:43:39
+  + mesures 18:43:42
+  + mesures 18:43:45
+  + mesures 18:43:48
+  ! alerte publiee #742
+  + mesures 18:43:51
+  + mesures 18:43:54
+  + mesures 18:43:57
+  + mesures 18:44:00
+  ! alerte publiee #754
+  + mesures 18:44:03
+  + mesures 18:44:06
+  + mesures 18:44:09
+  + mesures 18:44:12
+  ! alerte publiee #766
+  + mesures 18:44:15
+  + mesures 18:44:18
+  + mesures 18:44:21
+  + mesures 18:44:24
+  ! alerte publiee #778
+  + mesures 18:44:27
+  + mesures 18:44:30
+  + mesures 18:44:33
+  + mesures 18:44:36
+  ! alerte publiee #790
+  + mesures 18:44:39
+  + mesures 18:44:42
+  + mesures 18:44:45
+  + mesures 18:44:48
+  ! alerte publiee #802
+  + mesures 18:44:51
+  + mesures 18:44:54
+  + mesures 18:44:57
+  + mesures 18:45:00
+  ! alerte publiee #814
+  + mesures 18:45:03
+  + mesures 18:45:06
+  + mesures 18:45:09
+  ! alerte publiee #824
+  + mesures 18:45:12
+  + mesures 18:45:15
+  + mesures 18:45:18
+  + mesures 18:45:21
+  ! alerte publiee #836
+  + mesures 18:45:24
+  + mesures 18:45:27
+  + mesures 18:45:30
+  + mesures 18:45:33
+  ! alerte publiee #848
+  + mesures 18:45:36
+  + mesures 18:45:39
+  + mesures 18:45:42
+  + mesures 18:45:45
+  ! alerte publiee #860
+  + mesures 18:45:48
+  + mesures 18:45:51
+  + mesures 18:45:54
+  + mesures 18:45:57
+  ! alerte publiee #872
+  + mesures 18:46:00
+  + mesures 18:46:03
+  + mesures 18:46:06
+  + mesures 18:46:09
+  ! alerte publiee #884
+  + mesures 18:46:13
+  + mesures 18:46:16
+  + mesures 18:46:19
+  + mesures 18:46:22
+  ! alerte publiee #896
+  + mesures 18:46:25
+  + mesures 18:46:28
+  + mesures 18:46:31
+  + mesures 18:46:34
+  ! alerte publiee #908
+  + mesures 18:46:37
+  + mesures 18:46:40
+  + mesures 18:46:43
+  + mesures 18:46:46
+  ! alerte publiee #920
+  + mesures 18:46:49
+  + mesures 18:46:52
+  + mesures 18:46:55
+  + mesures 18:46:58
+  ! alerte publiee #932
+  + mesures 18:47:01
+  + mesures 18:47:04
+  + mesures 18:47:07
+  + mesures 18:47:10
+  ! alerte publiee #944
+  + mesures 18:47:13
+  + mesures 18:47:16
+  + mesures 18:47:19
+  + mesures 18:47:22
+  ! alerte publiee #956
+  + mesures 18:47:25
+  + mesures 18:47:28
+  + mesures 18:47:31
+  + mesures 18:47:34
+  ! alerte publiee #968
+  + mesures 18:47:37
+  + mesures 18:47:40
+  + mesures 18:47:43
+  + mesures 18:47:46
+  ! alerte publiee #980
+  + mesures 18:47:49
+  + mesures 18:47:52
+  + mesures 18:47:55
+  + mesures 18:47:58
+  ! alerte publiee #992
+  + mesures 18:48:01
+  + mesures 18:48:04
+  + mesures 18:48:07
+  + mesures 18:48:10
+  ! alerte publiee #1004
+  + mesures 18:48:13
+  + mesures 18:48:16
+  + mesures 18:48:19
+  + mesures 18:48:22
+  ! alerte publiee #1016
+  + mesures 18:48:25
+  + mesures 18:48:28
+  + mesures 18:48:31
+  + mesures 18:48:34
+  ! alerte publiee #1028
+  + mesures 18:48:37
+  + mesures 18:48:40
+  + mesures 18:48:43
+  ! alerte publiee #1038
+  + mesures 18:48:46
+  + mesures 18:48:49
+  + mesures 18:48:52
+  + mesures 18:48:55
+  ! alerte publiee #1050
+  + mesures 18:48:58
+  + mesures 18:49:01
+  + mesures 18:49:04
+  + mesures 18:49:07
+  ! alerte publiee #1062
+  + mesures 18:49:10
+  + mesures 18:49:13
+  + mesures 18:49:16
+  + mesures 18:49:19
+  ! alerte publiee #1074
+  + mesures 18:49:22
+  + mesures 18:49:25
+  + mesures 18:49:28
+  + mesures 18:49:31
+  ! alerte publiee #1086
+  + mesures 18:49:34
+  + mesures 18:49:37
+  + mesures 18:49:40
+  + mesures 18:49:43
+  ! alerte publiee #1098
+  + mesures 18:49:46
+  + mesures 18:49:49
+  + mesures 18:49:52
+  + mesures 18:49:55
+  ! alerte publiee #1110
+  + mesures 18:49:58
+  + mesures 18:50:01
+  + mesures 18:50:04
+  + mesures 18:50:07
+  ! alerte publiee #1122
+  + mesures 18:50:10
+  + mesures 18:50:13
+  + mesures 18:50:16
+  + mesures 18:50:19
+  ! alerte publiee #1134
+  + mesures 18:50:22
+  + mesures 18:50:25
+  + mesures 18:50:28
+  + mesures 18:50:31
+  ! alerte publiee #1146
+  + mesures 18:50:35
+  + mesures 18:50:38
+  + mesures 18:50:41
+  + mesures 18:50:44
+  ! alerte publiee #1158
+  + mesures 18:50:47
+  + mesures 18:50:50
+  + mesures 18:50:53
+  + mesures 18:50:56
+  ! alerte publiee #1170
+  + mesures 18:50:59
+  + mesures 18:51:02
+  + mesures 18:51:05
+  + mesures 18:51:08
+  ! alerte publiee #1182
+  + mesures 18:51:11
+  + mesures 18:51:14
+  + mesures 18:51:17
+  + mesures 18:51:20
+  ! alerte publiee #1194
+  + mesures 18:51:23
+  + mesures 18:51:26
+  + mesures 18:51:29
+  + mesures 18:51:32
+  ! alerte publiee #1206
+  + mesures 18:51:35
+  + mesures 18:51:38
+  + mesures 18:51:41
+  + mesures 18:51:44
+  ! alerte publiee #1218
+  + mesures 18:51:47
+  + mesures 18:51:50
+  + mesures 18:51:53
+  + mesures 18:51:56
+  ! alerte publiee #1230
+  + mesures 18:51:59
+  + mesures 18:52:02
+  + mesures 18:52:05
+  + mesures 18:52:08
+  ! alerte publiee #1242
+  + mesures 18:52:11
+  + mesures 18:52:14
+  + mesures 18:52:17
+  + mesures 18:52:20
+  ! alerte publiee #1254
+  + mesures 18:52:23
+  + mesures 18:52:26
+  + mesures 18:52:29
+  + mesures 18:52:32
+  ! alerte publiee #1266
+  + mesures 18:52:35
+  + mesures 18:52:38
+  + mesures 18:52:41
+  + mesures 18:52:44
+  ! alerte publiee #1278
+  + mesures 18:52:47
+  + mesures 18:52:50
+  + mesures 18:52:53
+  + mesures 18:52:56
+  ! alerte publiee #1290
+  + mesures 18:52:59
+  + mesures 18:53:02
+  + mesures 18:53:05
+  + mesures 18:53:08
+  ! alerte publiee #1302
+  + mesures 18:53:11
+  + mesures 18:53:14
+  + mesures 18:53:17
+  + mesures 18:53:20
+  ! alerte publiee #1314
+  + mesures 18:53:23
+  + mesures 18:53:26
+  + mesures 18:53:29
+  + mesures 18:53:32
+  ! alerte publiee #1326
+  + mesures 18:53:35
+  + mesures 18:53:38
+  + mesures 18:53:41
+  + mesures 18:53:44
+  ! alerte publiee #1338
+  + mesures 18:53:47
+  + mesures 18:53:50
+  + mesures 18:53:53
+  + mesures 18:53:56
+  ! alerte publiee #1351
+  + mesures 18:53:59
+  + mesures 18:54:02
+  + mesures 18:54:05
+  + mesures 18:54:08
+  ! alerte publiee #1363
+  + mesures 18:54:11
+  + mesures 18:54:14
+  + mesures 18:54:17
+  + mesures 18:54:20
+  ! alerte publiee #1375
+  + mesures 18:54:23
+  + mesures 18:54:26
+  + mesures 18:54:29
+  + mesures 18:54:32
+  ! alerte publiee #1387
+  + mesures 18:54:35
+  + mesures 18:54:38
+  + mesures 18:54:41
+  + mesures 18:54:44
+  ! alerte publiee #1399
+  + mesures 18:54:47
+  + mesures 18:54:50
+  + mesures 18:54:53
+  + mesures 18:54:56
+  ! alerte publiee #1411
+  + mesures 18:54:59
+  + mesures 18:55:02
+  + mesures 18:55:05
+  + mesures 18:55:08
+  ! alerte publiee #1423
+  + mesures 18:55:11
+  + mesures 18:55:14
+  + mesures 18:55:17
+  + mesures 18:55:20
+  ! alerte publiee #1435
+  + mesures 18:55:23
+  + mesures 18:55:26
+  + mesures 18:55:29
+  + mesures 18:55:32
+  ! alerte publiee #1447
+  + mesures 18:55:35
+  + mesures 18:55:38
+  + mesures 18:55:41
+  + mesures 18:55:44
+  ! alerte publiee #1459
+  + mesures 18:55:47
+  + mesures 18:55:50
+  + mesures 18:55:53
+  + mesures 18:55:56
+  ! alerte publiee #1471
+  + mesures 18:55:59
+  + mesures 18:56:02
+  + mesures 18:56:05
+  + mesures 18:56:08
+  ! alerte publiee #1483
+  + mesures 18:56:11
+  + mesures 18:56:14
+  + mesures 18:56:17
+  + mesures 18:56:20
+  ! alerte publiee #1495
+  + mesures 18:56:23
+  + mesures 18:56:26
+  + mesures 18:56:29
+  + mesures 18:56:32
+  ! alerte publiee #1507
+  + mesures 18:56:35
+  + mesures 18:56:38
+  + mesures 18:56:41
+  + mesures 18:56:44
+  ! alerte publiee #1519
+  + mesures 18:56:47
+  + mesures 18:56:50
+  + mesures 18:56:53
+  + mesures 18:56:56
+  ! alerte publiee #1531
+  + mesures 18:56:59
+  + mesures 18:57:02
+  + mesures 18:57:05
+  + mesures 18:57:08
+  ! alerte publiee #1543
+  + mesures 18:57:11
+  + mesures 18:57:14
+  + mesures 18:57:17
+  + mesures 18:57:20
+  ! alerte publiee #1555
+  + mesures 18:57:23
+  + mesures 18:57:26
+  + mesures 18:57:29
+  + mesures 18:57:32
+  ! alerte publiee #1567
+  + mesures 18:57:35
+  + mesures 18:57:38
+  + mesures 18:57:41
+  + mesures 18:57:44
+  ! alerte publiee #1579
+  + mesures 18:57:47
+  + mesures 18:57:50
+  + mesures 18:57:53
+  + mesures 18:57:56
+  ! alerte publiee #1591
+  + mesures 18:57:59
+  + mesures 18:58:02
+  + mesures 18:58:05
+  + mesures 18:58:08
+  ! alerte publiee #1603
+  + mesures 18:58:11
+  + mesures 18:58:14
+  + mesures 18:58:17
+  + mesures 18:58:20
+  ! alerte publiee #1615
+  + mesures 18:58:23
+  + mesures 18:58:26
+  + mesures 18:58:29
+  + mesures 18:58:32
+  ! alerte publiee #1627
+  + mesures 18:58:35
+  + mesures 18:58:38
+  + mesures 18:58:41
+  + mesures 18:58:44
+  ! alerte publiee #1639
+  + mesures 18:58:47
+  + mesures 18:58:50
+  + mesures 18:58:53
+  + mesures 18:58:56
+  ! alerte publiee #1651
+  + mesures 18:59:00
+  + mesures 18:59:03
+  + mesures 18:59:06
+  + mesures 18:59:09
+  ! alerte publiee #1663
+  + mesures 18:59:12
+  + mesures 18:59:15
+  + mesures 18:59:18
+  + mesures 18:59:21
+  ! alerte publiee #1675
+  + mesures 18:59:24
+  + mesures 18:59:27
+  + mesures 18:59:30
+  + mesures 18:59:33
+  ! alerte publiee #1687
+  + mesures 18:59:36
+  + mesures 18:59:39
+  + mesures 18:59:42
+  + mesures 18:59:45
+  ! alerte publiee #1699
+  + mesures 18:59:48
+  + mesures 18:59:51
+  + mesures 18:59:54
+  + mesures 18:59:57
+  ! alerte publiee #1711
+  + mesures 19:00:00
+  + mesures 19:00:03
+  + mesures 19:00:06
+  + mesures 19:00:09
+  ! alerte publiee #1723
+  + mesures 19:00:12
+  + mesures 19:00:15
+  + mesures 19:00:18
+  + mesures 19:00:21
+  ! alerte publiee #1735
+  + mesures 19:00:24
+  + mesures 19:00:27
+  + mesures 19:00:30
+  + mesures 19:00:33
+  ! alerte publiee #1747
+  + mesures 19:00:36
+  + mesures 19:00:39
+  + mesures 19:00:42
+  + mesures 19:00:45
+  ! alerte publiee #1759
+  + mesures 19:00:48
+  + mesures 19:00:51
+  + mesures 19:00:54
+  + mesures 19:00:57
+  ! alerte publiee #1771
+  + mesures 19:01:00
+  + mesures 19:01:03
+  + mesures 19:01:06
+  + mesures 19:01:09
+  ! alerte publiee #1783
+  + mesures 19:01:12
+  + mesures 19:01:15
+  + mesures 19:01:18
+  + mesures 19:01:21
+  ! alerte publiee #1795
+  + mesures 19:01:24
+  + mesures 19:01:27
+  + mesures 19:01:30
+  + mesures 19:01:33
+  ! alerte publiee #1807
+  + mesures 19:01:36
+  + mesures 19:01:39
+  + mesures 19:01:42
+  + mesures 19:01:45
+  ! alerte publiee #1819
+  + mesures 19:01:48
+  + mesures 19:01:51
+  + mesures 19:01:54
+  + mesures 19:01:57
+  ! alerte publiee #1831
+  + mesures 19:02:00
+  + mesures 19:02:03
+  + mesures 19:02:06
+  + mesures 19:02:09
+  ! alerte publiee #1843
+  + mesures 19:02:12
+  + mesures 19:02:15
+  + mesures 19:02:18
+  + mesures 19:02:21
+  ! alerte publiee #1855
+  + mesures 19:02:24
+  + mesures 19:02:27
+  + mesures 19:02:30
+  + mesures 19:02:33
+  ! alerte publiee #1867
+  + mesures 19:02:36
+  + mesures 19:02:39
+  + mesures 19:02:42
+  + mesures 19:02:45
+  ! alerte publiee #1879
+  + mesures 19:02:48
+  + mesures 19:02:51
+  + mesures 19:02:54
+  + mesures 19:02:57
+  ! alerte publiee #1891
+  + mesures 19:03:00
+  + mesures 19:03:03
+  + mesures 19:03:06
+  + mesures 19:03:09
+  ! alerte publiee #1903
+  + mesures 19:03:12
+  + mesures 19:03:15
+  + mesures 19:03:18
+  + mesures 19:03:21
+  ! alerte publiee #1915
+  + mesures 19:03:24
+  + mesures 19:03:27
+  + mesures 19:03:30
+  + mesures 19:03:33
+  ! alerte publiee #1927
+  + mesures 19:03:36
+  + mesures 19:03:39
+  + mesures 19:03:42
+  + mesures 19:03:45
+  ! alerte publiee #1939
+  + mesures 19:03:48
+  + mesures 19:03:51
+  + mesures 19:03:54
+  + mesures 19:03:57
+  ! alerte publiee #1951
+  + mesures 19:04:00
+  + mesures 19:04:03
+  + mesures 19:04:06
+  + mesures 19:04:09
+  ! alerte publiee #1963
+  + mesures 19:04:12
+  + mesures 19:04:15
+  + mesures 19:04:18
+  + mesures 19:04:21
+  ! alerte publiee #1975
+  + mesures 19:04:24
+  + mesures 19:04:27
+  + mesures 19:04:30
+  + mesures 19:04:33
+  ! alerte publiee #1987
+  + mesures 19:04:36
+  + mesures 19:04:39
+  + mesures 19:04:42
+  + mesures 19:04:45
+  ! alerte publiee #1999
+  + mesures 19:04:48
+  + mesures 19:04:51
+  + mesures 19:04:54
+  + mesures 19:05:02
+  ! alerte publiee #2016
+  + mesures 19:05:05
+  + mesures 19:05:08
+  + mesures 19:05:11
+  + mesures 19:05:14
+  ! alerte publiee #2028
+  + mesures 19:05:17
+  + mesures 19:05:20
+  + mesures 19:05:23
+  + mesures 19:05:26
+  ! alerte publiee #2040
+  + mesures 19:05:29
+  + mesures 19:05:32
+  + mesures 19:05:35
+  + mesures 19:05:38
+  ! alerte publiee #2052
+  + mesures 19:05:41
+  + mesures 19:05:44
+  + mesures 19:05:47
+  + mesures 19:05:50
+  ! alerte publiee #2064
+  + mesures 19:05:53
+  + mesures 19:05:56
+  + mesures 19:05:59
+  + mesures 19:06:02
+  ! alerte publiee #2076
+  + mesures 19:06:05
+  + mesures 19:06:08
+  + mesures 19:06:11
+  + mesures 19:06:14
+  ! alerte publiee #2088
+  + mesures 19:06:17
+  + mesures 19:06:20
+  + mesures 19:06:23
+  + mesures 19:06:26
+  ! alerte publiee #2100
+  + mesures 19:06:29
+  + mesures 19:06:32
+  + mesures 19:06:35
+  + mesures 19:06:38
+  ! alerte publiee #2112
+  + mesures 19:06:41
+  + mesures 19:06:44
+  + mesures 19:06:47
+  + mesures 19:06:50
+  ! alerte publiee #2124
+  + mesures 19:06:53
+  + mesures 19:06:56
+  + mesures 19:06:59
+  + mesures 19:07:02
+  ! alerte publiee #2136
+  + mesures 19:07:05
+  + mesures 19:07:08
+  + mesures 19:07:11
+  + mesures 19:07:14
+  ! alerte publiee #2148
+  + mesures 19:07:17
+  + mesures 19:07:20
+  + mesures 19:07:23
+  + mesures 19:07:26
+  ! alerte publiee #2160
+  + mesures 19:07:29
+  + mesures 19:07:32
+  + mesures 19:07:35
+  + mesures 19:07:38
+  ! alerte publiee #2172
+  + mesures 19:07:41
+  + mesures 19:07:44
+  + mesures 19:07:47
+  + mesures 19:07:50
+  ! alerte publiee #2184
+  + mesures 19:07:53
+  + mesures 19:07:56
+  + mesures 19:07:59
+  + mesures 19:08:02
+  ! alerte publiee #2196
+  + mesures 19:08:05
+  + mesures 19:08:08
+  + mesures 19:08:11
+  + mesures 19:08:14
+  ! alerte publiee #2208
+  + mesures 19:08:17
+  + mesures 19:08:20
+  + mesures 19:08:23
+  + mesures 19:08:26
+  ! alerte publiee #2220
+  + mesures 19:08:29
+  + mesures 19:08:32
+  + mesures 19:08:35
+  + mesures 19:08:38
+  ! alerte publiee #2232
+  + mesures 19:08:41
+  + mesures 19:08:44
+  + mesures 19:08:47
+  + mesures 19:08:50
+  ! alerte publiee #2244
+  + mesures 19:08:53
+  + mesures 19:08:56
+  + mesures 19:08:59
+  + mesures 19:09:02
+  ! alerte publiee #2256
+  + mesures 19:09:05
+  + mesures 19:09:08
+  + mesures 19:09:11
+  + mesures 19:09:14
+  ! alerte publiee #2268
+  + mesures 19:09:17
+  + mesures 19:09:20
+  + mesures 19:09:23
+  ! alerte publiee #2278
+  + mesures 19:09:26
+  + mesures 19:09:29
+  + mesures 19:09:32
+  + mesures 19:09:35
+  ! alerte publiee #2290
+  + mesures 19:09:38
+  + mesures 19:09:41
+  + mesures 19:09:44
+  + mesures 19:09:47
+  ! alerte publiee #2302
+  + mesures 19:09:50
+  + mesures 19:09:53
+  + mesures 19:09:56
+  + mesures 19:09:59
+  ! alerte publiee #2314
+  + mesures 19:10:02
+  + mesures 19:10:05
+  + mesures 19:10:08
+  + mesures 19:10:11
+  ! alerte publiee #2326
+  + mesures 19:10:14
+  + mesures 19:10:17
+  + mesures 19:10:20
+  + mesures 19:10:23
+  ! alerte publiee #2338
+  + mesures 19:10:26
+  + mesures 19:10:29
+  + mesures 19:10:32
+  + mesures 19:10:35
+  ! alerte publiee #2350
+  + mesures 19:10:38
+  + mesures 19:10:41
+  + mesures 19:10:44
+  + mesures 19:10:47
+  ! alerte publiee #2362
+  + mesures 19:10:50
+  + mesures 19:10:53
+  + mesures 19:10:56
+  + mesures 19:10:59
+  ! alerte publiee #2374
+  + mesures 19:11:02
+  + mesures 19:11:05
+  + mesures 19:11:08
+  + mesures 19:11:11
+  ! alerte publiee #2386
+  + mesures 19:11:14
+  + mesures 19:11:17
+  + mesures 19:11:20
+  + mesures 19:11:23
+  ! alerte publiee #2398
+  + mesures 19:11:26
+  + mesures 19:11:29
+  + mesures 19:11:32
+  + mesures 19:11:35
+  ! alerte publiee #2410
+  + mesures 19:11:38
+  + mesures 19:11:41
+  + mesures 19:11:44
+  + mesures 19:11:47
+  ! alerte publiee #2422
+  + mesures 19:11:50
+  + mesures 19:11:53
+  + mesures 19:11:56
+  + mesures 19:11:59
+  ! alerte publiee #2434
+  + mesures 19:12:02
+  + mesures 19:12:05
+  + mesures 19:12:08
+  + mesures 19:12:11
+  ! alerte publiee #2446
+  + mesures 19:12:14
+  + mesures 19:12:17
+  + mesures 19:12:20
+  + mesures 19:12:23
+  ! alerte publiee #2458
+  + mesures 19:12:26
+  + mesures 19:12:29
+  + mesures 19:12:32
+  + mesures 19:12:35
+  ! alerte publiee #2470
+  + mesures 19:12:38
+  + mesures 19:12:41
+  + mesures 19:12:44
+  + mesures 19:12:47
+  ! alerte publiee #2482
+  + mesures 19:12:50
+  + mesures 19:12:53
+  + mesures 19:12:56
+  + mesures 19:12:59
+  ! alerte publiee #2494
+  + mesures 19:13:02
+  + mesures 19:13:05
+  + mesures 19:13:08
+  + mesures 19:13:11
+  ! alerte publiee #2506
+  + mesures 19:13:14
+  + mesures 19:13:17
+  + mesures 19:13:20
+  + mesures 19:13:23
+  ! alerte publiee #2518
+  + mesures 19:13:26
+  + mesures 19:13:29
+  + mesures 19:13:32
+  + mesures 19:13:35
+  ! alerte publiee #2530
+  + mesures 19:13:38
+  + mesures 19:13:41
+  + mesures 19:13:44
+  + mesures 19:13:47
+  ! alerte publiee #2542
+  + mesures 19:13:50
+  + mesures 19:13:53
+  + mesures 19:13:56
+  + mesures 19:13:59
+  ! alerte publiee #2554
+  + mesures 19:14:02
+  + mesures 19:14:05
+  + mesures 19:14:08
+  + mesures 19:14:11
+  ! alerte publiee #2566
+  + mesures 19:14:14
+  + mesures 19:14:17
+  + mesures 19:14:20
+  + mesures 19:14:23
+  ! alerte publiee #2578
+  + mesures 19:14:26
+  + mesures 19:14:29

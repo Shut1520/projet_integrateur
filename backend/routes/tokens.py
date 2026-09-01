@@ -7,14 +7,16 @@ La cle_api n'est montree QU'UNE SEULE FOIS a la creation.
 
 import secrets
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models.token import Token
 from models.utilisateur import Utilisateur
 from schemas.token import TokenCreate, TokenUpdate, TokenResponse, TokenResponseWithKey
-from auth import get_utilisateur_connecte
+from auth import exiger_admin
+from config import RATE_LIMIT_ECRITURES
+from services.rate_limit import limiter
 
 router = APIRouter(prefix="/api/tokens", tags=["Tokens"])
 
@@ -36,7 +38,7 @@ def _get_ou_404(db: Session, id: int) -> Token:
 def lister_tokens(
     utilisateur_id: int | None = None,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """Liste les tokens. Peut filtrer par utilisateur."""
     query = db.query(Token)
@@ -49,17 +51,19 @@ def lister_tokens(
 def lire_token(
     id: int,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """Detail d'un token (sans la cle_api)."""
     return _get_ou_404(db, id)
 
 
 @router.post("", response_model=TokenResponseWithKey, status_code=201)
+@limiter.limit(RATE_LIMIT_ECRITURES)
 def creer_token(
+    request: Request,
     data: TokenCreate,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """
     Cree un nouveau token.
@@ -85,11 +89,13 @@ def creer_token(
 
 
 @router.put("/{id}", response_model=TokenResponse)
+@limiter.limit(RATE_LIMIT_ECRITURES)
 def modifier_token(
+    request: Request,
     id: int,
     data: TokenUpdate,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """
     Modifie un token (renommer, revoquer).
@@ -104,10 +110,12 @@ def modifier_token(
 
 
 @router.delete("/{id}", status_code=204)
+@limiter.limit(RATE_LIMIT_ECRITURES)
 def supprimer_token(
+    request: Request,
     id: int,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """Supprime/revoque un token."""
     token = _get_ou_404(db, id)

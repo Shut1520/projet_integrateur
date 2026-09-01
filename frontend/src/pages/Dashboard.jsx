@@ -9,6 +9,7 @@ import { GaugeCard } from '../components/ui/GaugeCard';
 import { DashboardSkeleton } from '../components/ui/DashboardSkeleton';
 import { HealthSummaryBar } from '../components/ui/HealthSummaryBar';
 import { apiService } from '../services/api';
+import { subscribeMesures } from '../services/mqtt';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
@@ -56,6 +57,15 @@ const SENSOR_CONFIG = [
   { key: 'sen0159', label: 'CO2', color: '#059669', bg: 'rgba(5, 150, 105, 0.08)', unit: 'ppm' },
   { key: 'niveau_eau', label: 'Niveau Eau', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)', unit: '%' },
 ];
+
+// Cle du payload MQTT multi-mesures → gauge du dashboard
+const MESURE_TO_GAUGE = {
+  temperature: 'temp',
+  humidite_sol: 'humSol',
+  luminosite: 'lux',
+  co2: 'co2',
+  niveau_eau: 'eau',
+};
 
 // Sévérité des alertes → couleurs
 const SEVERITE_BORDER = {
@@ -238,6 +248,23 @@ export const Dashboard = () => {
       setLastUpdateSecs((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Temps réel MQTT : met à jour les jauges à chaque mesure publiée par l'ESP32
+  // (sai/<parcelle>/capteurs/<type>). Le graphique suit encore l'API (fallback).
+  useEffect(() => {
+    const unsub = subscribeMesures(({ payload }) => {
+      if (!payload || typeof payload !== 'object') return;
+      const updates = {};
+      Object.entries(MESURE_TO_GAUGE).forEach(([cle, gauge]) => {
+        const valeur = Number(payload[cle]);
+        if (payload[cle] != null && !Number.isNaN(valeur)) updates[gauge] = valeur;
+      });
+      if (Object.keys(updates).length === 0) return;
+      setGauges((prev) => ({ ...prev, ...updates }));
+      setLastUpdateSecs(0);
+    });
+    return () => unsub();
   }, []);
 
   // Rechargement du graphique quand la plage ou les capteurs changent

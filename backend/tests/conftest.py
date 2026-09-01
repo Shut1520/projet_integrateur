@@ -14,6 +14,9 @@ import sys
 # Ajoute le dossier backend au PYTHONPATH
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+# Neutralise le subscriber MQTT (thread de main.py) pendant les tests.
+os.environ["SAI_MQTT_DISABLED"] = "1"
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
@@ -33,12 +36,28 @@ from services.auth_service import creer_token, inscrire
 from werkzeug.security import generate_password_hash
 
 # ─── Configuration DB de test ───
-DB_URL = "postgresql://sai_user:sai_password@localhost:5432/sai_db"
+# BD de test dediee (sai_test) : isolee de la BD de production sai_db,
+# pour empecher que les tests ne polluent les donnees reelles.
+DB_URL = "postgresql://sai_user:sai_password@localhost:5432/sai_test"
 engine = create_engine(DB_URL)
 TestSession = sessionmaker(bind=engine)
 
 
 # ─── Fixtures ───
+@pytest.fixture(scope="session", autouse=True)
+def _desactiver_rate_limit():
+    """
+    Desactive le rate limiting (slowapi) pendant toute la suite.
+    Evite les 429 flaky quand de nombreux tests frappent le meme endpoint
+    (ex: POST /api/commandes, tous partagent la meme IP du TestClient).
+    """
+    from services.rate_limit import limiter
+
+    limiter.enabled = False
+    yield
+    limiter.enabled = True
+
+
 @pytest.fixture(scope="function")
 def db():
     """Session DB isolee par test (commit + rollback)."""
@@ -154,6 +173,32 @@ def actionneur(db, parcelle):
         db.commit()
         db.refresh(a)
     return a
+
+
+@pytest.fixture(scope="function")
+def cle_api(db, admin):
+    """Cree (ou recupere) une cle API valide pour le client IoT (ESP32)."""
+    from datetime import datetime, timedelta, timezone
+
+    user, _ = admin
+    token = db.query(Token).filter(Token.nom == "cle_iot_test").first()
+    if not token:
+        token = Token(
+            cle_api="sk_sai_test_" + "a" * 64,
+            nom="cle_iot_test",
+            actif=True,
+            expires_at=datetime.now(timezone.utc) + timedelta(days=365),
+            id_utilisateur=user.id,
+        )
+        db.add(token)
+        db.commit()
+        db.refresh(token)
+    return token
+
+
+def cle_api_headers(cle_api: Token) -> dict:
+    """Retourne le header X-API-Key pour le TestClient."""
+    return {"X-API-Key": cle_api.cle_api}
 
 
 # ─── Helpers ───
