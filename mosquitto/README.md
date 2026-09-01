@@ -22,7 +22,7 @@ pratique pour déboguer).
 ## Fichiers
 
 - `mosquitto.conf` — configuration du broker (auth + ACL + TLS).
-- `acl` — contrôle d'accès par topic (`sai_backend`, `sai_esp32`).
+- `acl` — contrôle d'accès par topic (`sai_backend`, `sai_esp32`, `sai_frontend`).
 - `passwd` — mots de passe (hashés, **gitignoré**, régénéré par `setup_broker.ps1`).
 - `certs/` — PKI TLS autosignée (CA + serveur). Clés privées **gitignorées**.
 - `data/` — persistance du broker (gitignoré).
@@ -66,3 +66,18 @@ mosquitto_sub -h localhost -p 8883 --cafile certs/mosquitto_ca.crt \
 
 > En dev, le backend se connecte via `paho-mqtt` avec les réglages de
 > `backend/config.py` / `backend/.env` (voir Phase 2 du subscriber).
+
+## Simulateur ESP32 (dev)
+
+`backend/scripts/mqtt_simulateur.py` publie des mesures multi-capteurs et une
+alerte périodique, exactement comme le firmware ESP32 le fera. Il s'authentifie
+en `sai_esp32` (par défaut — ACL : write capteurs + alertes) :
+
+```bash
+# Depuis backend/, avec le venv actif
+python scripts/mqtt_simulateur.py [--parcelle serre-a] [--interval 5] [--alertes 60] [--user sai_esp32] [--pass ...]
+```
+
+> ⚠️ Ne pas remplacer `sai_esp32` par `sai_backend` : `sai_backend` n'a que le
+> read sur `sai/#` + write actionneurs/alertes → publication capteurs refusée
+> (`PUBACK rc135`).

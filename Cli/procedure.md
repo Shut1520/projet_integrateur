@@ -13,12 +13,14 @@ Ce document détaille toutes les étapes d'utilisation de l'interface en ligne d
 5. [Consulter les mesures d'un capteur](#5-consulter-les-mesures-dun-capteur)
 6. [Lister les actionneurs](#6-lister-les-actionneurs)
 7. [Envoyer une commande à un actionneur](#7-envoyer-une-commande-à-un-actionneur)
-8. [Consulter l'historique des commandes](#8-consulter-lhistorique-des-commandes)
-9. [Gérer les alertes](#9-gérer-les-alertes)
-10. [Gérer les seuils d'automatisation](#10-gérer-les-seuils-dautomatisation)
-11. [Consulter le tableau de bord du système](#11-consulter-le-tableau-de-bord-du-système)
-12. [Déconnexion (logout)](#12-déconnexion-logout)
-13. [Erreurs courantes et dépannage](#13-erreurs-courantes-et-dépannage)
+8. [Actions en lot (batch)](#8-actions-en-lot-batch)
+9. [Consulter l'historique des commandes](#9-consulter-lhistorique-des-commandes)
+10. [Gérer les alertes](#10-gérer-les-alertes)
+11. [Gérer les seuils d'automatisation](#11-gérer-les-seuils-dautomatisation)
+12. [Consulter le tableau de bord du système](#12-consulter-le-tableau-de-bord-du-système)
+13. [Clé API (apikey)](#13-clé-api-apikey)
+14. [Déconnexion (logout)](#14-déconnexion-logout)
+15. [Erreurs courantes et dépannage](#15-erreurs-courantes-et-dépannage)
 
 ---
 
@@ -40,17 +42,19 @@ requests>=2.31.0
 
 ### 1.2. Vérifier la configuration
 
-Le fichier `config.json` contient l'URL de l'API et le token d'authentification :
+Le fichier `config.json` contient l'URL de l'API, le token d'authentification et la clé API :
 
 ```json
 {
     "api_url": "http://localhost:8000",
-    "token": null
+    "token": null,
+    "cle_api": null
 }
 ```
 
 - **`api_url`** : Adresse du serveur FastAPI. Par défaut `http://localhost:8000`.
 - **`token`** : Token JWT automatiquement géré lors de la connexion/déconnexion.
+- **`cle_api`** : Clé API (`sk_sai_...`) envoyée dans l'en-tête `X-API-Key`, gérée par la commande `apikey` (voir section 13).
 
 ### 1.3. Vérifier que le serveur API est lancé
 
@@ -105,9 +109,10 @@ python cli.py status --check
 
 **Ce qui se passe :**
 - Si connecté : affiche l'URL du serveur, le nom, l'email et le rôle de l'utilisateur.
+- Si une clé API est configurée : affiche un préfixe masqué (`sk_sai_...` initiales).
 - Si non connecté : affiche un message indiquant qu'aucune session n'est active.
 
-**Sortie attendue (connecté) :**
+**Sortie attendue (connecté, avec clé API) :**
 
 ```
 [OK] Connecte a l'API
@@ -115,6 +120,7 @@ python cli.py status --check
      Utilisateur : Admin SAI
      Email : admin@sai.com
      Role : admin
+     Cle API : sk_sai_5f8a... (configuree)
 ```
 
 **Sortie attendue (non connecté) :**
@@ -225,13 +231,14 @@ ID   Nom            GPIO  Etat        Parcelle
 Envoie un ordre (on/off) à un actionneur spécifique.
 
 ```bash
-python cli.py commander <id_actionneur> --action on|off [--duree <secondes>]
+python cli.py commander <id_actionneur> --action on|off [--duree <secondes>] [--oui]
 ```
 
 **Paramètres :**
 - `<id_actionneur>` : ID de l'actionneur cible (obligatoire).
 - `--action` : `on` pour activer, `off` pour désactiver (obligatoire).
 - `--duree` : Durée en secondes de l'action (optionnel).
+- `--oui` : Confirme les actions critiques sans prompt interactif (optionnel).
 
 **Exemples :**
 
@@ -239,26 +246,76 @@ python cli.py commander <id_actionneur> --action on|off [--duree <secondes>]
 python cli.py commander 1 --action on              # Allumer l'actionneur #1
 python cli.py commander 1 --action off             # Éteindre l'actionneur #1
 python cli.py commander 1 --action on --duree 60   # Allumer pendant 60 secondes
+python cli.py commander 1 --action on --duree 60 --oui   # Sans confirmation
 python cli.py commander 2 --action on              # Allumer l'actionneur #2
 ```
 
-**Ce qui se passe :**
-1. Le CLI envoie la commande à l'API (`POST /api/commandes`).
-2. La source est automatiquement définie sur `"cli"`.
-3. Un message de confirmation s'affiche avec l'ID de la commande et son statut.
+**Vérifications automatiques (CDC 6.2.1 / 6.3) :**
+
+1. **Pompe (irrigation)** : le CLI interroge le capteur `niveau_eau` de la parcelle. Niveau sous 15 % → irrigation **bloquée**, sauf si `--oui` est fourni (permet de forcer).
+2. **Actionneurs critiques** (`pompe`, `ventilation`, `eclairage`) : confirmation interactive `[o/N]` demandée avant l'envoi, sauf avec `--oui`.
 
 **Sortie attendue :**
 
 ```
 [OK] Commande envoyee : on sur actionneur #1
      ID commande : 15
-     Statut : en_attente
+     Statut : envoyee
      Duree : 60 secondes
+```
+
+Toutes les exécutions sont **journalisées** dans `cli.log` (CDC 6.3).
+
+---
+
+## 8. Actions en lot (batch)
+
+### 8.1. Arrosage (irrigation)
+
+Lance une irrigation en vérifiant d'abord le niveau du réservoir (CDC 6.2.1 / F05).
+
+```bash
+python cli.py batch arrosage --actionneur <id> [--duree <secondes>] [--parcelle <id>] [--oui]
+```
+
+**Paramètres :**
+- `--actionneur` : ID de la pompe (obligatoire).
+- `--duree` : Durée de l'arrosage en secondes (optionnel, défaut illimité).
+- `--parcelle` : ID de la parcelle pour localiser le capteur `niveau_eau` (optionnel, défaut : déduit de l'actionneur).
+- `--oui` : Force l'arrosage sans confirmation, même si le niveau est bas.
+
+**Ce qui se passe :**
+1. Le CLI récupère la dernière mesure `niveau_eau` de la parcelle.
+2. Si le niveau est **sous 15 %** : l'arrosage est **annulé**, sauf `--oui` (la décision est journalisée).
+3. Si aucune mesure n'existe : l'arrosage est lancé avec un avertissement.
+4. La commande est envoyée à l'API (`POST /api/commandes`), source `cli`.
+
+**Sortie attendue :**
+
+```
+[INFO] Niveau reservoir : 45.0 %
+[OK] Arrosage lance : pompe #1 - 60s
+     ID commande : 22
+     Statut : envoyee
+```
+
+### 8.2. Ventilation
+
+Lance la ventilation après confirmation de l'action (CDC 6.2.2 / F05).
+
+```bash
+python cli.py batch ventilation --actionneur <id> [--duree <secondes>] [--oui]
+```
+
+**Exemple :**
+
+```bash
+python cli.py batch ventilation --actionneur 2 --duree 120 --oui
 ```
 
 ---
 
-## 8. Consulter l'historique des commandes
+## 9. Consulter l'historique des commandes
 
 Affiche les 20 dernières commandes envoyées dans le système.
 
@@ -286,7 +343,7 @@ ID   Type         Source   Statut        Actionneur  Date
 
 ---
 
-## 9. Gérer les alertes
+## 10. Gérer les alertes
 
 ### 9.1. Lister les alertes
 
@@ -362,7 +419,7 @@ python cli.py alertes resoudre 5
 
 ---
 
-## 10. Gérer les seuils d'automatisation
+## 11. Gérer les seuils d'automatisation
 
 Les seuils définissent les plages de valeurs acceptées pour chaque type de mesure et chaque parcelle. Lorsqu'une mesure dépasse ces seuils, une alerte est automatiquement générée.
 
@@ -425,7 +482,7 @@ python cli.py seuils configurer --type humidite_sol --min 30 --max 80 --unite % 
 
 ---
 
-## 11. Consulter le tableau de bord du système
+## 12. Consulter le tableau de bord du système
 
 Affiche une vue d'ensemble du système avec les statistiques principales.
 
@@ -456,7 +513,31 @@ python cli.py statut
 
 ---
 
-## 12. Déconnexion (logout)
+## 13. Clé API (apikey)
+
+Le CLI peut s'authentifier auprès des **endpoints IoT** (équivalent ESP32) grâce à une **clé API** (`sk_sai_...`, table `tokens`), envoyée dans l'en-tête `X-API-Key`. Utile lorsque le CLI doit jouer le rôle du microcontrôleur (création de mesures, récupération de commandes en attente...).
+
+### 13.1. Enregistrer une clé API
+
+```bash
+python cli.py apikey sk_sai_5f8a2c1b9d3e4f0a...
+```
+
+**Ce qui se passe :**
+1. La clé est sauvegardée dans `config.json` (`cle_api`).
+2. Un accusé de réception masqué s'affiche : `[OK] Cle API enregistree : sk_sai_5f8a...`.
+
+### 13.2. Effacer la clé API
+
+```bash
+python cli.py apikey --effacer
+```
+
+> La clé API **n'est jamais affichée en clair** : `status` n'affiche que le préfixe (`sk_sai_...` initiales).
+
+---
+
+## 14. Déconnexion (logout)
 
 Déconnecte l'utilisateur et supprime le token de session.
 
@@ -478,7 +559,7 @@ python cli.py logout
 
 ---
 
-## 13. Erreurs courantes et dépannage
+## 15. Erreurs courantes et dépannage
 
 | Erreur | Cause | Solution |
 |--------|-------|----------|
@@ -500,10 +581,14 @@ python cli.py logout
 | `logout` | Déconnexion | Non |
 | `status` | Vérifier l'état de la session | Non |
 | `status --check` | Vérifier le token auprès du serveur | Non |
+| `apikey <sk_sai_...>` | Enregistrer la clé API (`X-API-Key`) | Non |
+| `apikey --effacer` | Effacer la clé API | Non |
 | `capteurs` | Lister les capteurs | Oui |
 | `mesures <id> [--nb N]` | Afficher les mesures d'un capteur | Oui |
 | `actionneurs` | Lister les actionneurs | Oui |
-| `commander <id> --action on/off [--duree S]` | Envoyer un ordre à un actionneur | Oui |
+| `commander <id> --action on/off [--duree S] [--oui]` | Envoyer un ordre à un actionneur | Oui |
+| `batch arrosage --actionneur <id> [--duree S] [--parcelle P] [--oui]` | Irrigation avec vérification du réservoir | Oui |
+| `batch ventilation --actionneur <id> [--duree S] [--oui]` | Ventilation en lot | Oui |
 | `commandes` | Historique des commandes | Oui |
 | `alertes [--etat ...] [--parcelle ...]` | Lister les alertes (avec filtres) | Oui |
 | `alertes reconnaitre <id>` | Marquer une alerte comme reconnue | Oui |

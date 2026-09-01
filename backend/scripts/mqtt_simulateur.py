@@ -8,9 +8,10 @@ firmware ESP32 (voir Iot/INTERFACE.md). Utile pour valider le temps reel fronten
 
 Usage (depuis backend/, venv active) :
     python scripts/mqtt_simulateur.py [--parcelle serre-a] [--interval 5] [--alertes 60]
+    [--user sai_esp32] [--pass sai_esp32_pass]
 
-Connexion : broker TLS 8883, utilisateur `sai_esp32` (ACL : write capteurs + alertes).
-Ctrl+C pour arreter.
+Connexion : broker TLS 8883, utilisateur `sai_esp32` par defaut (ACL : write
+capteurs + alertes). Ctrl+C pour arreter.
 """
 
 import argparse
@@ -25,7 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import paho.mqtt.client as mqtt
 
-from config import MQTT_BROKER, MQTT_PORT, MQTT_TLS, MQTT_USER, MQTT_PASS, MQTT_CA_CERT
+from config import MQTT_BROKER, MQTT_PORT, MQTT_TLS, MQTT_CA_CERT
 
 # Valeurs nominales par type de mesure (le simulateur fait varier autour de la cible)
 NOMINAUX = {
@@ -73,6 +74,8 @@ def main():
     parser.add_argument("--parcelle", default="serre-a", help="Nom de parcelle dans les topics")
     parser.add_argument("--interval", type=int, default=5, help="Intervalle (s) entre deux publications")
     parser.add_argument("--alertes", type=int, default=60, help="Publier une alerte toutes les N secondes")
+    parser.add_argument("--user", default="sai_esp32", help="Utilisateur MQTT (ACL : write capteurs + alertes)")
+    parser.add_argument("--pass", dest="password", default="sai_esp32_pass", help="Mot de passe MQTT")
     args = parser.parse_args()
 
     client = mqtt.Client(
@@ -81,10 +84,9 @@ def main():
     )
     if MQTT_TLS:
         client.tls_set(ca_certs=MQTT_CA_CERT, tls_version=mqtt.ssl.PROTOCOL_TLS)
-    if MQTT_USER:
-        client.username_pw_set(MQTT_USER, MQTT_PASS)
+    client.username_pw_set(args.user, args.password)
 
-    print(f"Connecting: {MQTT_BROKER}:{MQTT_PORT} (TLS={MQTT_TLS}) as {MQTT_USER}")
+    print(f"Connecting: {MQTT_BROKER}:{MQTT_PORT} (TLS={MQTT_TLS}) as {args.user}")
     client.connect(MQTT_BROKER, MQTT_PORT, keepalive=30)
     client.loop_start()
 
