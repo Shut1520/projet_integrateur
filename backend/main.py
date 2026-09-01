@@ -113,11 +113,15 @@ def demarrer_automatisation():
     print("[automatisation] Boucle demarrree (toutes les 5 min)")
 
     # Subscriber MQTT : ingestion des mesures ESP32 (Phase 2)
-    from services.mqtt_service import _boucle_subscriber
+    # Neutralisable via SAI_MQTT_DISABLED=1 (utile pour les tests pytest).
+    if os.getenv("SAI_MQTT_DISABLED", "") in ("1", "true", "True", "yes"):
+        print("[mqtt] Subscriber desactive (SAI_MQTT_DISABLED)")
+    else:
+        from services.mqtt_service import _boucle_subscriber
 
-    mqtt_thread = threading.Thread(target=_boucle_subscriber, daemon=True)
-    mqtt_thread.start()
-    print("[mqtt] Subscriber demarre")
+        mqtt_thread = threading.Thread(target=_boucle_subscriber, daemon=True)
+        mqtt_thread.start()
+        print("[mqtt] Subscriber demarre")
 
 
 # ─── Point d'entree pour l'execution directe ───

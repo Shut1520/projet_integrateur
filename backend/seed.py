@@ -201,6 +201,7 @@ def seed_mesures_mock(db: Session, capteurs: list, nb_mesures: int = 50):
 def vider_tables(db: Session):
     """Supprime toutes les donnees de chaque table (ordre anti-FK)."""
     ordre = [
+        "historique_actions",
         "tokens",
         "seuils",
         "alertes",

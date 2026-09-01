@@ -14,6 +14,9 @@ import sys
 # Ajoute le dossier backend au PYTHONPATH
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+# Neutralise le subscriber MQTT (thread de main.py) pendant les tests.
+os.environ["SAI_MQTT_DISABLED"] = "1"
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
@@ -33,7 +36,9 @@ from services.auth_service import creer_token, inscrire
 from werkzeug.security import generate_password_hash
 
 # ─── Configuration DB de test ───
-DB_URL = "postgresql://sai_user:sai_password@localhost:5432/sai_db"
+# BD de test dediee (sai_test) : isolee de la BD de production sai_db,
+# pour empecher que les tests ne polluent les donnees reelles.
+DB_URL = "postgresql://sai_user:sai_password@localhost:5432/sai_test"
 engine = create_engine(DB_URL)
 TestSession = sessionmaker(bind=engine)
 

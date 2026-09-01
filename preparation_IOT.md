@@ -62,6 +62,15 @@ Document **vivant** : checklist de préparation de tout le terrain avant l'impl�
 - [x] **2.3** Parser le JSON MQTT → mapper le capteur (parcelle/type) → **insérer la `Mesure` en BD** directement (au lieu de passer par HTTP).
 - [x] **2.4** Gérer la **reconnexion au broker** (backoff) et la fidélité QoS.
 
+### Nettoyage BD & BD de test dédiée (prérequis CI)
+
+- [x] **N.1** Nettoyer `sai_db` (retour état seed propre) : backup `pg_dump` (dossier `backend/backups/`, gitignoré) + `seed.py --drop`.
+- [x] **N.2** Étendre `init_db.py` avec un argument `--db <nom>` pour initialiser n'importe quelle base (défaut `sai_db`).
+- [x] **N.3** Créer la **BD de test dédiée `sai_test`** : schéma construit **par Alembic** (`alembic upgrade head`, source de vérité) — le MPD seul est incomplet (colonne `actif`, `historique_actions`).
+- [x] **N.4** Pointer `tests/conftest.py` vers `sai_test` (isolation par rapport à `sai_db`).
+- [x] **N.5** Neutraliser le subscriber MQTT pendant les tests : flag `SAI_MQTT_DISABLED` lu dans `main.py`, activé dans `conftest.py`.
+- [x] **N.6** Valider : **110 passed, 3 échecs pré-existants (401 vs 403)** sur `sai_test`, et **`sai_db` reste propre** (aucune pollution).
+
 ### Phase 3 — Authentification ESP32 par clé API
 
 - [ ] **3.1** Créer la dépendance `get_client_cle_api` : validation d'une clé (`X-API-Key` / query) contre la table `tokens` (active, non expirée, maj `last_used_at`).
@@ -130,3 +139,4 @@ Document **vivant** : checklist de préparation de tout le terrain avant l'impl�
 | 2026-09-01 | **2.4** | Reconnexion avec backoff exponentiel borné (2→60 s) autour de `connect`/`loop_forever` ; QoS 1 sur l'abonnement mesures/alertes. | opencode |
 | 2026-09-01 | **1.2 ✅ finalisé** | **Round-trip TLS confirmé** : test d'intégration réel (broker 8883 + subscriber + `mosquitto_pub` au user `sai_esp32` + vérif BD) → `1 mesure inserée, valeur=26.5, unite=°C, source=esp32`. Le bloqueur Phase 1 est levé. | opencode |
 | 2026-09-01 | **Tests 2.x** | `tests/test_mqtt_service.py` créé (5 tests) : résolution capteur (trouvé/inconnu/parcelle inconnue), insertion payload spec (valeur+unité+source), clés non numériques ignorées. Suite : **110 passed**, 3 échecs pré-existants. Données d'intégration nettoyées. | opencode |
+| 2026-09-01 | **N.1–N.6** | **Nettoyage BD + BD de test dédiée.** Backup `pg_dump` de `sai_db` dans `backend/backups/` (gitignoré) puis reseed propre (`seed.py --drop`, bug FK `historique_actions` corrigé). `init_db.py` paramétré par `--db`. `sai_test` construite **par Alembic** (`upgrade head`, schéma seul cohérent avec les modèles — le MPD n'inclut ni `actif` ni `historique_actions`). `conftest.py` pointe vers `sai_test` + flag `SAI_MQTT_DISABLED` neutralise le subscriber en test. Validation : **110 passed / 3 échecs pré-existants** sur `sai_test`, **`sai_db` intacte** (2 users, 1 parcelle `Serre A`, 5 capteurs sans doublons, 0 mesures) → fin de la pollution inter-tests. | opencode |
