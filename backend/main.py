@@ -107,10 +107,17 @@ def _boucle_automatisation():
 
 @app.on_event("startup")
 def demarrer_automatisation():
-    """Lance la boucle d'automatisation au demarrage du serveur."""
+    """Lance la boucle d'automatisation et le subscriber MQTT au demarrage."""
     thread = threading.Thread(target=_boucle_automatisation, daemon=True)
     thread.start()
     print("[automatisation] Boucle demarrree (toutes les 5 min)")
+
+    # Subscriber MQTT : ingestion des mesures ESP32 (Phase 2)
+    from services.mqtt_service import _boucle_subscriber
+
+    mqtt_thread = threading.Thread(target=_boucle_subscriber, daemon=True)
+    mqtt_thread.start()
+    print("[mqtt] Subscriber demarre")
 
 
 # ─── Point d'entree pour l'execution directe ───

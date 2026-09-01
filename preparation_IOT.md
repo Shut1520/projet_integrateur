@@ -49,7 +49,7 @@ Document **vivant** : checklist de préparation de tout le terrain avant l'impl�
 ### Phase 1 — Infrastructure : broker Mosquitto
 
 - [x] **1.1** Installer Mosquitto : `winget install EclipseFoundation.Mosquitto` (v2.1.2) puis vérifier `mosquitto -v`.
-- [~] **1.2** Configurer TLS **8883** + **auth** (`mosquitto_passwd`) + **ACL par topic** — fichiers versionnés dans `mosquitto/` (`mosquitto.conf`, `passwd`, `acl`). *(en cours : PKI + passwd + acl + config TLS créés et démarrage broker validé ; round-trip TLS pub/sub à confirmer en Phase 6.2)*
+- [x] **1.2** Configurer TLS **8883** + **auth** (`mosquitto_passwd`) + **ACL par topic** — fichiers versionnés dans `mosquitto/` (`mosquitto.conf`, `passwd`, `acl`).
 - [x] **1.3** Tenir compte des **particularités Mosquitto v2.x** : écoute par défaut = loopback + `allow_anonymous true` par défaut → restreindre explicitement ; déclarer `listener 1883/8883` explicitement.
 - [x] **1.4** Créer un **script de démarrage / arrêt** du broker en dev (reproductible).
 - [x] **1.5** Ajouter `paho-mqtt` à `backend/requirements.txt` et l'installer dans le venv.
@@ -57,10 +57,10 @@ Document **vivant** : checklist de préparation de tout le terrain avant l'impl�
 
 ### Phase 2 — Subscriber MQTT backend
 
-- [ ] **2.1** Créer `services/mqtt_service.py` (subscriber `paho-mqtt` lancé au démarrage de `main.py`).
-- [ ] **2.2** S'abonner aux topics selon la spécification : `sai/+/capteurs/#` (mesures), `sai/+/actionneurs/#` (statut), `sai/+/alertes`.
-- [ ] **2.3** Parser le JSON MQTT → mapper le capteur (parcelle/type) → **insérer la `Mesure` en BD** directement (au lieu de passer par HTTP).
-- [ ] **2.4** Gérer la **reconnexion au broker** (backoff) et la fidélité QoS.
+- [x] **2.1** Créer `services/mqtt_service.py` (subscriber `paho-mqtt` lancé au démarrage de `main.py`).
+- [x] **2.2** S'abonner aux topics selon la spécification : `sai/+/capteurs/#` (mesures), `sai/+/actionneurs/#` (statut), `sai/+/alertes`.
+- [x] **2.3** Parser le JSON MQTT → mapper le capteur (parcelle/type) → **insérer la `Mesure` en BD** directement (au lieu de passer par HTTP).
+- [x] **2.4** Gérer la **reconnexion au broker** (backoff) et la fidélité QoS.
 
 ### Phase 3 — Authentification ESP32 par clé API
 
@@ -124,3 +124,9 @@ Document **vivant** : checklist de préparation de tout le terrain avant l'impl�
 | 2026-09-01 | **1.4** | Scripts `mosquitto/scripts/` : `gen_certs.ps1` (PKI CA + serveur, OpenSSL de Git), `setup_broker.ps1` (PKI + passwd), `start_broker.ps1` (lance depuis `mosquitto/` pour résoudre les chemins relatifs), `stop_broker.ps1`. `README.md` d'usage. Démarrage broker validé. | opencode |
 | 2026-09-01 | **1.5** | `paho-mqtt>=2.1.0` ajouté à `backend/requirements.txt` + installé (2.1.0, API v2 vérifiée). | opencode |
 | 2026-09-01 | **1.6** | Bloc MQTT dans `backend/config.py` + `backend/.env` : `MQTT_BROKER=localhost`, `MQTT_PORT=8883`, `MQTT_TLS=true`, `MQTT_USER=sai_backend`, `MQTT_PASS=sai_backend_pass`, `MQTT_CA_CERT` (résolue vers `mosquitto/certs/mosquitto_ca.crt`), topics `sai/+/capteurs/#` / `sai/+/actionneurs/#` / `sai/+/alertes`. Config chargée + app FastAPI importe sans erreur. | opencode |
+| 2026-09-01 | **2.1** | `services/mqtt_service.py` : subscriber paho (API v2), TLS + auth depuis `config.py`, connect + `loop_forever`, lancé en thread daemon au démarrage de `main.py` (dans `demarrer_automatisation`). | opencode |
+| 2026-09-01 | **2.2** | Abonné à `sai/+/capteurs/#` et `sai/+/alertes` (QoS 1). Payload JSON parsé conforme à la spec (multi-mesures, `sai/[parcelle]/capteurs/[type]`). | opencode |
+| 2026-09-01 | **2.3** | Mapping type→capteur (`temperature→dht22`, `humidite_sol→yl-69`, `co2→sen0159`, `luminosite→bh1750`, `niveau_eau`), unités par défaut (surchargeables par `unite`). `_resoudre_capteur` : parcelle par nom + capteur actif. Une `Mesure` insérée par clé numérique du payload. | opencode |
+| 2026-09-01 | **2.4** | Reconnexion avec backoff exponentiel borné (2→60 s) autour de `connect`/`loop_forever` ; QoS 1 sur l'abonnement mesures/alertes. | opencode |
+| 2026-09-01 | **1.2 ✅ finalisé** | **Round-trip TLS confirmé** : test d'intégration réel (broker 8883 + subscriber + `mosquitto_pub` au user `sai_esp32` + vérif BD) → `1 mesure inserée, valeur=26.5, unite=°C, source=esp32`. Le bloqueur Phase 1 est levé. | opencode |
+| 2026-09-01 | **Tests 2.x** | `tests/test_mqtt_service.py` créé (5 tests) : résolution capteur (trouvé/inconnu/parcelle inconnue), insertion payload spec (valeur+unité+source), clés non numériques ignorées. Suite : **110 passed**, 3 échecs pré-existants. Données d'intégration nettoyées. | opencode |
