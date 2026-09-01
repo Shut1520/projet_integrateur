@@ -116,6 +116,7 @@ def evaluer_parcelle(db: Session, parcelle_id: int) -> dict:
         "alertes_creees": 0,
         "actions_declenchees": 0,
         "details": [],
+        "_alertes_obj": [],
     }
 
     for seuil in seuils:
@@ -154,6 +155,7 @@ def evaluer_parcelle(db: Session, parcelle_id: int) -> dict:
                 id_mesure=mesure.id,
             )
             resultats["alertes_creees"] += 1
+            resultats["_alertes_obj"].append(alerte)
             resultats["details"].append(f"Alerte: {message}")
 
             # Declencher l'actionneur correspondant si disponible
@@ -185,12 +187,22 @@ def executer_boucle(db: Session) -> dict:
         "alertes_creees": 0,
         "actions_declenchees": 0,
     }
+    alertes_crees = []
 
     for parcelle in parcelles:
         resultats = evaluer_parcelle(db, parcelle.id)
         resultats_total["parcelles_evaluees"] += 1
         resultats_total["alertes_creees"] += resultats["alertes_creees"]
         resultats_total["actions_declenchees"] += resultats["actions_declenchees"]
+        alertes_crees.extend(resultats.get("_alertes_obj", []))
 
     db.commit()
+
+    # Temps reel : publie les alertes generees sur MQTT (best effort)
+    if alertes_crees:
+        from services.mqtt_service import publier_alerte
+
+        for alerte in alertes_crees:
+            publier_alerte(alerte, db)
+
     return resultats_total

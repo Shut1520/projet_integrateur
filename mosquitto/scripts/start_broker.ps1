@@ -19,7 +19,8 @@ if (-not (Test-Path -LiteralPath $config)) { throw "Config introuvable : $config
 $brokerDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 
 Write-Host "Demarrage du broker Mosquitto SAI (config: $config)..." -ForegroundColor Green
-Write-Host "  - listener 8883 (TLS, auth + ACL)"
+Write-Host "  - listener 8883 (TLS, auth + ACL)  -> ESP32 / backend"
+Write-Host "  - listener 9001 (WebSocket, auth)  -> frontend web (temps reel)"
 Write-Host "  (1883 geree par le service Windows — inutilise par SAI)"
 Write-Host "Ctrl+C pour arreter." -ForegroundColor Yellow
 

@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { apiService } from '../../services/api';
+import { subscribeAlertes } from '../../services/mqtt';
 import {
   Search,
   Bell,
@@ -90,7 +91,9 @@ export const TopBar = ({ onToggleMobileMenu }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Récupération des alertes actives avec polling toutes les 30 secondes
+  // Alertes temps réel : chargement HTTP initial (fallback) puis abonnement MQTT.
+  // Chaque nouvelle alerte publiée par le backend (sai/<parcelle>/alertes) est
+  // ajoutée immédiatement au panneau de notifications, sans polling.
   useEffect(() => {
     async function fetchAlertes() {
       try {
@@ -102,8 +105,15 @@ export const TopBar = ({ onToggleMobileMenu }) => {
       }
     }
     fetchAlertes();
-    const interval = setInterval(fetchAlertes, 30000);
-    return () => clearInterval(interval);
+
+    const unsub = subscribeAlertes(({ payload }) => {
+      if (!payload || payload.id == null) return;
+      setAlertes((prev) => {
+        if (prev.some((a) => a.id === payload.id)) return prev;
+        return [payload, ...prev].slice(0, 50);
+      });
+    });
+    return () => unsub();
   }, []);
 
   /**

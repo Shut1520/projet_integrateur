@@ -15,6 +15,7 @@ Pas de BD de test dediee : ce module tourne dans le contexte de l'app (BD reelle
 """
 
 import json
+import os
 import time
 
 import paho.mqtt.client as mqtt
@@ -54,6 +55,7 @@ TYPE_A_UNITE = {
 _CHAMPS_RESERVES = {"device_id", "parcelle", "timestamp", "unite"}
 
 _CLIENT = None
+_PUB_CLIENT = None
 
 
 def _client():
@@ -65,6 +67,66 @@ def _client():
             client_id="sai_backend_subscriber",
         )
     return _CLIENT
+
+
+def _publisher_client():
+    """Retourne le client paho dedie a la publication d'alertes (singleton).
+
+    Connexion + boucle reseau lancees une seule fois ; paho se reconnecte
+    automatiquement si le broker tombe. En cas d'echec initial (broker
+    injoignable), on reinitialise pour retenter au prochain appel.
+    """
+    global _PUB_CLIENT
+    if _PUB_CLIENT is None:
+        client = mqtt.Client(
+            callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
+            client_id="sai_backend_publisher",
+        )
+        _configurer_client(client)
+        client.connect(MQTT_BROKER, MQTT_PORT, keepalive=30)
+        client.loop_start()
+        _PUB_CLIENT = client
+    return _PUB_CLIENT
+
+
+def publier_alerte(alerte, db) -> bool:
+    """Publie une alerte sur MQTT `sai/<parcelle>/alertes` (best effort).
+
+    Payload "client-friendly" consomme par le frontend (TopBar/Dashboard).
+    L'echec de publication ne doit jamais faire echouer la requete HTTP :
+    on journalise et on retourne False dans ce cas.
+    """
+    if os.getenv("SAI_MQTT_DISABLED", "") in ("1", "true", "True", "yes"):
+        return False  # tests : MQTT neutralise
+
+    try:
+        from models.parcelle import Parcelle
+
+        parcelle = db.get(Parcelle, alerte.id_parcelle)
+        nom = parcelle.nom if parcelle else f"parcelle-{alerte.id_parcelle}"
+
+        payload = {
+            "id": alerte.id,
+            "type_alerte": alerte.type_alerte,
+            "type": alerte.type_alerte,
+            "message": alerte.message,
+            "severite": alerte.severite,
+            "etat": alerte.etat,
+            "valeur": alerte.valeur,
+            "seuil": alerte.seuil,
+            "id_parcelle": alerte.id_parcelle,
+            "parcelle": nom,
+            "date_debut": alerte.date_debut.isoformat() if alerte.date_debut else None,
+        }
+        _publisher_client().publish(
+            f"sai/{nom}/alertes",
+            json.dumps(payload, ensure_ascii=False),
+            qos=1,
+        )
+        return True
+    except Exception as e:
+        print(f"[mqtt] Publication alerte impossible: {e}")
+        return False
 
 
 def _unite_du_type(type_mesure: str, payload: dict) -> str:

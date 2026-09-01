@@ -23,7 +23,8 @@ Write-Host "[1/2] Generation de la PKI TLS..." -ForegroundColor Green
 Write-Host "[2/2] Mots de passe Mosquitto..." -ForegroundColor Green
 $jobs = @(
     @{ user = "sai_backend";  pass = "sai_backend_pass" },
-    @{ user = "sai_esp32";    pass = "sai_esp32_pass" }
+    @{ user = "sai_esp32";    pass = "sai_esp32_pass" },
+    @{ user = "sai_frontend"; pass = "sai_frontend_pass" }
 )
 
 # Creation -c puis -b pour ajouter/apdater (methodes via le .exe)

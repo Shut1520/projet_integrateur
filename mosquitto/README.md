@@ -1,19 +1,23 @@
 # Broker Mosquitto SAI
 
 Configuration versionnee du broker MQTT utilise par le projet SAI (Phase 1 de la
-preparation IoT). Deux listeners sont prevus, mais sur **cette** machine seul
-le port **8883 (TLS)** est expose.
+preparation IoT + temps reel frontend Phase 4). Deux listeners sont exposes :
+**8883 (MQTT/TLS)** pour ESP32/backend et **9001 (WebSocket)** pour le frontend.
 
 ## Ports
 
 | Port | Statut | Usage |
 |------|--------|-------|
-| **8883** | **Expose (TLS + auth + ACL)** | Broker SAI (notre config ci-dessous) |
+| **8883** | **Expose (TLS + auth + ACL)** | Broker SAI (notre config ci-dessous) — ESP32 / backend |
+| **9001** | **Expose (WebSocket + auth + ACL)** | Frontend web temps reel (`ws://localhost:9001`, sans TLS en dev) |
 | 1883 | Occupé par le service Windows Mosquitto (config par défaut, **inutilisé par SAI**) | — |
 
 Le bloc `listener 1883` est present dans `mosquitto.conf` mais **commenté** : il
 peut être réactivé si le service Windows libère le port (accès local non chiffré,
 pratique pour déboguer).
+
+> Le port 9001 est **sans TLS** pour le dev (CA autosignée pénible dans un
+> navigateur). Pour la prod, le couvrir avec `wss` derrière un proxy TLS (nginx).
 
 ## Fichiers
 
@@ -27,8 +31,9 @@ pratique pour déboguer).
 
 | Utilisateur | Rôle | Portée ACL |
 |-------------|------|------------|
-| `sai_backend` | subscriber backend | read `sai/#`, write `sai/+/actionneurs/#` |
+| `sai_backend` | subscriber backend + publisher alertes | read `sai/#`, write `sai/+/actionneurs/#`, write `sai/+/alertes` |
 | `sai_esp32` | publisher ESP32 | write `sai/+/capteurs/#`, write `sai/+/alertes`, read `sai/+/commandes` |
+| `sai_frontend` | lecture temps réel frontend (9001) | read `sai/#` |
 
 ## Prérequis (une seule fois)
 

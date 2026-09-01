@@ -20,6 +20,23 @@ Document **vivant** : checklist de préparation de tout le terrain avant l'impl�
 
 ---
 
+## Principe d'exécution — « terrain » ↔ « validation finale »
+
+La préparation est découpée en deux catégories, distinguées **systématiquement** dans ce document :
+
+- **(A) Terrain** : tout ce qui peut être développé, configuré et documenté **sans acteur « ESP32 »** — code backend/frontend/CLI, config broker, docs, tests unitaires/non-intégratifs. Ne dépend **d'aucune publication MQTT externe**.
+- **(B) Validation finale** : tout ce qui exige de **« jouer l'ESP32 »** (publier des mesures MQTT, tirer les commandes en attente, confirmer les exécutions) **ou** de vérifier de bout en bout le circuit MQTT (broker ↔ backend ↔ BD ↔ frontend temps réel) — round-trips et tests d'intégration.
+
+**Règle d'exécution** : on réalise **toute la catégorie (A)** d'abord, dans l'ordre des phases ; la catégorie **(B)** — intégration broker, simulateur « ESP32 virtuel », temps réel frontend vérifié — n'est entamée **qu'en toute dernière position**, une fois le terrain prêt.
+
+**Application de la règle aux phases restantes** :
+
+- **Phase 4** : les points d'implémentation (4.1-4.4) sont **(A)** ✅ ; le round-trip complet (simulateur → mesures en BD → WS 9001 → publisher backend) reste en **(B)**.
+- **Phase 5 (CLI)** : entièrement **(A)**.
+- **Phase 6** : **6.1** et **6.5** en **(A)** ; **6.2**, **6.3**, **6.4** en **(B)**.
+
+---
+
 ## Baseline environnement (vérifiée le 2026-09-01)
 
 - ❌ **Docker** : absent → **non requis / non utilisé** (Mosquitto est un binaire natif, pas un container).
@@ -34,6 +51,7 @@ Document **vivant** : checklist de préparation de tout le terrain avant l'impl�
 ## Checklist de préparation
 
 > Cocher `[x]` chaque point réalisé et mentionner `@ <date>` + qui. Voir le *Journal de mise à jour*.
+> Légende : **(A)** = terrain (sans acteur ESP32) · **(B)** = validation finale (ESP32 / bout en bout) — voir *Principe d'exécution*.
 
 ### Phase 0 — Alignement de l'existant (prérequis IoT)
 
@@ -81,27 +99,28 @@ Document **vivant** : checklist de préparation de tout le terrain avant l'impl�
 
 ### Phase 4 — Temps réel frontend
 
-- [ ] **4.1** Ajouter le client MQTT WebSocket (`mqtt.js`) utilisant `VITE_MQTT_URL` (variable aujourd'hui **non utilisée** dans le code).
-- [ ] **4.2** Brancher le topic alertes (`sai/+/alertes`) pour le panneau/compteur **temps réel** (aujourd'hui la TopBar fait du **polling 30 s** de `GET /api/alertes`).
-- [ ] **4.3** (Optionnel) Rafraîchissement auto des mesures du dashboard via MQTT capteurs (aujourd'hui chargement unique + bouton manuel).
-- [ ] **4.4** Documenter `VITE_MQTT_URL` dans `frontend/.env.example`.
+- [x] **(A)** **4.1** Client MQTT WebSocket (`mqtt.js`) utilisant `VITE_MQTT_URL` (variable aujourd'hui **non utilisée** dans le code).
+- [x] **(A)** **4.2** Brancher le topic alertes (`sai/+/alertes`) pour le panneau/compteur **temps réel** (aujourd'hui la TopBar fait du **polling 30 s** de `GET /api/alertes`).
+- [x] **(A)** **4.3** (Optionnel) Rafraîchissement auto des mesures du dashboard via MQTT capteurs (aujourd'hui chargement unique + bouton manuel).
+- [x] **(A)** **4.4** Documenter `VITE_MQTT_URL` dans `frontend/.env.example`.
+- [ ] **(B)** **4.5** **Round-trip de validation finale** : simulateur corrigé (user `sai_esp32`) → mesures insérées en BD via le subscriber → alertes/mesures reçues en WS 9001 (frontend) ; `POST /api/alertes` → publisher backend → message WS.
 
 ### Phase 5 — CLI complémentaire
 
-- [ ] **5.1** Support de la **clé API** dans `Cli/config.json` + envoi du header `X-API-Key`.
-- [ ] **5.2** **Vérification du niveau réservoir** avant irrigation (CDC 6.2.1) : requête du capteur `niveau_eau` avant de commander la pompe.
-- [ ] **5.3** **Confirmation interactive** avant les actions critiques (CDC 6.3).
-- [ ] **5.4** **Logging des exécutions** dans un fichier dédié (CDC 6.3), par ex. `cli.log`.
-- [ ] **5.5** (Optionnel) Commande **batch** d'arrosage/ventilation (CDC F05).
-- [ ] **5.6** Maintenir `python test_cli.py` à jour après ces ajouts.
+- [ ] **(A)** **5.1** Support de la **clé API** dans `Cli/config.json` + envoi du header `X-API-Key`.
+- [ ] **(A)** **5.2** **Vérification du niveau réservoir** avant irrigation (CDC 6.2.1) : requête du capteur `niveau_eau` avant de commander la pompe.
+- [ ] **(A)** **5.3** **Confirmation interactive** avant les actions critiques (CDC 6.3).
+- [ ] **(A)** **5.4** **Logging des exécutions** dans un fichier dédié (CDC 6.3), par ex. `cli.log`.
+- [ ] **(A)** **5.5** (Optionnel) Commande **batch** d'arrosage/ventilation (CDC F05).
+- [ ] **(A)** **5.6** Maintenir `python test_cli.py` à jour après ces ajouts.
 
 ### Phase 6 — Tests & validation écosystème (avant le firmware)
 
-- [ ] **6.1** Tests `pytest` : `mqtt_service`, auth clé API, commandes/actions par clé API, dashboard agrégé.
-- [ ] **6.2** Test d'intégration broker : publier une mesure MQTT fictive → vérifier son insertion en BD via le subscriber.
-- [ ] **6.3** Simulateur **« ESP32 virtuel »** (script Python/test) : publie des mesures MQTT, récupère une commande en attente, confirme l'exécution, crée une `Action` → vérifie le flux complet en BD.
-- [ ] **6.4** Vérifier l'affichage **temps réel frontend** avec un publisher MQTT de test.
-- [ ] **6.5** Mettre à jour `AGENTS.md` : ajouter la section MQTT, l'auth clé API, les nouveaux endpoints, le broker ; **retirer la mention « MQTT non implémenté »** une fois la préparation faite.
+- [ ] **(A)** **6.1** Tests `pytest` : `mqtt_service`, auth clé API, commandes/actions par clé API, dashboard agrégé.
+- [ ] **(B)** **6.2** Test d'intégration broker : publier une mesure MQTT fictive → vérifier son insertion en BD via le subscriber.
+- [ ] **(B)** **6.3** Simulateur **« ESP32 virtuel »** (script Python/test) : publie des mesures MQTT, récupère une commande en attente, confirme l'exécution, crée une `Action` → vérifie le flux complet en BD.
+- [ ] **(B)** **6.4** Vérifier l'affichage **temps réel frontend** avec un publisher MQTT de test.
+- [ ] **(A)** **6.5** Mettre à jour `AGENTS.md` : ajouter la section MQTT, l'authentification clé API, les nouveaux endpoints, le broker ; **retirer la mention « MQTT non implémenté »** une fois la préparation faite.
 
 ---
 
@@ -110,7 +129,7 @@ Document **vivant** : checklist de préparation de tout le terrain avant l'impl�
 - Schéma BD cohérent, **Alembic = référence**, migrations propres.
 - Subscriber MQTT fonctionnel (broker démarré + ingestion mesures + reconnexion).
 - Endpoints IoT sécurisés par **clé API** + `GET /api/commandes/attente` + contrat d'interface ESP32 documenté (`Iot/INTERFACE.md`).
-- Frontend **temps réel** câblé (alertes MQTT WebSocket).
+- Frontend **temps réel** câblé (alertes + mesures MQTT WebSocket).
 - CLI complété (clé API, niveau réservoir, confirmation, logging).
 - Tests d'intégration écosystème + simulateur « ESP32 virtuel » verts.
 - Environnement de dev reproductible (config broker versionnée + script de démarrage).
@@ -123,6 +142,7 @@ Document **vivant** : checklist de préparation de tout le terrain avant l'impl�
 
 | Date | Point | Description | Qui |
 |------|-------|-------------|-----|
+| 2026-09-01 | **Principe A/B** | **Reformation du document** : ajout de la section « Principe d'exécution — terrain ↔ validation finale » (définitions (A)/(B), règle d'exécution = tout (A) d'abord puis (B) en dernière position, application aux phases restantes) + annotations `(A)`/`(B)` sur les checklists Phases 4, 5, 6 + ajout du round-trip **4.5 (B)** de validation finale. | opencode |
 | 2026-09-01 | **0.1** | Schéma aligné sur `mpd.sql` : migration Alembic `a1b2c3d4e5f7_alignement_mpd.py` (7 triggers `updated_at`, 11 CHECK, 2 index manquants recréés, non-destructif). Écart documenté : `chk_alertes_source` retirée (l'app crée des alertes sans mesure/action) ; CASCADE volontairement non traité (décision utilisateur, à reporter). | opencode |
 | 2026-09-01 | **0.2** | Dépendance `exiger_admin` dans `auth.py` (403 si role ≠ admin) appliquée sur capteurs/utilisateurs/tokens. Tests `TestControleRole` (3 négatifs, fixture `agri_fresh` isolée). | opencode |
 | 2026-09-01 | **0.3** | Rate limiting `slowapi` 0.1.10 : `services/rate_limit.py` + config (60/min mesures, 20/min écritures/auth) + handler dans `main.py`. Vérifié : 429 atteint après 20 requêtes. | opencode |
@@ -141,3 +161,4 @@ Document **vivant** : checklist de préparation de tout le terrain avant l'impl�
 | 2026-09-01 | **Tests 2.x** | `tests/test_mqtt_service.py` créé (5 tests) : résolution capteur (trouvé/inconnu/parcelle inconnue), insertion payload spec (valeur+unité+source), clés non numériques ignorées. Suite : **110 passed**, 3 échecs pré-existants. Données d'intégration nettoyées. | opencode |
 | 2026-09-01 | **N.1–N.6** | **Nettoyage BD + BD de test dédiée.** Backup `pg_dump` de `sai_db` dans `backend/backups/` (gitignoré) puis reseed propre (`seed.py --drop`, bug FK `historique_actions` corrigé). `init_db.py` paramétré par `--db`. `sai_test` construite **par Alembic** (`upgrade head`, schéma seul cohérent avec les modèles — le MPD n'inclut ni `actif` ni `historique_actions`). `conftest.py` pointe vers `sai_test` + flag `SAI_MQTT_DISABLED` neutralise le subscriber en test. Validation : **110 passed / 3 échecs pré-existants** sur `sai_test`, **`sai_db` intacte** (2 users, 1 parcelle `Serre A`, 5 capteurs sans doublons, 0 mesures) → fin de la pollution inter-tests. | opencode |
 | 2026-09-01 | **3.1–3.5** | **Phase 3 — auth ESP32 par clé API.** `auth.py` : `get_client_cle_api` (header `X-API-Key` / query `api_key`, validation active+non expirée, maj `last_used_at`) et `get_client_iot` (OR clé API / JWT pour endpoints partagés). `POST /api/mesures` passe de **public à clé API requise**. `PUT /api/commandes/{id}`, `POST /api/actions`, `PUT /api/actions/{id}` acceptent clé API ou JWT. Nouveau `GET /api/commandes/attente` (commande `envoyee`, FIFO). Contrat `Iot/INTERFACE.md` (clé API, topics MQTT, payload multi-mesures, workflow pull/confirm, codes d'erreur, config firmware). Tests : `test_iot.py` (9 tests) + adaptation `test_mesures.py` ; suite **119 passed / 3 échecs pré-existants** (401 vs 403). Fixture autouse désactive le rate limiting en test (évite 429 flaky sur `POST /api/commandes`). | opencode |
+| 2026-09-01 | **4.1–4.4** | **Phase 4 — temps réel frontend (partie A).** (1) Broker : nouveau listener **WebSocket 9001** dans `mosquitto.conf` + ACL (`sai_frontend` read `sai/#`, `sai_backend` + write `sai/+/alertes`), `passwd` régénéré (3 users), `setup_broker.ps1`/`start_broker.ps1` à jour, broker SAI relancé (8883 + 9001). (2) Backend : `publier_alerte()` dans `mqtt_service.py` (client paho dédié, payload « client-friendly », best effort) appelé sur `POST /api/alertes` et sur la boucle auto (`automatisation_service.py` après commit). (3) Frontend : `mqtt` npm installé ; `src/services/mqtt.js` (connexion `VITE_MQTT_URL` ws://localhost:9001, user `sai_frontend`, abonnements `sai/+/alertes` + `sai/+/capteurs/#`, reconnexion auto) ; `TopBar.jsx` passe du **polling 30 s** à l'abonnement MQTT (chargement HTTP initial conservé en fallback) ; `Dashboard.jsx` met à jour les jauges en direct sur `sai/+/capteurs/#` (`lastUpdateSecs` reset). (4) Simulateur `backend/scripts/mqtt_simulateur.py` (TLS 8883, user `sai_esp32`, multi-mesures + alerte périodique). Docs : `frontend/.env.example` (déjà présent), `mosquitto/README.md`, `AGENTS.md`. | opencode |
