@@ -1,0 +1,18 @@
+# mosquitto/.gitignore — secrets et fichiers generes a ne pas committer.
+
+# Fichier de mots de passe (contenant des hash de mots de passe) — regenere via
+#   mosquitto_passwd -b mosquitto/passwd <user> <pwd>
+passwd
+
+# Cle privee de la CA (sensible) — regeneree via scripts/gen_certs.ps1
+certs/mosquitto_ca.key
+
+# Cle privee du serveur TLS (sensible) — regeneree via scripts/gen_certs.ps1
+certs/mosquitto_server.key
+
+# Fichier serial de la CA
+certs/*.srl
+
+# Persistance du broker
+data/*
+!data/.gitkeep

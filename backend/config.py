@@ -32,3 +32,24 @@ DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME", "sai_db")
 DB_USER = os.getenv("DB_USER", "sai_user")
 DB_PASS = os.getenv("DB_PASS", "sai_password")
+
+# ─── MQTT (broker Mosquitto, Phase 1) ───
+# Le backend est subscriber : il recoit les mesures publiees par l'ESP32.
+# Port 8883 = listener TLS du broker SAI (mosquitto/mosquitto.conf).
+MQTT_BROKER = os.getenv("MQTT_BROKER", "localhost")
+MQTT_PORT = int(os.getenv("MQTT_PORT", "8883"))
+MQTT_TLS = os.getenv("MQTT_TLS", "true").lower() in ("1", "true", "yes", "on")
+MQTT_USER = os.getenv("MQTT_USER", "sai_backend")
+MQTT_PASS = os.getenv("MQTT_PASS", "sai_backend_pass")
+
+# Chemin du certificat CA pour valider le broker TLS. Resolu en relatif par
+# rapport a ce fichier (../mosquitto/certs/mosquitto_ca.crt), surchargeable.
+_default_ca = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), "..", "mosquitto", "certs", "mosquitto_ca.crt")
+)
+MQTT_CA_CERT = os.getenv("MQTT_CA_CERT", _default_ca)
+
+# ─── Topics MQTT (spec : sai/<parcelle>/...) ───
+MQTT_TOPIC_MESURES = os.getenv("MQTT_TOPIC_MESURES", "sai/+/capteurs/#")
+MQTT_TOPIC_ACTIONNEURS = os.getenv("MQTT_TOPIC_ACTIONNEURS", "sai/+/actionneurs/#")
+MQTT_TOPIC_ALERTES = os.getenv("MQTT_TOPIC_ALERTES", "sai/+/alertes")
