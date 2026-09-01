@@ -12,8 +12,9 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.action import Action
 from models.utilisateur import Utilisateur
+from models.token import Token
 from schemas.action import ActionCreate, ActionUpdate, ActionResponse
-from auth import get_utilisateur_connecte
+from auth import get_utilisateur_connecte, get_client_iot
 
 router = APIRouter(prefix="/api/actions", tags=["Actions"])
 
@@ -53,11 +54,12 @@ def lire_action(
 def creer_action(
     data: ActionCreate,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    client: Utilisateur | Token = Depends(get_client_iot),
 ):
     """
     Cree une action (liee a une commande existante).
-    Utilise par l'ESP32 quand il commence a executer une commande.
+    Utilise par l'ESP32 (via cle API) quand il commence a executer une commande.
+    Accepte aussi le JWT (web/CLI).
     """
     action = Action(**data.model_dump())
     db.add(action)
@@ -71,12 +73,13 @@ def modifier_action(
     id: int,
     data: ActionUpdate,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    client: Utilisateur | Token = Depends(get_client_iot),
 ):
     """
     Met a jour une action (ex: fin d'execution).
-    L'ESP32 appelle cet endpoint pour signaler :
+    L'ESP32 (via cle API) appelle cet endpoint pour signaler :
     - date_fin, duree, resultat, statut='termine'
+    Accepte aussi le JWT (web/CLI).
     """
     action = _get_ou_404(db, id)
     for champ, valeur in data.model_dump(exclude_unset=True).items():

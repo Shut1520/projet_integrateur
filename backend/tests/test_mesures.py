@@ -2,11 +2,11 @@
 Tests pour les mesures.
 
 - GET  /api/mesures
-- POST /api/mesures  (route publique pour ESP32)
+- POST /api/mesures  (require une cle API)
 """
 
 import pytest
-from tests.conftest import auth_header
+from tests.conftest import auth_header, cle_api_headers
 
 
 class TestListerMesures:
@@ -18,9 +18,9 @@ class TestListerMesures:
 
 
 class TestCreerMesure:
-    def test_creer_publique_ok(self, client, capteur):
-        """POST /api/mesures est public (ESP32 push)."""
-        r = client.post("/api/mesures", json={
+    def test_creer_cle_api_ok(self, client, capteur, cle_api):
+        """POST /api/mesures require une cle API (ESP32 push)."""
+        r = client.post("/api/mesures", headers=cle_api_headers(cle_api), json={
             "valeur": 25.5,
             "unite": "C",
             "source": "esp32",
@@ -31,16 +31,26 @@ class TestCreerMesure:
         assert data["valeur"] == 25.5
         assert data["unite"] == "C"
 
-    def test_creer_manque_valeur(self, client, capteur):
+    def test_creer_sans_cle_refuse(self, client, capteur):
+        """Sans cle API, la creation est refusee (401)."""
         r = client.post("/api/mesures", json={
+            "valeur": 25.5,
+            "unite": "C",
+            "source": "esp32",
+            "id_capteur": capteur.id,
+        })
+        assert r.status_code == 401
+
+    def test_creer_manque_valeur(self, client, capteur, cle_api):
+        r = client.post("/api/mesures", headers=cle_api_headers(cle_api), json={
             "unite": "C",
             "source": "esp32",
             "id_capteur": capteur.id,
         })
         assert r.status_code == 422
 
-    def test_creer_manque_capteur(self, client):
-        r = client.post("/api/mesures", json={
+    def test_creer_manque_capteur(self, client, cle_api):
+        r = client.post("/api/mesures", headers=cle_api_headers(cle_api), json={
             "valeur": 25.5,
             "unite": "C",
             "source": "esp32",

@@ -15,8 +15,10 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.mesure import Mesure
 from models.utilisateur import Utilisateur
+from models.capteur import Capteur
+from models.token import Token
 from schemas.mesure import MesureCreate, MesureResponse
-from auth import get_utilisateur_connecte
+from auth import get_utilisateur_connecte, get_client_cle_api
 from config import RATE_LIMIT_MESURES
 from services.rate_limit import limiter
 
@@ -83,15 +85,20 @@ def dernieres_mesures(
 
 @router.post("", response_model=MesureResponse, status_code=201)
 @limiter.limit(RATE_LIMIT_MESURES)
-def creer_mesure(request: Request, data: MesureCreate, db: Session = Depends(get_db)):
+def creer_mesure(
+    request: Request,
+    data: MesureCreate,
+    db: Session = Depends(get_db),
+    client: Token = Depends(get_client_cle_api),
+):
     """
     Ajoute une mesure.
     Utilise par l'ESP32 (MQTT -> API) ou par saisie manuelle.
-    Publique pour permettre a l'ESP32 d'envoyer des donnees sans JWT.
-    Rate limitee (defaut 60/min par IP) pour proteger la table a gros volume.
+    Requiert une CLE API (header X-API-Key / query api_key) —
+    plus public : protege la table a gros volume.
+    Rate limitee (defaut 60/min par IP).
     """
     # Verifier que le capteur existe
-    from models.capteur import Capteur
     capteur = db.get(Capteur, data.id_capteur)
     if not capteur:
         raise HTTPException(

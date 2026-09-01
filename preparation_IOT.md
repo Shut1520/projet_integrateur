@@ -73,11 +73,11 @@ Document **vivant** : checklist de préparation de tout le terrain avant l'impl�
 
 ### Phase 3 — Authentification ESP32 par clé API
 
-- [ ] **3.1** Créer la dépendance `get_client_cle_api` : validation d'une clé (`X-API-Key` / query) contre la table `tokens` (active, non expirée, maj `last_used_at`).
-- [ ] **3.2** Sécuriser `POST /api/mesures` (passer de « public » à « clé API » requise).
-- [ ] **3.3** Ouvrir par clé API : `PUT /api/commandes/{id}` (confirmation `recue`/`executee`/`echouee`), `POST /api/actions`, `PUT /api/actions/{id}`.
-- [ ] **3.4** Créer `GET /api/commandes/attente` : l'ESP32 récupère les commandes `envoyee` en attente d'exécution (workflow pull — absent aujourd'hui).
-- [ ] **3.5** Rédiger le **contrat d'interface ESP32** → `Iot/INTERFACE.md` (endpoints, formats JSON, identifiants par modèle, clé API, topics MQTT).
+- [x] **3.1** Créer la dépendance `get_client_cle_api` : validation d'une clé (`X-API-Key` / query) contre la table `tokens` (active, non expirée, maj `last_used_at`).
+- [x] **3.2** Sécuriser `POST /api/mesures` (passer de « public » à « clé API » requise).
+- [x] **3.3** Ouvrir par clé API : `PUT /api/commandes/{id}` (confirmation `recue`/`executee`/`echouee`), `POST /api/actions`, `PUT /api/actions/{id}`.
+- [x] **3.4** Créer `GET /api/commandes/attente` : l'ESP32 récupère les commandes `envoyee` en attente d'exécution (workflow pull — absent aujourd'hui).
+- [x] **3.5** Rédiger le **contrat d'interface ESP32** → `Iot/INTERFACE.md` (endpoints, formats JSON, identifiants par modèle, clé API, topics MQTT).
 
 ### Phase 4 — Temps réel frontend
 
@@ -140,3 +140,4 @@ Document **vivant** : checklist de préparation de tout le terrain avant l'impl�
 | 2026-09-01 | **1.2 ✅ finalisé** | **Round-trip TLS confirmé** : test d'intégration réel (broker 8883 + subscriber + `mosquitto_pub` au user `sai_esp32` + vérif BD) → `1 mesure inserée, valeur=26.5, unite=°C, source=esp32`. Le bloqueur Phase 1 est levé. | opencode |
 | 2026-09-01 | **Tests 2.x** | `tests/test_mqtt_service.py` créé (5 tests) : résolution capteur (trouvé/inconnu/parcelle inconnue), insertion payload spec (valeur+unité+source), clés non numériques ignorées. Suite : **110 passed**, 3 échecs pré-existants. Données d'intégration nettoyées. | opencode |
 | 2026-09-01 | **N.1–N.6** | **Nettoyage BD + BD de test dédiée.** Backup `pg_dump` de `sai_db` dans `backend/backups/` (gitignoré) puis reseed propre (`seed.py --drop`, bug FK `historique_actions` corrigé). `init_db.py` paramétré par `--db`. `sai_test` construite **par Alembic** (`upgrade head`, schéma seul cohérent avec les modèles — le MPD n'inclut ni `actif` ni `historique_actions`). `conftest.py` pointe vers `sai_test` + flag `SAI_MQTT_DISABLED` neutralise le subscriber en test. Validation : **110 passed / 3 échecs pré-existants** sur `sai_test`, **`sai_db` intacte** (2 users, 1 parcelle `Serre A`, 5 capteurs sans doublons, 0 mesures) → fin de la pollution inter-tests. | opencode |
+| 2026-09-01 | **3.1–3.5** | **Phase 3 — auth ESP32 par clé API.** `auth.py` : `get_client_cle_api` (header `X-API-Key` / query `api_key`, validation active+non expirée, maj `last_used_at`) et `get_client_iot` (OR clé API / JWT pour endpoints partagés). `POST /api/mesures` passe de **public à clé API requise**. `PUT /api/commandes/{id}`, `POST /api/actions`, `PUT /api/actions/{id}` acceptent clé API ou JWT. Nouveau `GET /api/commandes/attente` (commande `envoyee`, FIFO). Contrat `Iot/INTERFACE.md` (clé API, topics MQTT, payload multi-mesures, workflow pull/confirm, codes d'erreur, config firmware). Tests : `test_iot.py` (9 tests) + adaptation `test_mesures.py` ; suite **119 passed / 3 échecs pré-existants** (401 vs 403). Fixture autouse désactive le rate limiting en test (évite 429 flaky sur `POST /api/commandes`). | opencode |

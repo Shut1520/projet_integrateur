@@ -11,8 +11,9 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.commande import Commande
 from models.utilisateur import Utilisateur
+from models.token import Token
 from schemas.commande import CommandeCreate, CommandeUpdate, CommandeResponse
-from auth import get_utilisateur_connecte
+from auth import get_utilisateur_connecte, get_client_iot, get_client_cle_api
 from services.commande_service import creer_commande, mettre_a_jour_statut
 from config import RATE_LIMIT_ECRITURES
 from services.rate_limit import limiter
@@ -35,6 +36,27 @@ def lister_commandes(
 ):
     """Liste toutes les commandes (avec les plus recentes en premier)."""
     return db.query(Commande).order_by(Commande.timestamp.desc()).all()
+
+
+@router.get("/attente", response_model=list[CommandeResponse])
+@limiter.limit(RATE_LIMIT_ECRITURES)
+def commandes_en_attente(
+    request: Request,
+    db: Session = Depends(get_db),
+    client: Token = Depends(get_client_cle_api),
+):
+    """
+    Retourne les commandes en attente d'execution par l'ESP32
+    (statut = 'envoyee'), les plus anciennes en premier (FIFO).
+    Workflow pull : l'ESP32 interroge cet endpoint regulierement.
+    Requiert une cle API.
+    """
+    return (
+        db.query(Commande)
+        .filter(Commande.statut == "envoyee")
+        .order_by(Commande.timestamp.asc(), Commande.id.asc())
+        .all()
+    )
 
 
 @router.get("/{id}", response_model=CommandeResponse)
@@ -79,14 +101,15 @@ def modifier_commande(
     id: int,
     data: CommandeUpdate,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    client: Utilisateur | Token = Depends(get_client_iot),
 ):
     """
     Met a jour le statut d'une commande.
-    Utilise par l'ESP32 (via MQTT) pour signaler :
+    Utilise par l'ESP32 (via cle API) pour signaler :
       'recue'    → l'ESP32 a recu la commande
       'executee' → la commande a ete executee avec succes
       'echouee'  → l'execution a echoue
+    Accepte aussi le JWT (web/CLI) via get_client_iot.
     """
     if data.statut:
         return mettre_a_jour_statut(db, id, data.statut)
