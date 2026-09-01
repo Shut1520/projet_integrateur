@@ -1,11 +1,15 @@
 """
-Dependency injection pour l'authentification JWT.
+Dependency injection pour l'authentification JWT et le controle de role.
 
 Utilisation dans les routes :
-    from auth import get_utilisateur_connecte
+    from auth import get_utilisateur_connecte, exiger_admin
 
     @router.get("/protected")
     def ma_route(utilisateur: Utilisateur = Depends(get_utilisateur_connecte)):
+        ...
+
+    @router.get("/admin-only")
+    def route_admin(utilisateur: Utilisateur = Depends(exiger_admin)):
         ...
 """
 
@@ -57,4 +61,19 @@ def get_utilisateur_connecte(
             detail="Utilisateur introuvable",
         )
 
+    return utilisateur
+
+
+def exiger_admin(
+    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+) -> Utilisateur:
+    """
+    Depuis get_utilisateur_connecte, verifie que l'utilisateur a le role admin.
+    Sinon leve une 403 Forbidden.
+    """
+    if not utilisateur.est_admin():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acces reserve aux administrateurs",
+        )
     return utilisateur

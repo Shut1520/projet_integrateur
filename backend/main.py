@@ -18,6 +18,11 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+
+from config import RATE_LIMIT_DEFAULT
+from services.rate_limit import limiter
 
 from routes.utilisateurs import router as utilisateurs_router
 from routes.parcelles import router as parcelles_router
@@ -31,6 +36,7 @@ from routes.seuils import router as seuils_router
 from routes.tokens import router as tokens_router
 from routes.auth import router as auth_router
 from routes.historique import router as historique_router
+from routes.dashboard import router as dashboard_router
 
 # ─── Creation de l'application ───
 app = FastAPI(
@@ -38,6 +44,10 @@ app = FastAPI(
     description="API REST de gestion des parcelles, capteurs, actionneurs et automatisation",
     version="1.0.0",
 )
+
+# ─── Rate limiting : active slowapi sur l'application ───
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # ─── Configuration CORS ───
 # Permet au frontend React (sur un port different) d'appeler l'API
@@ -68,6 +78,7 @@ app.include_router(seuils_router)
 app.include_router(tokens_router)
 app.include_router(auth_router)
 app.include_router(historique_router)
+app.include_router(dashboard_router)
 
 
 # ─── Route de sante (health check) ───

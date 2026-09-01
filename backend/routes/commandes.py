@@ -5,7 +5,7 @@ Represente un ordre envoye a un actionneur.
 Peut provenir du web, du CLI ou de l'automatisation.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -14,6 +14,8 @@ from models.utilisateur import Utilisateur
 from schemas.commande import CommandeCreate, CommandeUpdate, CommandeResponse
 from auth import get_utilisateur_connecte
 from services.commande_service import creer_commande, mettre_a_jour_statut
+from config import RATE_LIMIT_ECRITURES
+from services.rate_limit import limiter
 
 router = APIRouter(prefix="/api/commandes", tags=["Commandes"])
 
@@ -46,7 +48,9 @@ def lire_commande(
 
 
 @router.post("", response_model=CommandeResponse, status_code=201)
+@limiter.limit(RATE_LIMIT_ECRITURES)
 def creer_commande_route(
+    request: Request,
     data: CommandeCreate,
     db: Session = Depends(get_db),
     utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
@@ -69,7 +73,9 @@ def creer_commande_route(
 
 
 @router.put("/{id}", response_model=CommandeResponse)
+@limiter.limit(RATE_LIMIT_ECRITURES)
 def modifier_commande(
+    request: Request,
     id: int,
     data: CommandeUpdate,
     db: Session = Depends(get_db),
@@ -94,7 +100,9 @@ def modifier_commande(
 
 
 @router.delete("/{id}", status_code=204)
+@limiter.limit(RATE_LIMIT_ECRITURES)
 def supprimer_commande(
+    request: Request,
     id: int,
     db: Session = Depends(get_db),
     utilisateur: Utilisateur = Depends(get_utilisateur_connecte),

@@ -82,10 +82,9 @@ def modifier_action(
     for champ, valeur in data.model_dump(exclude_unset=True).items():
         setattr(action, champ, valeur)
 
-    # Calcul automatique de la duree si date_fin est fournie
-    if data.date_fin is not None and data.date_debut is not None:
-        action.calculer_duree()
-    elif data.date_fin is not None and action.date_debut is not None:
+    # Calcul automatique de la duree si date_fin est fournie et
+    # que l'action a une date_debut (attendue pour une action en cours).
+    if data.date_fin is not None and action.date_debut is not None:
         action.calculer_duree()
 
     db.commit()

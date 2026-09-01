@@ -9,7 +9,7 @@ from database import get_db
 from models.capteur import Capteur
 from models.utilisateur import Utilisateur
 from schemas.capteur import CapteurCreate, CapteurUpdate, CapteurResponse
-from auth import get_utilisateur_connecte
+from auth import exiger_admin
 from services.historique_service import enregistrer
 
 router = APIRouter(prefix="/api/capteurs", tags=["Capteurs"])
@@ -26,7 +26,7 @@ def _get_ou_404(db: Session, id: int) -> Capteur:
 @router.get("", response_model=list[CapteurResponse])
 def lister_capteurs(
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """Retourne la liste de tous les capteurs."""
     return db.query(Capteur).all()
@@ -36,7 +36,7 @@ def lister_capteurs(
 def lire_capteur(
     id: int,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """Retourne un capteur specifique par son ID."""
     return _get_ou_404(db, id)
@@ -46,7 +46,7 @@ def lire_capteur(
 def creer_capteur(
     data: CapteurCreate,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """Ajoute un nouveau capteur a une parcelle."""
     capteur = Capteur(**data.model_dump())
@@ -63,7 +63,7 @@ def modifier_capteur(
     id: int,
     data: CapteurUpdate,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """Met a jour un capteur existant."""
     capteur = _get_ou_404(db, id)
@@ -81,7 +81,7 @@ def modifier_capteur(
 def supprimer_capteur(
     id: int,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    utilisateur: Utilisateur = Depends(exiger_admin),
 ):
     """Supprime un capteur et ses mesures associees (CASCADE)."""
     capteur = _get_ou_404(db, id)

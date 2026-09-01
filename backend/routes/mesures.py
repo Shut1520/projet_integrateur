@@ -8,7 +8,7 @@ la modification/suppression (les mesures sont immutables).
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
@@ -17,6 +17,8 @@ from models.mesure import Mesure
 from models.utilisateur import Utilisateur
 from schemas.mesure import MesureCreate, MesureResponse
 from auth import get_utilisateur_connecte
+from config import RATE_LIMIT_MESURES
+from services.rate_limit import limiter
 
 router = APIRouter(prefix="/api/mesures", tags=["Mesures"])
 
@@ -80,11 +82,13 @@ def dernieres_mesures(
 
 
 @router.post("", response_model=MesureResponse, status_code=201)
-def creer_mesure(data: MesureCreate, db: Session = Depends(get_db)):
+@limiter.limit(RATE_LIMIT_MESURES)
+def creer_mesure(request: Request, data: MesureCreate, db: Session = Depends(get_db)):
     """
     Ajoute une mesure.
     Utilise par l'ESP32 (MQTT -> API) ou par saisie manuelle.
     Publique pour permettre a l'ESP32 d'envoyer des donnees sans JWT.
+    Rate limitee (defaut 60/min par IP) pour proteger la table a gros volume.
     """
     # Verifier que le capteur existe
     from models.capteur import Capteur
