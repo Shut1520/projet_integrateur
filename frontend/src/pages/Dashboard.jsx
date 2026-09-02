@@ -53,7 +53,7 @@ ChartJS.register(
 const SENSOR_CONFIG = [
   { key: 'dht22', label: 'Temp Air', color: '#2E7D32', bg: 'rgba(46, 125, 50, 0.1)', unit: '°C' },
   { key: 'yl-69', label: 'Hum Sol', color: '#2563EB', bg: 'rgba(37, 99, 235, 0.08)', unit: '%' },
-  { key: 'bh1750', label: 'Luminosité', color: '#CA8A04', bg: 'rgba(202, 138, 4, 0.08)', unit: 'lx' },
+  { key: 'bh1750', label: 'Luminosité', color: '#CA8A04', bg: 'rgba(202, 138, 4, 0.08)', unit: '%' },
   { key: 'sen0159', label: 'CO2', color: '#059669', bg: 'rgba(5, 150, 105, 0.08)', unit: 'ppm' },
   { key: 'niveau_eau', label: 'Niveau Eau', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)', unit: '%' },
 ];
@@ -504,9 +504,9 @@ export const Dashboard = () => {
         <GaugeCard
           title="Luminosité"
           value={gauges.lux ?? '—'}
-          unit="lx"
+          unit="%"
           min={0}
-          max={2000}
+          max={100}
           iconType="lux"
           status={gauges.lux == null ? 'Inconnu' : 'Normal'}
           parcelleNom="BH1750"

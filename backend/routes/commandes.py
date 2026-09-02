@@ -51,12 +51,18 @@ def commandes_en_attente(
     Workflow pull : l'ESP32 interroge cet endpoint regulierement.
     Requiert une cle API.
     """
-    return (
+    commandes = (
         db.query(Commande)
         .filter(Commande.statut == "envoyee")
         .order_by(Commande.timestamp.asc(), Commande.id.asc())
         .all()
     )
+    resultat = []
+    for c in commandes:
+        if c.actionneur is not None:
+            c.nom_actionneur = c.actionneur.nom
+        resultat.append(c)
+    return resultat
 
 
 @router.get("/{id}", response_model=CommandeResponse)

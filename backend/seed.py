@@ -75,7 +75,7 @@ def seed_capteurs(db: Session, parcelle: Parcelle) -> list:
     capteurs_data = [
         {"nom": "dht22", "reference": "AM2302", "gpio": 4, "protocole": "digital"},
         {"nom": "yl-69", "reference": "YL-69", "gpio": 34, "protocole": "analog"},
-        {"nom": "bh1750", "reference": "BH1750", "gpio": 21, "protocole": "i2c"},
+        {"nom": "bh1750", "reference": "BH1750", "gpio": 36, "protocole": "analog"},
         {"nom": "sen0159", "reference": "SEN0159", "gpio": 35, "protocole": "analog"},
         {
             "nom": "niveau_eau",
@@ -129,9 +129,9 @@ def seed_seuils(db: Session, configurateur: Utilisateur, parcelle: Parcelle) -> 
         {"type_mesure": "co2", "valeur_min": 800, "valeur_max": 1000, "unite": "ppm"},
         {
             "type_mesure": "luminosite",
-            "valeur_min": 200,
-            "valeur_max": 2000,
-            "unite": "lux",
+            "valeur_min": 20,
+            "valeur_max": 80,
+            "unite": "%",
         },
         {
             "type_mesure": "niveau_eau",
@@ -171,7 +171,7 @@ def seed_mesures_mock(db: Session, capteurs: list, nb_mesures: int = 50):
     types_mesure = {
         "dht22": {"unite": "C", "min": 25, "max": 38},
         "yl-69": {"unite": "%", "min": 20, "max": 60},
-        "bh1750": {"unite": "lux", "min": 100, "max": 3000},
+        "bh1750": {"unite": "%", "min": 0, "max": 100},
         "sen0159": {"unite": "ppm", "min": 600, "max": 1200},
         "niveau_eau": {"unite": "%", "min": 15, "max": 100},
     }

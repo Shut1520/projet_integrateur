@@ -42,5 +42,8 @@ class CommandeResponse(CommandeBase):
     """Reponse au client."""
 
     id: int
+    nom_actionneur: Optional[str] = Field(
+        None, description="Nom de l'actionneur commande (relation), ex: 'pompe'"
+    )
 
     model_config = ConfigDict(from_attributes=True)

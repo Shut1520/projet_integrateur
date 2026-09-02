@@ -35,6 +35,7 @@ from config import (
 # ─── Mapping type de mesure (cle du payload spec) -> nom du capteur en BD ───
 TYPE_A_CAPTEUR = {
     "temperature": "dht22",
+    "humidite_air": "dht22",
     "humidite_sol": "yl-69",
     "co2": "sen0159",
     "luminosite": "bh1750",
@@ -45,10 +46,11 @@ TYPE_A_CAPTEUR = {
 # ─── Unite par defaut selon le type de mesure (surcharge par 'unite' du payload) ───
 TYPE_A_UNITE = {
     "temperature": "°C",
+    "humidite_air": "%",
     "humidite_sol": "%",
     "co2": "ppm",
-    "luminosite": "lx",
-    "luminosite_lux": "lx",
+    "luminosite": "%",
+    "luminosite_lux": "%",
     "niveau_eau": "%",
 }
 

@@ -25,6 +25,7 @@ topic write sai/+/alertes
 user sai_esp32
 topic read sai/+/commandes
 topic write sai/+/capteurs/#
+topic write sai/+/actionneurs/#
 topic write sai/+/alertes
 
 # ─── Frontend web (temps reel) : lit tout ───

@@ -103,6 +103,31 @@ def test_traiter_payload_insere_mesure(db, mqtt_parcelle):
     assert m.source == "esp32"
 
 
+def test_traiter_payload_insere_humidite_air(db, mqtt_parcelle):
+    """'humidite_air' est mappe sur le capteur dht22 avec l'unite % (Phase 7)."""
+    parcelle = mqtt_parcelle["parcelle"]
+    capteur = mqtt_parcelle["capteur"]
+
+    payload = {
+        "device_id": "esp32_test",
+        "parcelle": parcelle.nom,
+        "timestamp": "2026-09-01T10:00:00Z",
+        "humidite_air": 61.5,
+    }
+    nb = mq._traiter_mesures(db, parcelle.nom, payload)
+
+    assert nb == 1
+    m = (
+        db.query(Mesure)
+        .filter(Mesure.id_capteur == capteur.id)
+        .order_by(Mesure.id.desc())
+        .first()
+    )
+    assert m is not None
+    assert m.valeur == 61.5
+    assert m.unite == "%"
+
+
 def test_traiter_payload_ignore_cles_non_numeriques(db, mqtt_parcelle):
     """Les cles spec (device_id, parcelle, etc.) sont ignorees, pas inserees."""
     parcelle = mqtt_parcelle["parcelle"]

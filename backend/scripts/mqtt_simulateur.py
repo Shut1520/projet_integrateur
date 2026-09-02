@@ -33,7 +33,7 @@ NOMINAUX = {
     "temperature": 24.0,
     "humidite_sol": 45.0,
     "co2": 600.0,
-    "luminosite": 1500.0,
+    "luminosite": 60.0,   # % (firmware LDR), aligne sur seuils 20-80 %
     "niveau_eau": 80.0,
 }
 
@@ -47,7 +47,7 @@ def _payload_aleatoire():
         "temperature": round(NOMINAUX["temperature"] + random.uniform(-3, 3), 1),
         "humidite_sol": round(NOMINAUX["humidite_sol"] + random.uniform(-10, 10), 1),
         "co2": round(NOMINAUX["co2"] + random.uniform(-80, 80), 0),
-        "luminosite": round(NOMINAUX["luminosite"] + random.uniform(-300, 300), 0),
+        "luminosite": round(NOMINAUX["luminosite"] + random.uniform(-10, 10), 0),
         "niveau_eau": round(NOMINAUX["niveau_eau"] + random.uniform(-8, 8), 1),
     }
 

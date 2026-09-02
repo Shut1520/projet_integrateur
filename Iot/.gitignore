@@ -1,0 +1,9 @@
+# Configuration reelle (contient cle API + mot de passe WiFi) — NE PAS COMMITTER
+include/config.h
+
+# Artefacts de build PlatformIO
+.pio/
+.vscode/.browse.c_cpp.db
+.vscode/.browse.c_cpp.db_v3
+.vscode/.browse.VC.db
+.vscode/launch.json

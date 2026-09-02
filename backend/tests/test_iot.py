@@ -99,6 +99,15 @@ class TestCommandesAttente:
         r = client.get("/api/commandes/attente", headers=auth_header(token))
         assert r.status_code == 401
 
+    def test_attente_renvoie_nom_actionneur(self, client, admin, actionneur, cle_api):
+        """Le pull expose le nom de l'actionneur commande (firmware pilote par nom)."""
+        commande = _creer_commande_web(client, admin, actionneur)
+
+        r = client.get("/api/commandes/attente", headers=cle_api_headers(cle_api))
+        assert r.status_code == 200
+        entree = next(c for c in r.json() if c["id"] == commande["id"])
+        assert entree["nom_actionneur"] == actionneur.nom
+
 
 class TestFluxComplet:
     def test_flux_commandes_actions(self, client, admin, actionneur, cle_api):
