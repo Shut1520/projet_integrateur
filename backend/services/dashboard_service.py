@@ -30,7 +30,11 @@ def _dernieres_mesures(db: Session) -> dict[int, dict]:
     )
     q = (
         db.query(Mesure)
-        .join(sous_query, Mesure.id_capteur == sous_query.c.id_capteur)
+        .join(
+            sous_query,
+            (Mesure.id_capteur == sous_query.c.id_capteur)
+            & (Mesure.timestamp == sous_query.c.timestamp),
+        )
         .all()
     )
     resultats = {}

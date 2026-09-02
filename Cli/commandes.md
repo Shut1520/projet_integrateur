@@ -11,10 +11,11 @@ Toutes les commandes disponibles dans l'interface en ligne de commande du Systè
 3. [Mesures](#3-mesures)
 4. [Actionneurs](#4-actionneurs)
 5. [Commandes (ordonner)](#5-commandes-ordonner)
-6. [Historique des commandes](#6-historique-des-commandes)
-7. [Alertes](#7-alertes)
-8. [Seuils](#8-seuils)
-9. [Tableau de bord](#9-tableau-de-bord)
+6. [Actions en lot (batch)](#6-actions-en-lot-batch)
+7. [Historique des commandes](#7-historique-des-commandes)
+8. [Alertes](#8-alertes)
+9. [Seuils](#9-seuils)
+10. [Tableau de bord](#10-tableau-de-bord)
 
 ---
 
@@ -55,7 +56,7 @@ Aucun paramètre.
 
 ### `status`
 
-Affiche l'état de la connexion actuelle.
+Affiche l'état de la connexion actuelle (token JWT **et** clé API si configurée).
 
 ```bash
 python cli.py status [--check]
@@ -71,6 +72,42 @@ python cli.py status [--check]
 python cli.py status            # Vérification locale
 python cli.py status --check    # Vérification auprès du serveur
 ```
+
+**Sortie avec clé API configurée :**
+
+```
+[OK] Connecte a l'API
+     URL : http://localhost:8000
+     Utilisateur : Admin SAI
+     Email : admin@sai.com
+     Role : admin
+     Cle API : sk_sai_abc123... (configuree)
+```
+
+---
+
+### `apikey`
+
+Enregistre ou efface la **clé API** (`sk_sai_...`, table `tokens`) utilisée par le CLI pour s'authentifier auprès des endpoints IoT (équivalent ESP32).
+
+```bash
+python cli.py apikey <sk_sai_...>     # Enregistrer la clé API
+python cli.py apikey --effacer        # Effacer la clé API
+```
+
+| Paramètre | Obligatoire | Description |
+|-----------|:-----------:|-------------|
+| `<cle>` | Voir note | Clé API au format `sk_sai_...` à enregistrer |
+| `--effacer` | Voir note | Efface la clé API enregistrée |
+
+**Exemples :**
+
+```bash
+python cli.py apikey sk_sai_5f8a2c1b9d3e4f0a
+python cli.py apikey --effacer
+```
+
+> La clé est conservée dans `config.json` et envoyée dans l'en-tête `X-API-Key`. Elle est **masquée** dans la sortie de `status` (préfixe seul affiché).
 
 ---
 
@@ -140,7 +177,7 @@ Aucun paramètre.
 Envoie un ordre (on/off) à un actionneur.
 
 ```bash
-python cli.py commander <id_actionneur> --action <on|off> [--duree <secondes>]
+python cli.py commander <id_actionneur> --action <on|off> [--duree <secondes>] [--oui]
 ```
 
 | Paramètre | Obligatoire | Description | Défaut |
@@ -148,6 +185,7 @@ python cli.py commander <id_actionneur> --action <on|off> [--duree <secondes>]
 | `actionneur_id` | Oui | ID de l'actionneur cible | — |
 | `--action` | Oui | `on` (activer) ou `off` (désactiver) | — |
 | `--duree` | Non | Durée en secondes de l'action | illimité |
+| `--oui` | Non | Confirme les actions critiques **sans prompt interactif** | — |
 
 **Exemples :**
 
@@ -157,13 +195,81 @@ python cli.py commander 1 --action off             # Éteindre l'actionneur #1
 python cli.py commander 1 --action on --duree 60   # Allumer pendant 60 secondes
 python cli.py commander 2 --action on              # Allumer l'actionneur #2
 python cli.py commander 2 --action off --duree 120 # Éteindre après 120 secondes
+python cli.py commander 1 --action on --duree 60 --oui  # Sans confirmation
 ```
+
+**Vérifications automatiques (CDC 6.2.1 / 6.3) :**
+
+- **Pompe (irrigation)** : avant d'activer la pompe, le CLI interroge le capteur `niveau_eau` de la parcelle. Si le niveau est sous le seuil de sécurité (15 %), l'irrigation est **bloquée** (sauf `--oui` qui force).
+- **Actionneurs critiques** (`pompe`, `ventilation`, `eclairage`) : une **confirmation interactive** (`[o/N]`) est demandée, sauf si `--oui` est fourni.
 
 **Source automatiquement définie :** `cli`
 
+**Sortie attendue :**
+
+```
+[OK] Commande envoyee : on sur actionneur #1
+     ID commande : 15
+     Statut : envoyee
+     Duree : 60 secondes
+```
+
 ---
 
-## 6. Historique des commandes
+## 6. Actions en lot (batch)
+
+### `batch arrosage`
+
+Lance une irrigation (pompe) après vérification du niveau du réservoir (CDC 6.2.1 / F05).
+
+```bash
+python cli.py batch arrosage --actionneur <id> [--duree <secondes>] [--parcelle <id>] [--oui]
+```
+
+| Paramètre | Obligatoire | Description | Défaut |
+|-----------|:-----------:|-------------|--------|
+| `--actionneur` | Oui | ID de la pompe (actionneur d'irrigation) | — |
+| `--duree` | Non | Durée de l'arrosage en secondes | illimité |
+| `--parcelle` | Non | ID de la parcelle (localise le capteur `niveau_eau`) | déduite de l'actionneur |
+| `--oui` | Non | Force l'arrosage sans confirmation, même si le niveau est bas | — |
+
+**Vérification du réservoir (CDC 6.2.1)** : si la dernière mesure `niveau_eau` de la parcelle est **sous 15 %**, l'arrosage est **annulé** (sauf `--oui` qui force). Si aucune mesure n'existe, l'arrosage est lancé avec un avertissement.
+
+**Exemples :**
+
+```bash
+python cli.py batch arrosage --actionneur 1 --duree 60
+python cli.py batch arrosage --actionneur 1 --duree 60 --parcelle 1
+python cli.py batch arrosage --actionneur 1 --duree 60 --oui
+```
+
+---
+
+### `batch ventilation`
+
+Lance la ventilation après confirmation de l'action (CDC 6.2.2 / F05).
+
+```bash
+python cli.py batch ventilation --actionneur <id> [--duree <secondes>] [--oui]
+```
+
+| Paramètre | Obligatoire | Description | Défaut |
+|-----------|:-----------:|-------------|--------|
+| `--actionneur` | Oui | ID de la ventilation (actionneur) | — |
+| `--duree` | Non | Durée de la ventilation en secondes | illimité |
+| `--oui` | Non | Confirme sans prompt interactif | — |
+
+**Exemple :**
+
+```bash
+python cli.py batch ventilation --actionneur 2 --duree 120 --oui
+```
+
+> Les deux actions batch sont **journalisées** dans `cli.log` (CDC 6.3) : lancement, blocage, annulation, échec.
+
+---
+
+## 7. Historique des commandes
 
 ### `commandes`
 
@@ -179,7 +285,7 @@ Aucun paramètre.
 
 ---
 
-## 7. Alertes
+## 8. Alertes
 
 ### `alertes` — Lister
 
@@ -248,7 +354,7 @@ python cli.py alertes resoudre 5
 
 ---
 
-## 8. Seuils
+## 9. Seuils
 
 ### `seuils` — Lister
 
@@ -297,7 +403,7 @@ python cli.py seuils configurer --type humidite_sol --min 30 --max 80 --unite % 
 
 ---
 
-## 9. Tableau de bord
+## 10. Tableau de bord
 
 ### `statut`
 
@@ -318,10 +424,14 @@ Aucun paramètre.
 | `login --email ... --password ...` | Connexion |
 | `logout` | Déconnexion |
 | `status [--check]` | État de la session |
+| `apikey <sk_sai_...>` | Enregistrer la clé API (X-API-Key) |
+| `apikey --effacer` | Effacer la clé API |
 | `capteurs` | Lister les capteurs |
 | `mesures <id> [--nb N]` | Mesures d'un capteur |
 | `actionneurs` | Lister les actionneurs |
-| `commander <id> --action on/off [--duree S]` | Envoyer un ordre |
+| `commander <id> --action on/off [--duree S] [--oui]` | Envoyer un ordre (vérif réservoir + confirmation critique) |
+| `batch arrosage --actionneur <id> [--duree S] [--parcelle P] [--oui]` | Irrigation avec vérification du réservoir |
+| `batch ventilation --actionneur <id> [--duree S] [--oui]` | Ventilation en lot |
 | `commandes` | Historique des commandes |
 | `alertes [--etat ...] [--parcelle ...]` | Lister les alertes |
 | `alertes reconnaitre <id>` | Reconnaître une alerte |

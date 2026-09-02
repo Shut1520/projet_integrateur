@@ -1,4 +1,5 @@
 {
     "api_url": "http://localhost:8000",
-    "token": null
+    "token": null,
+    "cle_api": null
 }

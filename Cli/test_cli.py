@@ -39,15 +39,59 @@ def main():
         server.kill()
         sys.exit(1)
 
+    # Résolution des IDs réels depuis l'API (la base seedée n'a pas des IDs fixes).
+    # Nécessite un login pour récupérer un token, puis lecture des capteurs/actionneurs.
+    import requests
+    sess = requests.Session()
+    login_resp = sess.post(
+        "http://localhost:8000/api/auth/login",
+        json={"email": "admin@sai.com", "password": "admin123"}, timeout=60,
+    )
+    if login_resp.status_code != 200:
+        print(f"[ECHEC] Connexion API pour resolution des IDs: {login_resp.status_code}")
+        server.kill()
+        sys.exit(1)
+    token = login_resp.json().get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    capteur_id = None
+    capteurs_resp = sess.get("http://localhost:8000/api/capteurs", headers=headers, timeout=60)
+    if capteurs_resp.status_code == 200 and capteurs_resp.json():
+        capteur_id = capteurs_resp.json()[0].get("id")
+
+    pompe_id = ventilation_id = None
+    actionneurs_resp = sess.get("http://localhost:8000/api/actionneurs", headers=headers, timeout=60)
+    if actionneurs_resp.status_code == 200:
+        for a in actionneurs_resp.json():
+            nom = (a.get("nom") or "").lower()
+            if nom == "pompe":
+                pompe_id = a.get("id")
+            elif nom == "ventilation":
+                ventilation_id = a.get("id")
+
+    if not (capteur_id and pompe_id and ventilation_id):
+        print("[ECHEC] Resolution des IDs impossible (capteur/actionneurs manquants).")
+        server.kill()
+        sys.exit(1)
+
     # Liste des commandes à tester : (arguments, description)
     tests = [
         (["login", "--email", "admin@sai.com", "--password", "admin123"], "Connexion"),
+        (["apikey", "sk_sai_test_cli_abc"], "Sauvegarde cle API"),
+        (["status"], "Status (cle API affichee)"),
         (["capteurs"], "Capteurs"),
-        (["mesures", "1", "--nb", "3"], "Mesures capteur #1"),
-        (["commander", "1", "--action", "on"], "Commander on"),
+        (["mesures", str(capteur_id), "--nb", "3"], f"Mesures capteur #{capteur_id}"),
+        (["commander", str(pompe_id), "--action", "on", "--duree", "30", "--oui"],
+         f"Commander pompe #{pompe_id} on --oui"),
+        (["batch", "arrosage", "--actionneur", str(pompe_id), "--duree", "30", "--oui"],
+         f"Batch arrosage --oui (pompe #{pompe_id})"),
+        (["batch", "ventilation", "--actionneur", str(ventilation_id), "--duree", "30", "--oui"],
+         f"Batch ventilation --oui (ventil #{ventilation_id})"),
         (["alertes"], "Alertes"),
         (["seuils"], "Seuils"),
-        (["status"], "Status"),
+        (["commandes"], "Historique commandes"),
+        (["apikey", "--effacer"], "Effacer cle API"),
+        (["status"], "Status (apres effacement cle)"),
         (["logout"], "Logout"),
     ]
 
@@ -57,7 +101,7 @@ def main():
         # Exécution de chaque commande CLI comme un sous-processus indépendant
         result = subprocess.run(
             [sys.executable, "main.py"] + args,
-            cwd=CLI_DIR, capture_output=True, text=True, timeout=10
+            cwd=CLI_DIR, capture_output=True, text=True, timeout=90
         )
         if result.returncode == 0:
             print(result.stdout, end="")

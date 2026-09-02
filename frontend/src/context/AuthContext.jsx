@@ -6,6 +6,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { storage } from '../services/storage';
 import { apiClient } from '../services/api';
+import { deconnecterMqtt } from '../services/mqtt';
 
 const AuthContext = createContext(undefined);
 
@@ -61,9 +62,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   /**
-   * Déconnexion : on efface le token et l'utilisateur du localStorage.
+   * Déconnexion : on coupe la connexion MQTT, puis on efface le token et
+   * l'utilisateur du localStorage. Couper MQTT évite que le client temps
+   * réel continue d'écouter les topics sans session valide.
    */
   const logout = () => {
+    deconnecterMqtt();
     localStorage.removeItem('sai_current_user_v1');
     setUser(null);
   };

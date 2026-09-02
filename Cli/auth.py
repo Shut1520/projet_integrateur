@@ -52,22 +52,24 @@ def status(api: APIClient):
     """
     Affiche le statut de la connexion.
 
-    Vérifie si un token est présent localement, puis interroge
-    le serveur via /api/auth/me pour récupérer le profil utilisateur.
+    Vérifie si un token ou une clé API est présent localement, puis interroge
+    le serveur via /api/auth/me pour récupérer le profil utilisateur (si token).
     En cas de token expiré ou invalide, un avertissement est affiché.
     """
     if api.est_connecte():
         print("[OK] Connecte a l'API")
         print(f"     URL : {api.api_url}")
-
-        # Tentative de récupération du profil auprès du serveur
-        try:
-            profil = api.get("/api/auth/me")
-            print(f"     Utilisateur : {profil.get('nom', '?')}")
-            print(f"     Email : {profil.get('email', '?')}")
-            print(f"     Role : {profil.get('role', '?')}")
-        except SystemExit:
-            print("     [WARN] Token invalide ou expire. Reconnectez-vous.")
+        if api.token:
+            # Tentative de récupération du profil auprès du serveur
+            try:
+                profil = api.get("/api/auth/me")
+                print(f"     Utilisateur : {profil.get('nom', '?')}")
+                print(f"     Email : {profil.get('email', '?')}")
+                print(f"     Role : {profil.get('role', '?')}")
+            except SystemExit:
+                print("     [WARN] Token invalide ou expire. Reconnectez-vous.")
+        if api.cle_api:
+            print(f"     Cle API : {api.cle_api[:16]}... (configuree)")
     else:
         print("[--] Non connecte")
         print("     Lancez : python cli.py login")

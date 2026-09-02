@@ -170,12 +170,12 @@ export const Thresholds = () => {
             // Paramètres de plage adaptés au type de mesure
             const step =
               s.type_mesure === 'co2' ? 50 :
-              s.type_mesure === 'luminosite' ? 50 :
+              s.type_mesure === 'luminosite' ? 5 :
               s.type_mesure === 'niveau_eau' ? 1 :
               1;
             const max =
               s.type_mesure === 'co2' ? 2000 :
-              s.type_mesure === 'luminosite' ? 5000 :
+              s.type_mesure === 'luminosite' ? 100 :
               s.type_mesure === 'temperature' ? 50 :
               100;
 

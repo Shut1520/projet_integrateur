@@ -1,0 +1,41 @@
+// config.h.example — Modele de configuration firmware SAI (A COPIER en config.h).
+//
+// Ce fichier est la version "vierge" versionnee, avec des valeurs fictives.
+// Duplique-le en `config.h` (gitignore) et remplis avec tes valeurs reelles :
+//
+//     cp include/config.h.example include/config.h
+//
+// config.h est GITIGNORE (il contient la cl� API et le mot de passe WiFi) :
+// NE JAMAIS LE COMMITTER.
+
+#ifndef CONFIG_EXAMPLE_H
+#define CONFIG_EXAMPLE_H
+
+// --- Reseau WiFi ---
+#define WIFI_SSID            "MON_RESEAU"
+#define WIFI_PASSWORD        "MON_MOT_DE_PASSE"
+
+// --- Broker MQTT (SAI, TLS 8883) ---
+#define BROKER_HOST          "192.168.1.10"
+#define BROKER_PORT          8883
+#define BROKER_USER          "sai_esp32"
+#define BROKER_PASS          "sai_esp32_pass"
+
+// --- Backend HTTP (workflow commandes / fallback mesures) ---
+#define API_BASE             "http://192.168.1.10:8000/api"
+#define API_KEY              "sk_sai_...remplacer..."
+
+// --- Parcelle (nom exact present en BD, sert de discriminant aux topics) ---
+#define PARCELLE             "Serre A"
+
+// --- Intervalles (ms) ---
+#define INTERVALLE_MESURES   5000     // publication des mesures
+#define INTERVALLE_ALERTES   60000    // alerte periodique (0 = desactivee)
+#define INTERVALLE_COMMANDES 5000     // polling des commandes en attente (rate limit 20/min)
+
+// --- Seuils d'automatisation embarquee (priorite locale > distante) ---
+#define SEUIL_SOL_SEC        30       // humidite sol < -> irrigation locale
+#define SEUIL_TEMP_HAUTE     40       // temperature > -> ventilation locale
+#define SEUIL_CO2_HAUT       900      // co2 > -> ventilation locale
+
+#endif // CONFIG_EXAMPLE_H

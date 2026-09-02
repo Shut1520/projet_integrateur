@@ -9,7 +9,7 @@ import { GaugeCard } from '../components/ui/GaugeCard';
 import { DashboardSkeleton } from '../components/ui/DashboardSkeleton';
 import { HealthSummaryBar } from '../components/ui/HealthSummaryBar';
 import { apiService } from '../services/api';
-import { subscribeMesures } from '../services/mqtt';
+import { subscribeMesures, subscribeAlertes, subscribeActionneurs } from '../services/mqtt';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
@@ -53,7 +53,7 @@ ChartJS.register(
 const SENSOR_CONFIG = [
   { key: 'dht22', label: 'Temp Air', color: '#2E7D32', bg: 'rgba(46, 125, 50, 0.1)', unit: '°C' },
   { key: 'yl-69', label: 'Hum Sol', color: '#2563EB', bg: 'rgba(37, 99, 235, 0.08)', unit: '%' },
-  { key: 'bh1750', label: 'Luminosité', color: '#CA8A04', bg: 'rgba(202, 138, 4, 0.08)', unit: 'lx' },
+  { key: 'bh1750', label: 'Luminosité', color: '#CA8A04', bg: 'rgba(202, 138, 4, 0.08)', unit: '%' },
   { key: 'sen0159', label: 'CO2', color: '#059669', bg: 'rgba(5, 150, 105, 0.08)', unit: 'ppm' },
   { key: 'niveau_eau', label: 'Niveau Eau', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)', unit: '%' },
 ];
@@ -267,6 +267,35 @@ export const Dashboard = () => {
     return () => unsub();
   }, []);
 
+  // Temps réel MQTT : alertes reçues en push (sai/<parcelle>/alertes) ajoutées au panneau.
+  // Le chargement HTTP initial (loadData) reste le fallback et le filtre etat != resolue.
+  useEffect(() => {
+    const unsub = subscribeAlertes(({ payload }) => {
+      if (!payload || payload.id == null) return;
+      setAlertes((prev) => {
+        if (prev.some((a) => a.id === payload.id)) return prev;
+        if (payload.etat && payload.etat === 'resolue') return prev;
+        return [payload, ...prev].slice(0, 50);
+      });
+    });
+    return () => unsub();
+  }, []);
+
+  // Temps réel MQTT : met à jour l'état d'un actionneur quand l'ESP32 publie sa
+  // nouvelle commande (sai/<parcelle>/actionneurs/<nom>).
+  useEffect(() => {
+    const unsub = subscribeActionneurs(({ payload }) => {
+      if (!payload || typeof payload !== 'object') return;
+      const nomRecu = (payload.nom || payload.actionneur || '').toString().toLowerCase();
+      const etatRecu = payload.etat || (payload.commande === 'on' ? 'actif' : payload.commande === 'off' ? 'inactif' : null);
+      if (!nomRecu || !etatRecu) return;
+      setActionneurs((prev) =>
+        prev.map((act) => (act.nom.toLowerCase() === nomRecu ? { ...act, etat: etatRecu } : act))
+      );
+    });
+    return () => unsub();
+  }, []);
+
   // Rechargement du graphique quand la plage ou les capteurs changent
   useEffect(() => {
     refreshChartData(chartRange);
@@ -475,9 +504,9 @@ export const Dashboard = () => {
         <GaugeCard
           title="Luminosité"
           value={gauges.lux ?? '—'}
-          unit="lx"
+          unit="%"
           min={0}
-          max={2000}
+          max={100}
           iconType="lux"
           status={gauges.lux == null ? 'Inconnu' : 'Normal'}
           parcelleNom="BH1750"

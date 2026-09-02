@@ -6,10 +6,14 @@ Utilisation :
     python cli.py login --email <email> --password <pass>
     python cli.py logout
     python cli.py status
+    python cli.py apikey <sk_sai_...>            # enregistrer la cle API (ESP32/CLI)
+    python cli.py apikey --effacer               # effacer la cle API
     python cli.py capteurs
     python cli.py actionneurs
     python cli.py mesures <id_capteur> [--nb 10]
-    python cli.py commander <id_actionneur> --action on|off [--duree 60]
+    python cli.py commander <id_actionneur> --action on|off [--duree 60] [--oui]
+    python cli.py batch arrosage --actionneur <id> [--duree 60] [--parcelle 1] [--oui]
+    python cli.py batch ventilation --actionneur <id> [--duree 120] [--oui]
     python cli.py commandes
     python cli.py alertes [--etat active] [--parcelle 1]
     python cli.py alertes reconnaitre <id>
@@ -27,7 +31,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from client import APIClient
 from auth import login, logout, status
-from commands import capteurs, mesures, actionneurs, commandes, alertes, seuils, statut
+from commands import (capteurs, mesures, actionneurs, commandes, alertes,
+                      seuils, statut, batch)
+from logs import journal
 
 
 def main():
@@ -45,9 +51,11 @@ def main():
         epilog="""
 Exemples :
   python cli.py login --email admin@sai.com --password admin123
+  python cli.py apikey sk_sai_xxxxxxxx
   python cli.py capteurs
   python cli.py mesures 1 --nb 5
-  python cli.py commander 1 --action on --duree 60
+  python cli.py commander 1 --action on --duree 60 --oui
+  python cli.py batch arrosage --actionneur 1 --duree 60
   python cli.py alertes --etat active
   python cli.py seuils configurer --type humidite_sol --min 30 --max 80 --unite %% --parcelle 1
         """,
@@ -90,6 +98,29 @@ Exemples :
                              help="Action a executer (on/off)")
     p_commander.add_argument("--duree", type=int, default=None,
                              help="Duree en secondes (optionnel)")
+    p_commander.add_argument("--oui", action="store_true",
+                             help="Confirmer sans prompt (actions critiques, CDC 6.3)")
+
+    # apikey
+    p_apikey = sous_commandes.add_parser("apikey", help="Configurer la cle API")
+    p_apikey.add_argument("--effacer", action="store_true",
+                          help="Effacer la cle API enregistree")
+    p_apikey.add_argument("cle", nargs="?", default=None,
+                          help="Cle API (format sk_sai_...) a enregistrer")
+
+    # batch
+    p_batch = sous_commandes.add_parser("batch", help="Actions en lot (arrosage/ventilation)")
+    p_batch.add_argument("sous-action", nargs="?", default="arrosage",
+                         choices=["arrosage", "ventilation"],
+                         help="Action a executer (defaut: arrosage)")
+    p_batch.add_argument("--actionneur", type=int, required=True,
+                         help="ID de l'actionneur (pompe pour arrosage, ventil pour ventilation)")
+    p_batch.add_argument("--duree", type=int, default=None,
+                         help="Duree en secondes (optionnel)")
+    p_batch.add_argument("--parcelle", type=int, default=None,
+                         help="ID de la parcelle (arrosage, pour localiser le capteur niveau_eau)")
+    p_batch.add_argument("--oui", action="store_true",
+                         help="Confirmer sans prompt (CDC 6.3)")
 
     # commandes
     p_commandes = sous_commandes.add_parser("commandes", help="Lister les commandes recentes")
@@ -129,12 +160,15 @@ Exemples :
     # Dispatch vers la commande correspondante
     if args.commande == "login":
         login(api, args.email, args.password)
+        journal("login", f"{args.email} connecte")
     elif args.commande == "logout":
         logout(api)
+        journal("logout", "deconnecte")
     elif args.commande == "status":
         status(api)
     elif args.commande == "statut":
         statut.run(api)
+        journal("statut", "tableau de bord affiche")
     elif args.commande == "capteurs":
         capteurs.lister(api)
     elif args.commande == "actionneurs":
@@ -142,9 +176,28 @@ Exemples :
     elif args.commande == "mesures":
         mesures.lister(api, args.capteur_id, args.nb)
     elif args.commande == "commander":
-        commandes.envoyer(api, args.actionneur_id, args.action, args.duree)
+        journal("commander", f"actionneur #{args.actionneur_id} {args.action} duree={args.duree}")
+        commandes.envoyer(api, args.actionneur_id, args.action, args.duree, args.oui)
     elif args.commande == "commandes":
         commandes.lister(api)
+    elif args.commande == "apikey":
+        if args.effacer:
+            api.effacer_cle_api()
+            print("[OK] Cle API effacee.")
+            journal("apikey", "cle API effacee")
+        elif args.cle:
+            api.sauvegarder_cle_api(args.cle)
+            print(f"[OK] Cle API enregistree : {args.cle[:16]}...")
+            journal("apikey", "cle API enregistree")
+        else:
+            print("[ERR] Utilisation : python cli.py apikey <sk_sai_...> (ou --effacer)")
+            sys.exit(1)
+    elif args.commande == "batch":
+        sous_action = getattr(args, "sous-action", "arrosage")
+        if sous_action == "arrosage":
+            batch.arrosage(api, args.actionneur, args.duree, args.parcelle, args.oui)
+        elif sous_action == "ventilation":
+            batch.ventilation(api, args.actionneur, args.duree, args.oui)
     elif args.commande == "alertes":
         # "sous-action" contient 'lister', 'reconnaitre' ou 'resoudre'
         sous_action = getattr(args, "sous-action", "lister")

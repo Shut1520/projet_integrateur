@@ -29,11 +29,13 @@ from config import (
     MQTT_CA_CERT,
     MQTT_TOPIC_MESURES,
     MQTT_TOPIC_ALERTES,
+    MQTT_TOPIC_ACTIONNEURS,
 )
 
 # ─── Mapping type de mesure (cle du payload spec) -> nom du capteur en BD ───
 TYPE_A_CAPTEUR = {
     "temperature": "dht22",
+    "humidite_air": "dht22",
     "humidite_sol": "yl-69",
     "co2": "sen0159",
     "luminosite": "bh1750",
@@ -44,10 +46,11 @@ TYPE_A_CAPTEUR = {
 # ─── Unite par defaut selon le type de mesure (surcharge par 'unite' du payload) ───
 TYPE_A_UNITE = {
     "temperature": "°C",
+    "humidite_air": "%",
     "humidite_sol": "%",
     "co2": "ppm",
-    "luminosite": "lx",
-    "luminosite_lux": "lx",
+    "luminosite": "%",
+    "luminosite_lux": "%",
     "niveau_eau": "%",
 }
 
@@ -233,6 +236,19 @@ def _traiter_payload(topic: str, payload_bytes: bytes) -> None:
         db.close()
 
 
+def _traiter_actionneurs(topic: str, payload_bytes: bytes) -> None:
+    """Journalise un etat de commande d'actionneur recu sur sai/<parcelle>/actionneurs/#.
+
+    Ne modifie pas la BD : l'etat source de verite des actionneurs reste la BD
+    (ce topic sert au temps reel frontend). On loggue a des fins de diagnostic.
+    """
+    try:
+        payload = json.loads(payload_bytes.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return
+    print(f"[mqtt] Etat actionneur ({topic}): {payload}")
+
+
 def _on_connect(client, userdata, flags, reason_code, properties=None):
     if reason_code != 0:
         print(f"[mqtt] Connexion refusee (code {reason_code})")
@@ -240,11 +256,16 @@ def _on_connect(client, userdata, flags, reason_code, properties=None):
     print(f"[mqtt] Connecte au broker {MQTT_BROKER}:{MQTT_PORT}")
     client.subscribe(MQTT_TOPIC_MESURES, qos=1)
     client.subscribe(MQTT_TOPIC_ALERTES, qos=1)
+    client.subscribe(MQTT_TOPIC_ACTIONNEURS, qos=1)
 
 
 def _on_message(client, userdata, msg):
     try:
-        _traiter_payload(msg.topic, msg.payload)
+        topic = msg.topic
+        if "/actionneurs/" in topic:
+            _traiter_actionneurs(topic, msg.payload)
+        else:
+            _traiter_payload(topic, msg.payload)
     except Exception as e:
         print(f"[mqtt] Erreur traitement {msg.topic}: {e}")
 
