@@ -4,9 +4,10 @@
  * Se connecte au broker Mosquitto via WebSocket (VITE_MQTT_URL, défaut
  * ws://localhost:9001) avec le compte en lecture `sai_frontend` (ACL read sai/#).
  *
- * Expose un petit registre de callbacks pour deux familles de messages :
+ * Expose un petit registre de callbacks pour trois familles de messages :
  *   - `alerte` : topic `sai/<parcelle>/alertes` (payload AlertePub JSON)
  *   - `mesure` : topic `sai/<parcelle>/capteurs/#` (payload multi-mesures)
+ *   - `actionneur` : topic `sai/<parcelle>/actionneurs/#` (état actionneur)
  *
  * La connexion est paresseuse : elle ne démarre qu'au premier abonnement et
  * reste active ensuite (reconnexion automatique toutes les 3 s).
@@ -19,10 +20,11 @@ const MQTT_PASS = 'sai_frontend_pass';
 
 const TOPIC_ALERTES = 'sai/+/alertes';
 const TOPIC_MESURES = 'sai/+/capteurs/#';
+const TOPIC_ACTIONNEURS = 'sai/+/actionneurs/#';
 
 let client = null;
 let connectHandler = null;
-const listeners = { alerte: new Set(), mesure: new Set() };
+const listeners = { alerte: new Set(), mesure: new Set(), actionneur: new Set() };
 
 /** Notifie tous les callbacks d'une famille, sans qu'un incident ne casse la boucle. */
 function notify(type, message) {
@@ -51,6 +53,7 @@ function ensureClient() {
     console.info(`[mqtt] Connecté à ${MQTT_URL}`);
     client.subscribe(TOPIC_ALERTES, { qos: 1 });
     client.subscribe(TOPIC_MESURES, { qos: 1 });
+    client.subscribe(TOPIC_ACTIONNEURS, { qos: 1 });
   });
 
   client.on('message', (topic, message) => {
@@ -67,6 +70,8 @@ function ensureClient() {
       notify('alerte', contexte);
     } else if (topic.includes('/capteurs/')) {
       notify('mesure', contexte);
+    } else if (topic.includes('/actionneurs/')) {
+      notify('actionneur', contexte);
     }
   });
 
@@ -92,6 +97,16 @@ export function subscribeMesures(cb) {
   ensureClient();
   listeners.mesure.add(cb);
   return () => listeners.mesure.delete(cb);
+}
+
+/**
+ * S'abonne aux états de commande des actionneurs (topic sai/+/actionneurs/#).
+ * @returns {Function} fonction pour se désabonner
+ */
+export function subscribeActionneurs(cb) {
+  ensureClient();
+  listeners.actionneur.add(cb);
+  return () => listeners.actionneur.delete(cb);
 }
 
 /** Coupe la connexion proprement (appelé à la déconnexion utilisateur). */

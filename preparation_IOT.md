@@ -11,6 +11,7 @@ Document **vivant** : checklist de préparation de tout le terrain avant l'impl�
 | Orientation communication | **MQTT complet** (ESP32 → broker Mosquitto → subscriber backend + temps réel frontend) |
 | Auth du microcontrôleur | **Clé API** (table `tokens`, format `sk_sai_...`) |
 | Périmètre | **Uniquement la préparation** (le firmware ESP32 sera traité ensuite, dans un plan séparé) |
+| **Points (B)** | **Différés en toute dernière position** : 6.2, 6.3, 6.4, 4.5 sont **reportés** pour éviter de bloquer le développement. Ils seront joués **avec le vrai matériel ESP32** (firmware réel), le simulateur ne servant que de référence de développement |
 | **Broker** | **Mosquitto natif (option A)** — seul et unique broker utilisé |
 | Installation du broker | **winget** : `EclipseFoundation.Mosquitto` → **v2.1.2** (disponibilité vérifiée) |
 | Source de vérité du schéma BD | **Alembic** (les migrations versionnées sont la référence) |
@@ -117,10 +118,22 @@ La préparation est découpée en deux catégories, distinguées **systématique
 ### Phase 6 — Tests & validation écosystème (avant le firmware)
 
 - [x] **(A)** **6.1** Tests `pytest` : `mqtt_service`, auth clé API, commandes/actions par clé API, dashboard agrégé.
-- [ ] **(B)** **6.2** Test d'intégration broker : publier une mesure MQTT fictive → vérifier son insertion en BD via le subscriber.
-- [ ] **(B)** **6.3** Simulateur **« ESP32 virtuel »** (script Python/test) : publie des mesures MQTT, récupère une commande en attente, confirme l'exécution, crée une `Action` → vérifie le flux complet en BD.
-- [ ] **(B)** **6.4** Vérifier l'affichage **temps réel frontend** avec un publisher MQTT de test.
+- [ ] **(B)** **6.2** Test d'intégration broker : publier une mesure MQTT **réelle (ESP32)** → vérifier son insertion en BD via le subscriber.
+- [ ] **(B)** **6.3** Flux commandes complet : le firmware ESP32 récupère une commande en attente, confirme l'exécution, crée une `Action` → vérifie le flux complet en BD.
+- [ ] **(B)** **6.4** Vérifier l'affichage **temps réel frontend** (WS 9001, alertes TopBar + jauges Dashboard) nourri par le firmware ESP32 réel.
 - [x] **(A)** **6.5** Mettre à jour `AGENTS.md` : ajouter la section MQTT, l'authentification clé API, les nouveaux endpoints, le broker ; **retirer la mention « MQTT non implémenté »** une fois la préparation faite.
+
+### Phase 7 — Réalisation firmware ESP32 (après préparation, plan dédié)
+
+> **Report de la partie (B)** : la validation (6.2-6.4, 4.5) est volontairement différée pour ne pas bloquer le développement. On réalise d'abord le **firmware** (Phase 7), puis on joue les (B) **avec le vrai ESP32** en toute dernière position.
+
+- [ ] **7.1** Setup matériel/logiciel ESP32 : IDE, WiFi, gestion connexion/reconnexion, sleep mode, watchdog.
+- [ ] **7.2** Lecture + filtrage des 5 capteurs (YL-69, DHT22, BH1750, SEN0159, niveau d'eau) — calibrés selon `modules_taches` 2.1.
+- [ ] **7.3** Commande des actionneurs (pompe, ventilation, éclairage via relais) + publication état sur `sai/<parcelle>/actionneurs/<nom>`.
+- [ ] **7.4** Publication MQTT multi-mesures (TLS 8883, QoS, topics `sai/<parcelle>/capteurs/<type>`, alerte périodique) — **alignée sur `mqtt_simulateur.py`**.
+- [ ] **7.5** Workflow pull HTTP : `GET /api/commandes/attente` → confirmations `recue`/`executee` → `POST /api/actions` (contrat `Iot/INTERFACE.md`).
+- [ ] **7.6** Automatisation embarquée : seuils locaux, priorité local > distant, alerte si perte de liaison.
+- [ ] **7.7** Tests matériels ESP32 (unitaires capteurs/actionneurs + intégration réelle).
 
 ---
 
@@ -133,6 +146,7 @@ La préparation est découpée en deux catégories, distinguées **systématique
 - CLI complété (clé API, niveau réservoir, confirmation, logging).
 - Tests d'intégration écosystème + simulateur « ESP32 virtuel » verts.
 - Environnement de dev reproductible (config broker versionnée + script de démarrage).
+- **Firmware ESP32 dans `Iot/`** (code source + guide de flash/calibration) — Phase 7.
 
 ---
 
@@ -167,3 +181,7 @@ La préparation est découpée en deux catégories, distinguées **systématique
 | 2026-09-01 | **5.1–5.6** | **Phase 5 — CLI complémentaire (100 % A).** (5.1) `Cli/client.py` : attribut `cle_api` + `sauvegarder_cle_api`/`effacer_cle_api` + header `X-API-Key` ; `config.example.json` +`cle_api` ; sous-commande `apikey <sk_sai_...> | --effacer` dans `main.py` ; `status` (auth.py) affiche la clé masquée (`sk_sai_...` préfixe). (5.2) `commandes.envoyer` : vérif réservoir (`_verifier_reservoir`, capteur `niveau_eau` de la parcelle, blocage < 15 % sauf `--oui`) ; `batch.arrosage` idem. (5.3) `_confirmer_critique` (commandes.py) + `_confirmer` (batch.py) : prompt `[o/N]` sur `pompe`/`ventilation`/`eclairage` (`ACTIONNEURS_CRITIQUES`), flag `--oui` sur `commander` et `batch`. (5.4) `Cli/logs.py` module `journal()` → `cli.log` (gitignoré) ; dispatch `main.py` journalise login/logout/commander/apikey/statut + erreurs. (5.5) `batch` arrosage/ventilation créé (`SEUIL_NIVEAU_EAU=15`, `SEUIL_TEMPERATURE=40`, `--oui` force l'arrosage si cohérent avec commandes.py). (5.6) `test_cli.py` étendu : `apikey`, `status` (clé affichée), `commander --oui`, `batch arrosage/ventilation --oui`, résolution **dynamique des IDs** (capteur/pompe/ventilation) depuis l'API seedée + timeout 90 s → **14/14 OK**, données de test nettoyées. Environnement : `requests` installé dans le venv backend (dépendance `Cli/requirements.txt`, le CLI tourne désormais via ce venv). | opencode |
 | 2026-09-01 | **6.1** | **Phase 6 (A) — tests dashboard agrégé.** Création `tests/test_dashboard.py` (4 tests) : payload complet `{capteurs, actionneurs, parcelles, alertes, dernieres_mesures}`, **une seule mesure (la plus récente) par capteur**, exclusion des alertes `resolue`, 401 sans token. **Bug corrigé dans `services/dashboard_service.py`** (`_dernieres_mesures`) : la jointure sur la sous-requête DISTINCT ON ne portait que sur `id_capteur` (pas le `timestamp`) → la ligne « dernière mesure » n'était pas garantie d'être la plus récente ; jointure étendue à `(id_capteur, timestamp)`. Suite complète : **123 passed / 3 échecs pré-existants (401 vs 403) inchangés**. Rappel couverture 6.1 (déjà en place) : `test_mqtt_service.py` (5), `test_iot.py` (8 : clé API + commandes/actions). | opencode |
 | 2026-09-01 | **6.5** | **Phase 6 (A) — `AGENTS.md` finalisé.** Section endpoints : ajout `GET /api/dashboard` (payload agrégé unique). Section CLI (§11) : enrichie (apikey, batch arrosage/ventilation, `--oui`, vérifs CDC 6.2.1/6.3, journal `cli.log`). Section Tests (§13) : documentés `test_mqtt_service.py`, `test_iot.py`, `test_dashboard.py` + `test_cli.py` (IDs dynamiques). **Plus aucune mention « MQTT non implémenté »** (section MQTT déjà « implémenté »). | opencode |
+| 2026-09-02 | **Report B + Phase 7** | **Décision : reporter la validation (B) — ajout de la Phase 7 « Réalisation firmware ESP32 ».** Les points (B) 6.2, 6.3, 6.4, 4.5 sont **différés en toute dernière position** et seront joués **avec le vrai matériel ESP32** (firmware réel) plutôt qu'avec le simulateur ; le simulateur ne garde qu'un rôle de **référence de développement**. Ajout de la **Phase 7** (7.1-7.7 : setup, capteurs, actionneurs + publication état MQTT, publication MQTT TLS alignée sur le simulateur, workflow pull HTTP, automatisation embarquée, tests matériels). Reformulation des 4 points (B) en acteur « ESP32 réel ». Brochure de l'état courant nettoyée (broker SAI arrêté, logs B0 supprimés). | opencode |
+| 2026-09-02 | **GAP-1** | **Fuite MQTT au logout corrigée.** `frontend/src/context/AuthContext.jsx` : `logout()` appelle désormais `deconnecterMqtt()` (importée depuis `services/mqtt`) avant de purger le localStorage — le client MQTT WebSocket est coupé et le singleton réinitialisé à la déconnexion. | opencode |
+| 2026-09-02 | **GAP-4** | **Topic actionneurs désormais souscrit (temps réel).** `frontend/src/services/mqtt.js` : nouveau topic `sai/+/actionneurs/#`, famille `listeners.actionneur`, export `subscribeActionneurs(cb)`. `backend/services/mqtt_service.py` : import de `MQTT_TOPIC_ACTIONNEURS`, abonnement dans `_on_connect`, handler `_traiter_actionneurs()` (journalisation, pas d'écriture BD). `frontend/src/pages/Dashboard.jsx` : souscrit via `subscribeActionneurs` et met à jour l'état d'un actionneur en direct (par nom). | opencode |
+| 2026-09-02 | **GAP-5** | **Alertes Dashboard en temps réel.** `frontend/src/pages/Dashboard.jsx` : souscrit à `subscribeAlertes` (en plus des mesures), fusionne les alertes push MQTT avec celles chargées en HTTP, déduplique par `id` et ignore les `resolue` (cap 50). Le chargement HTTP initial reste le fallback. | opencode |

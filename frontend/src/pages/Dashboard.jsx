@@ -9,7 +9,7 @@ import { GaugeCard } from '../components/ui/GaugeCard';
 import { DashboardSkeleton } from '../components/ui/DashboardSkeleton';
 import { HealthSummaryBar } from '../components/ui/HealthSummaryBar';
 import { apiService } from '../services/api';
-import { subscribeMesures } from '../services/mqtt';
+import { subscribeMesures, subscribeAlertes, subscribeActionneurs } from '../services/mqtt';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
@@ -263,6 +263,35 @@ export const Dashboard = () => {
       if (Object.keys(updates).length === 0) return;
       setGauges((prev) => ({ ...prev, ...updates }));
       setLastUpdateSecs(0);
+    });
+    return () => unsub();
+  }, []);
+
+  // Temps réel MQTT : alertes reçues en push (sai/<parcelle>/alertes) ajoutées au panneau.
+  // Le chargement HTTP initial (loadData) reste le fallback et le filtre etat != resolue.
+  useEffect(() => {
+    const unsub = subscribeAlertes(({ payload }) => {
+      if (!payload || payload.id == null) return;
+      setAlertes((prev) => {
+        if (prev.some((a) => a.id === payload.id)) return prev;
+        if (payload.etat && payload.etat === 'resolue') return prev;
+        return [payload, ...prev].slice(0, 50);
+      });
+    });
+    return () => unsub();
+  }, []);
+
+  // Temps réel MQTT : met à jour l'état d'un actionneur quand l'ESP32 publie sa
+  // nouvelle commande (sai/<parcelle>/actionneurs/<nom>).
+  useEffect(() => {
+    const unsub = subscribeActionneurs(({ payload }) => {
+      if (!payload || typeof payload !== 'object') return;
+      const nomRecu = (payload.nom || payload.actionneur || '').toString().toLowerCase();
+      const etatRecu = payload.etat || (payload.commande === 'on' ? 'actif' : payload.commande === 'off' ? 'inactif' : null);
+      if (!nomRecu || !etatRecu) return;
+      setActionneurs((prev) =>
+        prev.map((act) => (act.nom.toLowerCase() === nomRecu ? { ...act, etat: etatRecu } : act))
+      );
     });
     return () => unsub();
   }, []);
