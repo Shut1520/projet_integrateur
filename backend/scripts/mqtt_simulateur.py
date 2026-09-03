@@ -31,6 +31,7 @@ from config import MQTT_BROKER, MQTT_PORT, MQTT_TLS, MQTT_CA_CERT
 # Valeurs nominales par type de mesure (le simulateur fait varier autour de la cible)
 NOMINAUX = {
     "temperature": 24.0,
+    "humidite_air": 55.0,
     "humidite_sol": 45.0,
     "co2": 600.0,
     "luminosite": 60.0,   # % (firmware LDR), aligne sur seuils 20-80 %
@@ -45,6 +46,7 @@ def _payload_aleatoire():
         "parcelle": None,  # rempli par l'appelant
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "temperature": round(NOMINAUX["temperature"] + random.uniform(-3, 3), 1),
+        "humidite_air": round(NOMINAUX["humidite_air"] + random.uniform(-10, 10), 1),
         "humidite_sol": round(NOMINAUX["humidite_sol"] + random.uniform(-10, 10), 1),
         "co2": round(NOMINAUX["co2"] + random.uniform(-80, 80), 0),
         "luminosite": round(NOMINAUX["luminosite"] + random.uniform(-10, 10), 0),
@@ -52,7 +54,7 @@ def _payload_aleatoire():
     }
 
 
-def _payload_alerte(parcelle: str, i: int):
+def _payload_alerte(parcelle: str, i: int, id_parcelle: int):
     """Construit une alerte periodique (format consomme par le frontend)."""
     return {
         "id": i,
@@ -63,7 +65,7 @@ def _payload_alerte(parcelle: str, i: int):
         "etat": "active",
         "valeur": 42.0,
         "seuil": 30.0,
-        "id_parcelle": 1,
+        "id_parcelle": id_parcelle,
         "parcelle": parcelle,
         "date_debut": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
@@ -71,12 +73,23 @@ def _payload_alerte(parcelle: str, i: int):
 
 def main():
     parser = argparse.ArgumentParser(description="Simulateur ESP32 (MQTT)")
-    parser.add_argument("--parcelle", default="serre-a", help="Nom de parcelle dans les topics")
+    parser.add_argument("--parcelle", default="Serre A", help="Nom de parcelle dans les topics")
     parser.add_argument("--interval", type=int, default=5, help="Intervalle (s) entre deux publications")
     parser.add_argument("--alertes", type=int, default=60, help="Publier une alerte toutes les N secondes")
     parser.add_argument("--user", default="sai_esp32", help="Utilisateur MQTT (ACL : write capteurs + alertes)")
     parser.add_argument("--pass", dest="password", default="sai_esp32_pass", help="Mot de passe MQTT")
     args = parser.parse_args()
+
+    # Resolution de l'id_parcelle depuis la BD
+    try:
+        from database import SessionLocal
+        from models.parcelle import Parcelle
+        db = SessionLocal()
+        parcelle_obj = db.query(Parcelle).filter(Parcelle.nom == args.parcelle).first()
+        id_parcelle = parcelle_obj.id if parcelle_obj else 1
+        db.close()
+    except Exception:
+        id_parcelle = 1
 
     client = mqtt.Client(
         callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
@@ -107,7 +120,7 @@ def main():
 
             if int(time.time() - demarrage) >= dernier_compteur + args.alertes:
                 dernier_compteur = int(time.time() - demarrage)
-                client.publish(topic_alertes, json.dumps(_payload_alerte(args.parcelle, dernier_compteur)), qos=1)
+                client.publish(topic_alertes, json.dumps(_payload_alerte(args.parcelle, dernier_compteur, id_parcelle)), qos=1)
                 print(f"  ! alerte publiee #{dernier_compteur}")
 
             time.sleep(args.interval)

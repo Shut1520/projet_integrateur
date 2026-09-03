@@ -9,7 +9,8 @@ Flux :
 
 Topics ecoutes (spec : sai/[parcelle]/[type]/[sous-type]) :
     - sai/+/capteurs/#   (mesures capteurs, payload multi-mesures JSON)
-    - sai/+/alertes      (alertes ESP32 — journalisees)
+    - sai/+/alertes      (alertes ESP32 — stockees en BD)
+    - sai/+/actionneurs/# (etats d'actionneurs — loggues)
 
 Pas de BD de test dediee : ce module tourne dans le contexte de l'app (BD reelle).
 """
@@ -40,7 +41,6 @@ TYPE_A_CAPTEUR = {
     "co2": "sen0159",
     "luminosite": "bh1750",
     "niveau_eau": "niveau_eau",
-    "luminosite_lux": "bh1750",
 }
 
 # ─── Unite par defaut selon le type de mesure (surcharge par 'unite' du payload) ───
@@ -50,7 +50,6 @@ TYPE_A_UNITE = {
     "humidite_sol": "%",
     "co2": "ppm",
     "luminosite": "%",
-    "luminosite_lux": "%",
     "niveau_eau": "%",
 }
 
@@ -178,6 +177,9 @@ def _traiter_mesures(db, nom_parcelle: str, payload: dict) -> int:
     """Insere une Mesure par cle de type du payload spec. Retourne le nb insere."""
     from models.mesure import Mesure
 
+    device_id = payload.get("device_id", "")
+    source = "simulation" if "sim" in str(device_id).lower() else "esp32"
+
     inserees = 0
     for cle, valeur in payload.items():
         if cle in _CHAMPS_RESERVES:
@@ -194,7 +196,7 @@ def _traiter_mesures(db, nom_parcelle: str, payload: dict) -> int:
         mesure = Mesure(
             valeur=valeur,
             unite=_unite_du_type(cle, payload),
-            source="esp32",
+            source=source,
             id_capteur=id_capteur,
         )
         db.add(mesure)
@@ -249,6 +251,59 @@ def _traiter_actionneurs(topic: str, payload_bytes: bytes) -> None:
     print(f"[mqtt] Etat actionneur ({topic}): {payload}")
 
 
+def _traiter_alertes(topic: str, payload_bytes: bytes) -> None:
+    """Traite une alerte recue sur sai/<parcelle>/alertes et l'insere en BD.
+
+    Le frontend recoit aussi l'alerte via son propre abonnement MQTT, donc
+    on ne re-publie pas. On stocke simplement en BD pour la page /alertes.
+    """
+    from database import SessionLocal
+    from models.parcelle import Parcelle
+    from models.alerte import Alerte
+
+    parties = topic.split("/")
+    if len(parties) < 3:
+        return
+    nom_parcelle = parties[1]
+
+    try:
+        payload = json.loads(payload_bytes.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return
+    if not isinstance(payload, dict):
+        return
+
+    db = SessionLocal()
+    try:
+        parcelle = (
+            db.query(Parcelle)
+            .filter(Parcelle.nom == nom_parcelle)
+            .order_by(Parcelle.id)
+            .first()
+        )
+        if not parcelle:
+            print(f"[mqtt] Alerte ignoree : parcelle '{nom_parcelle}' inconnue")
+            return
+
+        alerte = Alerte(
+            type_alerte=payload.get("type_alerte", payload.get("type", "inconnu")),
+            message=payload.get("message", ""),
+            severite=payload.get("severite", "haute"),
+            etat=payload.get("etat", "active"),
+            valeur=payload.get("valeur"),
+            seuil=payload.get("seuil"),
+            id_parcelle=parcelle.id,
+        )
+        db.add(alerte)
+        db.commit()
+        print(f"[mqtt] Alerte inseree ({topic}): {alerte.type_alerte} (id={alerte.id})")
+    except Exception as e:
+        db.rollback()
+        print(f"[mqtt] Erreur insertion alerte ({topic}): {e}")
+    finally:
+        db.close()
+
+
 def _on_connect(client, userdata, flags, reason_code, properties=None):
     if reason_code != 0:
         print(f"[mqtt] Connexion refusee (code {reason_code})")
@@ -264,6 +319,8 @@ def _on_message(client, userdata, msg):
         topic = msg.topic
         if "/actionneurs/" in topic:
             _traiter_actionneurs(topic, msg.payload)
+        elif "/alertes" in topic:
+            _traiter_alertes(topic, msg.payload)
         else:
             _traiter_payload(topic, msg.payload)
     except Exception as e:

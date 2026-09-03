@@ -58,10 +58,20 @@ const SENSOR_CONFIG = [
   { key: 'niveau_eau', label: 'Niveau Eau', color: '#0891B2', bg: 'rgba(8, 145, 178, 0.08)', unit: '%' },
 ];
 
-// Cle du payload MQTT multi-mesures → gauge du dashboard
+// Configuration capteur → gauge + unite (pour filtrer correctement les mesures)
+const SENSOR_GAUGE_MAP = [
+  { name: 'dht22', gauge: 'temp', unite: ['°C', 'C'] },
+  { name: 'yl-69', gauge: 'humSol', unite: '%' },
+  { name: 'bh1750', gauge: 'lux', unite: '%' },
+  { name: 'sen0159', gauge: 'co2', unite: 'ppm' },
+  { name: 'niveau_eau', gauge: 'eau', unite: '%' },
+];
+
+// Cle du payload MQTT multi-mesures → gauge du dashboard (temps reel)
 const MESURE_TO_GAUGE = {
   temperature: 'temp',
   humidite_sol: 'humSol',
+  humidite_air: 'humAir',
   luminosite: 'lux',
   co2: 'co2',
   niveau_eau: 'eau',
@@ -108,6 +118,7 @@ export const Dashboard = () => {
   const [gauges, setGauges] = useState({
     temp: null,
     humSol: null,
+    humAir: null,
     lux: null,
     co2: null,
     eau: null,
@@ -117,6 +128,7 @@ export const Dashboard = () => {
   const [prevGauges, setPrevGauges] = useState({
     temp: null,
     humSol: null,
+    humAir: null,
     lux: null,
     co2: null,
     eau: null,
@@ -131,26 +143,40 @@ export const Dashboard = () => {
   // Données du graphique par capteur
   const [chartDataMap, setChartDataMap] = useState({});
 
+  // Labels dynamiques du graphique (timestamps des mesures)
+  const [chartLabels, setChartLabels] = useState([]);
+
   // Map nom capteur → id (pour résoudre les filtres sans re-fetch)
   const [capteurMap, setCapteurMap] = useState({});
 
   /**
    * Extrait la dernière mesure d'un capteur à partir d'une liste déjà chargée.
    */
-  const findLatestMesure = (mesures, capteurId) => {
+  const findLatestMesure = (mesures, capteurId, unite) => {
     return mesures
-      .filter((m) => m.id_capteur === capteurId)
+      .filter((m) => {
+        if (m.id_capteur !== capteurId) return false;
+        if (!unite) return true;
+        if (Array.isArray(unite)) return unite.includes(m.unite);
+        return m.unite === unite;
+      })
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0] || null;
   };
 
   /**
    * Extrait la mesure d'il y a ~24h pour calculer la tendance.
    */
-  const findPreviousMesure = (mesures, capteurId) => {
+  const findPreviousMesure = (mesures, capteurId, unite) => {
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     return mesures
-      .filter((m) => m.id_capteur === capteurId && new Date(m.timestamp) <= yesterday)
+      .filter((m) => {
+        if (m.id_capteur !== capteurId) return false;
+        if (new Date(m.timestamp) > yesterday) return false;
+        if (!unite) return true;
+        if (Array.isArray(unite)) return unite.includes(m.unite);
+        return m.unite === unite;
+      })
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0] || null;
   };
 
@@ -176,17 +202,23 @@ export const Dashboard = () => {
       // Filtrer localement la dernière mesure par type + tendance
       const mesuresList = Array.isArray(mesures) ? mesures : [];
 
-      const sensorNames = ['dht22', 'yl-69', 'bh1750', 'sen0159', 'niveau_eau'];
-      const gaugeKeys = ['temp', 'humSol', 'lux', 'co2', 'eau'];
       const newGauges = {};
       const newPrev = {};
 
-      sensorNames.forEach((name, i) => {
-        const latest = findLatestMesure(mesuresList, map[name]);
-        const prev = findPreviousMesure(mesuresList, map[name]);
-        newGauges[gaugeKeys[i]] = latest?.valeur ?? null;
-        newPrev[gaugeKeys[i]] = prev?.valeur ?? null;
+      SENSOR_GAUGE_MAP.forEach(({ name, gauge, unite }) => {
+        const latest = findLatestMesure(mesuresList, map[name], unite);
+        const prev = findPreviousMesure(mesuresList, map[name], unite);
+        newGauges[gauge] = latest?.valeur ?? null;
+        newPrev[gauge] = prev?.valeur ?? null;
       });
+
+      // DHT22 fournit aussi humidite_air (unite=%) — extraire separement
+      if (map['dht22']) {
+        const latestAir = findLatestMesure(mesuresList, map['dht22'], '%');
+        const prevAir = findPreviousMesure(mesuresList, map['dht22'], '%');
+        newGauges['humAir'] = latestAir?.valeur ?? null;
+        newPrev['humAir'] = prevAir?.valeur ?? null;
+      }
 
       setActionneurs(Array.isArray(acts) ? acts : []);
       setAlertes(Array.isArray(alts) ? alts.filter((a) => a.etat !== 'resolue') : []);
@@ -194,8 +226,10 @@ export const Dashboard = () => {
       setGauges(newGauges);
       setPrevGauges(newPrev);
       setLastUpdateSecs(0);
+      return map;
     } catch (err) {
       console.error('Erreur load Dashboard:', err);
+      return {};
     } finally {
       setLoading(false);
     }
@@ -203,47 +237,73 @@ export const Dashboard = () => {
 
   /**
    * Charge les données du graphique pour un type de capteur et une plage donnée.
+   * Retourne { values: number[], timestamps: string[] } pour labels dynamiques.
    */
   const loadChartData = async (capteurNom, map, range) => {
     try {
       const capteurId = map[capteurNom];
-      if (!capteurId) return [];
-      const params = { capteur_id: capteurId, limite: range === '24h' ? 8 : 7 };
-      if (range === '7j') {
+      if (!capteurId) return { values: [], timestamps: [] };
+      const params = { capteur_id: capteurId, limite: range === '24h' ? 24 : 7 };
+      if (range === '24h') {
+        const depuis = new Date();
+        depuis.setHours(depuis.getHours() - 24);
+        params.depuis = depuis.toISOString();
+      } else {
         const depuis = new Date();
         depuis.setDate(depuis.getDate() - 7);
         params.depuis = depuis.toISOString();
       }
       const mesures = await apiService.getMesures(params);
-      if (!Array.isArray(mesures)) return [];
-      return mesures
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-        .map((m) => m.valeur);
+      if (!Array.isArray(mesures)) return { values: [], timestamps: [] };
+      const sorted = mesures
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      return {
+        values: sorted.map((m) => m.valeur),
+        timestamps: sorted.map((m) => m.timestamp),
+      };
     } catch (err) {
       console.error(`Erreur loadChartData ${capteurNom}:`, err);
-      return [];
+      return { values: [], timestamps: [] };
     }
   };
 
   /**
    * Recharge les données du graphique pour tous les capteurs sélectionnés.
+   * @param {string} range - '24h' ou '7j'
+   * @param {Object} [overrideMap] - capteurMap à utiliser (évite stale closure au montage)
    */
-  const refreshChartData = async (range) => {
-    const map = Object.keys(capteurMap).length > 0 ? capteurMap : null;
+  const refreshChartData = async (range, overrideMap) => {
+    const map = overrideMap || (Object.keys(capteurMap).length > 0 ? capteurMap : null);
     if (!map) return;
     const results = await Promise.all(
       SENSOR_CONFIG.map((s) => loadChartData(s.key, map, range))
     );
     const newData = {};
+    let refTimestamps = null;
     SENSOR_CONFIG.forEach((s, i) => {
-      newData[s.key] = results[i];
+      newData[s.key] = results[i].values;
+      if (!refTimestamps && results[i].timestamps.length > 0) {
+        refTimestamps = results[i].timestamps;
+      }
     });
     setChartDataMap(newData);
+    // Labels dynamiques basés sur les timestamps de la première série
+    if (refTimestamps && refTimestamps.length > 0) {
+      const fmt = range === '24h'
+        ? (ts) => new Date(ts).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+        : (ts) => new Date(ts).toLocaleDateString('fr-FR', { weekday: 'short' });
+      setChartLabels(refTimestamps.map(fmt));
+    }
   };
 
-  // Initialisation
+  // Initialisation : loadData retourne le map, on l'utilise directement
+  // pour éviter la stale closure (capteurMap encore {} à ce stade)
   useEffect(() => {
-    loadData().then(() => refreshChartData(chartRange));
+    loadData().then((map) => {
+      if (map && Object.keys(map).length > 0) {
+        refreshChartData(chartRange, map);
+      }
+    });
     const interval = setInterval(() => {
       setLastUpdateSecs((prev) => prev + 1);
     }, 1000);
@@ -296,10 +356,10 @@ export const Dashboard = () => {
     return () => unsub();
   }, []);
 
-  // Rechargement du graphique quand la plage ou les capteurs changent
+  // Rechargement du graphique quand la plage change
   useEffect(() => {
     refreshChartData(chartRange);
-  }, [chartRange]);
+  }, [chartRange, capteurMap]);
 
   /**
    * Toggle un capteur dans la sélection du graphique.
@@ -320,7 +380,8 @@ export const Dashboard = () => {
    */
   const handleManualRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([loadData(), refreshChartData(chartRange)]);
+    const map = await loadData();
+    await refreshChartData(chartRange, map);
     setTimeout(() => {
       setRefreshing(false);
       addToast({ type: 'success', title: 'Données actualisées', message: 'Les capteurs ont été relus.' });
@@ -383,16 +444,19 @@ export const Dashboard = () => {
 
   // Configuration du graphique Chart.js
   const isDark = theme === 'dark';
-  const labels24h = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
-  const labels7d = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  const fallbackLabels24h = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
+  const fallbackLabels7d = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  const activeLabels = chartLabels.length > 0
+    ? chartLabels
+    : (chartRange === '24h' ? fallbackLabels24h : fallbackLabels7d);
 
   const chartData = {
-    labels: chartRange === '24h' ? labels24h : labels7d,
+    labels: activeLabels,
     datasets: SENSOR_CONFIG.filter((s) => selectedSensors.includes(s.key)).map((s) => ({
       label: `${s.label} (${s.unit})`,
       data: chartDataMap[s.key]?.length > 0
         ? chartDataMap[s.key]
-        : (chartRange === '24h' ? labels24h : labels7d).map(() => null),
+        : activeLabels.map(() => null),
       borderColor: s.color,
       backgroundColor: s.bg,
       tension: 0.35,
@@ -486,6 +550,19 @@ export const Dashboard = () => {
           parcelleNom="DHT22"
           onClick={() => navigate('/history?capteur=dht22')}
           trend={getTrend('temp')}
+          trendLabel="vs hier"
+        />
+        <GaugeCard
+          title="Humidité Air"
+          value={gauges.humAir ?? '—'}
+          unit="%"
+          min={0}
+          max={100}
+          iconType="hum"
+          status={gauges.humAir == null ? 'Inconnu' : gauges.humAir < 30 || gauges.humAir > 80 ? 'Alerte' : 'Normal'}
+          parcelleNom="DHT22"
+          onClick={() => navigate('/history?capteur=dht22')}
+          trend={getTrend('humAir')}
           trendLabel="vs hier"
         />
         <GaugeCard

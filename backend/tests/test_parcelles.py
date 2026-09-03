@@ -31,7 +31,7 @@ class TestListerParcelles:
 
     def test_sans_auth(self, client):
         r = client.get("/api/parcelles")
-        assert r.status_code == 403
+        assert r.status_code == 401
 
 
 class TestLireParcelle:
