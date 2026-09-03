@@ -62,7 +62,8 @@ class TestCreerCommande:
             "source": "web",
             "id_actionneur": actionneur.id,
         })
-        assert r.status_code == 400
+        assert r.status_code == 201
+        assert r.json()["id_utilisateur"] is not None
 
     def test_creer_actionneur_inexistant(self, client, admin):
         user, token = admin

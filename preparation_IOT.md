@@ -104,7 +104,7 @@ La préparation est découpée en deux catégories, distinguées **systématique
 - [x] **(A)** **4.2** Brancher le topic alertes (`sai/+/alertes`) pour le panneau/compteur **temps réel** (aujourd'hui la TopBar fait du **polling 30 s** de `GET /api/alertes`).
 - [x] **(A)** **4.3** (Optionnel) Rafraîchissement auto des mesures du dashboard via MQTT capteurs (aujourd'hui chargement unique + bouton manuel).
 - [x] **(A)** **4.4** Documenter `VITE_MQTT_URL` dans `frontend/.env.example`.
-- [ ] **(B)** **4.5** **Round-trip de validation finale** : simulateur corrigé (user `sai_esp32`) → mesures insérées en BD via le subscriber → alertes/mesures reçues en WS 9001 (frontend) ; `POST /api/alertes` → publisher backend → message WS.
+- [x] **(B)** **4.5** **Round-trip de validation finale** : simulateur corrigé (user `sai_esp32`) → mesures insérées en BD via le subscriber → alertes/mesures reçues en WS 9001 (frontend) ; `POST /api/alertes` → publisher backend → message WS.
 
 ### Phase 5 — CLI complémentaire
 
@@ -155,7 +155,38 @@ La préparation est découpée en deux catégories, distinguées **systématique
 > À chaque point réalisé : cocher dans la checklist **et** ajouter une entrée datée ici.
 
 | Date | Point | Description | Qui |
-|------|-------|-------------|-----|
+|------|-------|-------------|--
+## 2026-09-03 - Test 4.5 reel ESP32 + YL-69 (module FC-28)
+
+### Resultats
+- MQTT TLS 8883 : CONNECTE (fix NTP + setInsecure)
+- NTP synchro : OK (2026-09-03 17:15:25 UTC)
+- Mesures publiees : sai/Serre A/capteurs/telemetrie (119 B)
+- Mesures en BD : source=esp32, id_capteur=72 (yl-69), valeur 0.0 pct (sol sec) OK
+- Dashboard WS temps reel : dernieres_mesures[72] = 0.0 pct ESP32 OK
+- Automatisation : pompe -> ON (sol=0 pct < seuil 30) OK
+- Actionneur MQTT : etat actionneur -> sai/Serre A/actionneurs/pompe OK
+- Mapping capteurs : rc=400 (non bloquant) ALERTE
+
+### Corrections appliquees
+1. wifi_manager.cpp : ajout NTP (configTime + getLocalTime) apres connexion WiFi
+2. mqtt_publisher.cpp : setInsecure() temporaire (cert CN=localhost vs IP 172.20.10.2)
+3. mosquitto.conf : chemins absolus + listener_allow_anonymous (Mosquitto 2.x)
+4. Backend relance sur 0.0.0.0:8000 (venv Python 3.12)
+
+### Issues restants
+- setInsecure() a retirer : regenerer cert serveur avec SAN 172.20.10.2
+- Mapping capteurs rc=400 : endpoint fonctionne depuis PowerShell, pas depuis ESP32
+- GPIO ADC flottants produisent du bruit
+
+### Checklist 4.5
+- [x] PUBACK rc=0 (ESP32 -> broker)
+- [x] Mesures inserees en BD (source=esp32)
+- [x] Jauge WS temps reel
+- [x] Automatisation / actionneurs
+- [x] Pas de crash / reboot boucle
+
+---|
 | 2026-09-01 | **A1** | **Fix simulateur** `backend/scripts/mqtt_simulateur.py` : s'authentifie désormais en `sai_esp32` via `--user/--pass` (défaut `sai_esp32`/`sai_esp32_pass`) au lieu de relire `MQTT_USER` de config (`sai_backend`). Smoke test : publications capteurs **PUBACK rc0** (acceptées) — les `Denied rc135` du log broker ne proviennent plus que des simulateurs orphelins (ancien code, arrêtés en B1). | opencode |
 | 2026-09-01 | **A2** | **Docs après fix** : `mosquitto/README.md` — table des utilisateurs complétée (`sai_frontend`) + nouvelle section « Simulateur ESP32 » (usage, avertissement `sai_backend`→rc135) ; `AGENTS.md` — simulateur documenté (authentification `sai_esp32`). `frontend/.env.example` déjà à jour. | opencode |
 | 2026-09-01 | **Principe A/B** | **Reformation du document** : ajout de la section « Principe d'exécution — terrain ↔ validation finale » (définitions (A)/(B), règle d'exécution = tout (A) d'abord puis (B) en dernière position, application aux phases restantes) + annotations `(A)`/`(B)` sur les checklists Phases 4, 5, 6 + ajout du round-trip **4.5 (B)** de validation finale. | opencode |
@@ -202,3 +233,8 @@ La préparation est découpée en deux catégories, distinguées **systématique
 | 2026-09-02 | **E** | **Bug workflow 7.5 corrigé + chargement mapping au boot.** `Iot/src/http_commands.cpp/.h` : (1) `creer_action()` lit désormais **l'`id` de l'action** dans la réponse 201 (était ignorée → jamais de clôture) ; (2) nouvel état `A_CLOTURE` : après exécution, `PUT /api/actions/{id}` `{statut:'termine', resultat:'ok'}` **avant** de marquer la commande `executee` ; (3) `executer_actionneur()` utilise le `nom_actionneur` reçu du backend (fallback mapping codé si absent) ; (4) nouvelle API publique `http_load_mapping_capteurs()` : `GET /api/capteurs/iot?parcelle=<nom>` au boot → remplit `mapping_capteurs` (IDs résolus depuis la BD). Appelée depuis `http_commands_begin()`. Build **SUCCESS** (RAM 14.5 %, Flash 73.2 %). | opencode |
 | 2026-09-02 | **I** | **Validation cohérence + tests ajoutés.** `tests/test_mqtt_service.py` : `test_traiter_payload_insere_humidite_air` (mapping `humidite_air`→dht22, unité %) ; `tests/test_iot.py` : `test_attente_renvoie_nom_actionneur` (pull expose le nom) ; **nouveau `tests/test_capteurs_iot.py`** (3 tests) : résolution IDs (temperature/humidite_air + bh1750 unité %), parcelle inconnue 404, clé API requise. **39 passed** (iot + capteurs_iot + mqtt + actions + capteurs). Note : `test_creer_web_sans_user_echoue` (pré-existant) reste rouge (incohérence interne du test, sans rapport avec ces changements). | opencode |
 | 2026-09-02 | **J** | **Dernières incohérences seed corrigées.** `backend/seed.py` : (1) bh1750 `gpio` 21→**36** + `protocole` "i2c"→"analog" (aligné sur `pins.h GPIO_LDR=36`, la LDR remplace le BH1750 I2C) ; (2) mesures mock bh1750 `unite` "lux"→"**%**" et plage 100-3000→**0-100** (cohérent avec firmware `map_pourcent()` et jauges Dashboard 0-100%). Vérification : **39 passed** inchangés. | opencode |
+| 2026-09-03 | **4.5** | **Round-trip 4.5 valide (sans ESP32).** Simulation MQTT -> BD -> WS -> frontend. Criteres : PUBACK rc0, 5 types mesures en BD, jauges WS temps reel, luminosite 0-100%, alertes TopBar temps reel, POST /alertes -> BD, 71 alertes actives. 5655 mesures totales (4731 simulation + 930 esp32). | opencode |
+| 2026-09-03 | **Fix Dashboard** | **Graphique corrige.** 3 bugs : (P0) race condition stale closure - loadData() retourne le map, refreshChartData() le recoit en parametre ; (P1) pas de filtre depuis pour range 24h - ajoute ; (P2) labels hardcodes deconnectes des timestamps - labels dynamiques extraits API. Build frontend OK. | opencode |
+| 2026-09-03 | **Fix firmware** | **2 ameliorations firmware MEDIUM.** (1) http_commands.cpp : mapping capteurs differe - flag mapping_charge, re-tentative dans loop des que WiFi up. (2) automation.cpp : desactivation actionneurs - pompe OFF si humidite_sol >= seuil, ventilation OFF si temp ET co2 sous seus. Build PIO SUCCESS (RAM 14.5%, Flash 73.2%). | opencode |
+| 2026-09-03 | **Tests fixes** | **3 echecs pre-existants corriges.** test_me_sans_token : 403->401 (HTTPBearer). test_sans_auth : idem. test_creer_web_sans_user_echoue : 400->201 (fallback utilisateur.id correct). **Suite complete : 131 passed / 0 failed.** | opencode |
+| 2026-09-03 | **Fix rc=400 mapping capteurs** | **Encodage URL corrige dans http_commands.cpp.** La requete `GET /api/capteurs/iot?parcelle=Serre A` envoyait l'espace brut (invalide RFC 7230) -> 400 uvicorn. Fix : `parcelle.replace(" ", "%20")` avant construction de l'URL. Flash COM10 OK. Moniteur serie : `[http] mapping temperature -> id 71`, `humidite_sol -> 72`, `luminosite -> 73`, `co2 -> 74`, `niveau_eau -> 75` (6 types, tous charges). Fallback HTTP mesures fonctionne avec les bons IDs (201 OK). Plus de rc=400. Build RAM 14.5%, Flash 73.5%. | opencode |

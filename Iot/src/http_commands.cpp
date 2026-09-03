@@ -65,6 +65,7 @@ static enum EtatCmd {
 
 static unsigned long derniereTentativePull = 0;
 static unsigned long derniereFallback = 0;
+static bool mapping_charge = false;
 
 // Commande courante.
 static int  cmd_id            = -1;
@@ -253,11 +254,15 @@ void http_publish_measures_fallback() {
 // (GET /api/capteurs/iot?parcelle=<nom>). Les IDs capteurs dependent de la BD ;
 // ce chargement evite de hardcoder des valeurs qui divergeraient du seed.
 void http_load_mapping_capteurs() {
+  if (mapping_charge) return;
   if (!wifi_connected()) return;
 
   WiFiClient client;
   HTTPClient http;
-  String chemin = "/capteurs/iot?parcelle=" + String(PARCELLE);
+  // Encoder les espaces (%20) dans le nom de parcelle pour eviter un 400 HTTP.
+  String parcelle = PARCELLE;
+  parcelle.replace(" ", "%20");
+  String chemin = "/capteurs/iot?parcelle=" + parcelle;
   http.begin(client, (String(base_url()) + chemin).c_str());
   http.addHeader("X-API-Key", config_store_cle_api().c_str());
   int code = http.GET();
@@ -282,6 +287,7 @@ void http_load_mapping_capteurs() {
       }
       Serial.printf("[http] mapping %s -> id %d\n", type, id);
     }
+    mapping_charge = true;
   } else {
     http.end();
     Serial.printf("[http] chargement mapping capteurs rc=%d\n", code);
@@ -292,7 +298,7 @@ void http_commands_begin() {
   derniereTentativePull = 0;
   derniereFallback = 0;
   cmd_id_action = -1;
-  http_load_mapping_capteurs();
+  mapping_charge = false;
 }
 
 void http_set_mapping_actionneur(int id_actionneur, const String& nom) {
@@ -307,6 +313,12 @@ void http_set_mapping_actionneur(int id_actionneur, const String& nom) {
 
 void http_commands_loop() {
   unsigned long maintenant = millis();
+
+  // Re-tente le chargement du mapping capteurs des que le WiFi est up
+  // (au boot WiFi n'est pas pret, donc on differe jusqu'a la 1re connexion).
+  if (wifi_connected() && !mapping_charge) {
+    http_load_mapping_capteurs();
+  }
 
   // Fallback mesures : WiFi up mais MQTT down, a intervalle.
   if (wifi_connected() && !mqtt_connected() &&

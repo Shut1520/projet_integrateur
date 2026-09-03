@@ -43,6 +43,7 @@ static const char* timestamp_iso() {
 
 void mqtt_begin() {
   secure_client.setCACert(CA_CERT);
+  secure_client.setInsecure(); // TODO: retirer apres test — bypass verification hostname
   mqtt_client.setServer(BROKER_HOST, BROKER_PORT);
   mqtt_client.setBufferSize(1024); // payload multi-mesures + JSON
 }
@@ -73,6 +74,7 @@ void mqtt_publish_measures() {
 
 void mqtt_publish_alert(const char* type_alerte, const char* message, float valeur, float seuil) {
   JsonDocument doc;
+  doc["id"]          = (unsigned long)(millis() / 1000);
   doc["type_alerte"] = type_alerte;
   doc["type"]        = type_alerte;
   doc["message"]     = message;
@@ -81,6 +83,7 @@ void mqtt_publish_alert(const char* type_alerte, const char* message, float vale
   doc["valeur"]      = valeur;
   doc["seuil"]       = seuil;
   doc["parcelle"]    = PARCELLE;
+  doc["date_debut"]  = timestamp_iso();
 
   char buffer[256];
   size_t n = serializeJson(doc, buffer, sizeof(buffer));

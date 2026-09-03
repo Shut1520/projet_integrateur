@@ -110,7 +110,7 @@ class TestMe:
 
     def test_me_sans_token(self, client):
         r = client.get("/api/auth/me")
-        assert r.status_code == 403
+        assert r.status_code == 401
 
     def test_me_token_invalide(self, client):
         r = client.get("/api/auth/me", headers={"Authorization": "Bearer invalid"})

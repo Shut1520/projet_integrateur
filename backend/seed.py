@@ -169,7 +169,7 @@ def seed_mesures_mock(db: Session, capteurs: list, nb_mesures: int = 50):
     """Genere des mesures aleatoires pour simuler un historique temps reel."""
     maintenant = datetime.now()
     types_mesure = {
-        "dht22": {"unite": "C", "min": 25, "max": 38},
+        "dht22": {"unite": "°C", "min": 25, "max": 38},
         "yl-69": {"unite": "%", "min": 20, "max": 60},
         "bh1750": {"unite": "%", "min": 0, "max": 100},
         "sen0159": {"unite": "ppm", "min": 600, "max": 1200},

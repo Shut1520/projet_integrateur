@@ -5,6 +5,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
+import { subscribeAlertes } from '../services/mqtt';
 import { useToast } from '../context/ToastContext';
 import { useSearchParams } from 'react-router-dom';
 import { AlertesSkeleton } from '../components/ui/AlertesSkeleton';
@@ -71,6 +72,18 @@ export const Alertes = () => {
     loadAlertes();
   }, [filtreEtat, filtreSeverite]);
 
+  // Alertes temps reel : abonnement MQTT pour recevoir les nouvelles alertes
+  useEffect(() => {
+    const unsub = subscribeAlertes(({ payload }) => {
+      if (!payload || payload.id == null) return;
+      setAlertes((prev) => {
+        if (prev.some((a) => a.id === payload.id)) return prev;
+        return [payload, ...prev];
+      });
+    });
+    return () => unsub();
+  }, []);
+
   const handleReconnaitre = async (id) => {
     try {
       await apiService.reconnaitreAlerte(id);
@@ -114,7 +127,7 @@ export const Alertes = () => {
     if (!recherche) return true;
     const q = recherche.toLowerCase();
     return (
-      a.type?.toLowerCase().includes(q) ||
+      (a.type_alerte || a.type)?.toLowerCase().includes(q) ||
       a.message?.toLowerCase().includes(q)
     );
   });
