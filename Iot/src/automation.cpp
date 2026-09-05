@@ -5,6 +5,7 @@
 #include "config.h"
 #include "sensors.h"
 #include "actuators.h"
+#include "buzzer.h"
 #include "wifi_manager.h"
 #include "mqtt_publisher.h"
 
@@ -28,6 +29,7 @@ static void appliquer_seuil_arrosage() {
       Serial.printf("[auto] sol=%d%% < %d => pompe ON\n", (int)s.humidite_sol, SEUIL_SOL_SEC);
       set_actionneur("pompe", true);
       mqtt_publish_actuator_state("pompe", true);
+      buzzer_beep(1, 200); // bip court activation
     }
   } else if (actif) {
     Serial.printf("[auto] sol=%d%% >= %d => pompe OFF\n", (int)s.humidite_sol, SEUIL_SOL_SEC);
@@ -40,8 +42,11 @@ static void appliquer_seuil_ventilation() {
   const SensorReadings& s = sensors_get_current();
   if (isnan(s.temperature)) return;
   if (s.temperature > SEUIL_TEMP_HAUTE) {
-    Serial.printf("[auto] T=%.1f > %d => ventilation ON\n", s.temperature, SEUIL_TEMP_HAUTE);
-    set_actionneur("ventilation", true);
+    if (!actionneur_actif("ventilation")) {
+      Serial.printf("[auto] T=%.1f > %d => ventilation ON\n", s.temperature, SEUIL_TEMP_HAUTE);
+      set_actionneur("ventilation", true);
+      buzzer_beep(1, 200); // bip court une seule fois à l'activation
+    }
   }
 }
 
@@ -49,8 +54,11 @@ static void appliquer_seuil_co2() {
   const SensorReadings& s = sensors_get_current();
   if (isnan(s.co2)) return;
   if (s.co2 > SEUIL_CO2_HAUT) {
-    Serial.printf("[auto] CO2=%.0f > %d => ventilation ON (surventilation)\n", s.co2, SEUIL_CO2_HAUT);
-    set_actionneur("ventilation", true);
+    if (!actionneur_actif("ventilation")) {
+      Serial.printf("[auto] CO2=%.0f > %d => ventilation ON (surventilation)\n", s.co2, SEUIL_CO2_HAUT);
+      set_actionneur("ventilation", true);
+      buzzer_beep(1, 200); // bip court une seule fois à l'activation
+    }
   }
 }
 
@@ -78,6 +86,7 @@ static void verifier_liaison(unsigned long maintenant) {
   if (!ok) {
     Serial.println("[auto] liaison perdue (wifi ou mqtt)");
     mqtt_publish_alert("liaison", "Perte de liaison ESP32 (WiFi ou MQTT)", -1.0f, 0.0f);
+    buzzer_beep(3, 500); // 3 bips longs pour perte liaison
   }
 }
 

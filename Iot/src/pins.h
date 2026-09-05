@@ -12,11 +12,15 @@
 #define GPIO_YL69           34  // humidite sol  (analog ADC)
 #define GPIO_LDR            36  // photoresistance (analog ADC1, entree pure)
 #define GPIO_MQ135          35  // capteur gaz CO2 (analog ADC, ADC-only)
-#define GPIO_NIVEAU_EAU     32  // niveau d'eau (analog ADC)
+#define GPIO_ULTRASO_TRIG   32  // HC-SR04 trigger (sortie)
+#define GPIO_ULTRASO_ECHO   33  // HC-SR04 echo (entree, via diviseur 5V->3.3V)
 
 // --- Actionneurs (relais) ---
 #define GPIO_POMPE          26
 #define GPIO_VENTILATION    27
 #define GPIO_ECLAIRAGE      25
+
+// --- Buzzer alerte ---
+#define GPIO_BUZZER          5  // buzzer actif (sortie)
 
 #endif // PINS_H

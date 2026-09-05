@@ -14,16 +14,25 @@ static const unsigned long INTERVALLE_LECTURE_MS = 2000; // relit tous les 2 s
 static const int      LDR_MIN_ADU      = 300;  // lecture ADC en pleine lumiere
 static const int      LDR_MAX_ADU      = 3600; // lecture ADC a l'obscurite
 
-// Coefficients de la courbe log MQ-135 pour le CO2 (parametrables). A recalibrer
-// idealement en usine/lab. Formule : ppm = A * (R/Ro) ^ B.
-static const float    MQ135_COEF_A     = 116.6f;
-static const float    MQ135_COEF_B     = -2.77f;
+// Calibration MQ-135 CO2 (air propre → 400 ppm, calib. point unique).
+// ADC_AIR = valeur ADC lue en air propre (calibration pass 1).
+// Formule : ppm = 400 * pow(Rs/Ro, -2.77), Rs/Ro = ((4095-adc)/adc) / ((4095-AIR)/AIR).
+static const int      MQ135_ADC_AIR    = 1500; // PLACEHOLDER — mesure ADC air propre
+static const float    MQ135_PPM_AIR    = 400.0f;  // ppm en air propre
+static const float    MQ135_COEF_B     = -2.77f;  // pente datasheet MQ-135 CO2
+
+// Calibration ultrason HC-SR04 (capteur au-dessus du recipient).
+// Recipient : hauteur interne 200 mm, remplissage max 180 mm.
+// Capteur place a 200 mm du fond, emetteur/recepteur orientes vers le bas.
+static const float    HAUTEUR_RECIPIENT_MM = 200.0f;  // position du capteur (mm)
+static const float    HAUTEUR_PLEIN_MM     = 180.0f;  // hauteur d'eau = 100%
 
 // ─── Etat interne ───
 static DHT dht(GPIO_DHT22, DHT22);
 
 static SensorReadings courantes = { NAN, NAN, NAN, NAN, NAN, NAN };
 static unsigned long  derniereLecture = 0;
+static int            compteurDebug = 0;
 
 // Petit filtre moyenne glissante, un par capteur analogique (tampon isole).
 struct FiltreGlissant {
@@ -55,11 +64,14 @@ void sensors_begin() {
   analogSetPinAttenuation(GPIO_YL69, ADC_11db);
   analogSetPinAttenuation(GPIO_LDR, ADC_11db);
   analogSetPinAttenuation(GPIO_MQ135, ADC_11db);
-  analogSetPinAttenuation(GPIO_NIVEAU_EAU, ADC_11db);
   pinMode(GPIO_LDR, INPUT);
   pinMode(GPIO_YL69, INPUT);
   pinMode(GPIO_MQ135, INPUT);
-  pinMode(GPIO_NIVEAU_EAU, INPUT);
+
+  // HC-SR04 : TRIG en sortie, ECHO en entree
+  pinMode(GPIO_ULTRASO_TRIG, OUTPUT);
+  digitalWrite(GPIO_ULTRASO_TRIG, LOW);
+  pinMode(GPIO_ULTRASO_ECHO, INPUT);
 }
 
 void sensors_loop() {
@@ -76,6 +88,21 @@ void sensors_loop() {
   courantes.luminosite   = FiltreGlissant::ajouter(read_ldr(), filtre_ldr);
   courantes.co2          = FiltreGlissant::ajouter(read_co2(), filtre_co2);
   courantes.niveau_eau   = FiltreGlissant::ajouter(read_water_level(), filtre_eau);
+
+  // Debug serie : impression toutes les 20 s (10 lectures)
+  compteurDebug++;
+  if (compteurDebug >= 10) {
+    compteurDebug = 0;
+    int adc_co2 = analogRead(GPIO_MQ135);
+    Serial.printf("[sensors] T=%.1fC humAir=%d%% sol=%d%% lum=%d%% co2_adc=%d co2=%.0fppm eau=%.0f%%\n",
+                  courantes.temperature,
+                  (int)courantes.humidite_air,
+                  (int)courantes.humidite_sol,
+                  (int)courantes.luminosite,
+                  adc_co2,
+                  courantes.co2,
+                  courantes.niveau_eau);
+  }
 }
 
 const SensorReadings& sensors_get_current() {
@@ -110,17 +137,35 @@ float read_soil_moisture() {
 float read_co2() {
   int adc = analogRead(GPIO_MQ135);
   if (adc <= 0) return NAN;
-  // R/Ro approxime par la lecture ADC (courbe log). Ro = calibration air ambiant.
-  // En l'absence de calibration reel, on utilise une reference nominale.
-  float ratio = (float)adc / 4095.0f;
-  float ppm = MQ135_COEF_A * pow(ratio, MQ135_COEF_B);
-  if (ppm < 200.0f) ppm = 200.0f;
-  if (ppm > 2000.0f) ppm = 2000.0f;
-  return ppm;
+
+  // Rs/Ro : resistance normalisee en air propre
+  float rs_air = (4095.0f - MQ135_ADC_AIR) / MQ135_ADC_AIR;
+  float rs_now = (4095.0f - (float)adc) / (float)adc;
+  float ratio  = rs_now / rs_air;
+
+  float ppm = MQ135_PPM_AIR * pow(ratio, MQ135_COEF_B);
+  return constrain(ppm, 0.0f, 2000.0f);
 }
 
 float read_water_level() {
-  int adc = analogRead(GPIO_NIVEAU_EAU);
-  if (adc <= 0) return NAN;
-  return map_pourcent(adc, 0, 4095);
+  // Envoi d'une impulsion de 10 us sur TRIG
+  digitalWrite(GPIO_ULTRASO_TRIG, LOW);
+  delayMicroseconds(2);
+  digitalWrite(GPIO_ULTRASO_TRIG, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(GPIO_ULTRASO_TRIG, LOW);
+
+  // Mesure du temps de retour de l'echo (timeout 5 ms = ~850 mm max)
+  unsigned long duree = pulseIn(GPIO_ULTRASO_ECHO, HIGH, 5000);
+  if (duree == 0) return NAN;
+
+  // Distance en mm : t = 2d / 0.34 mm/us => d = t * 0.34 / 2
+  float distance_mm = duree * 0.34f / 2.0f;
+
+  // Hauteur d'eau = position capteur - distance mesuree
+  float hauteur_mm = HAUTEUR_RECIPIENT_MM - distance_mm;
+
+  // Remplissage en % (clampe 0-100)
+  float pct = (hauteur_mm / HAUTEUR_PLEIN_MM) * 100.0f;
+  return constrain(pct, 0.0f, 100.0f);
 }

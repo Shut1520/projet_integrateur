@@ -16,8 +16,9 @@ sous **PlatformIO**, entièrement **non-bloquant** (scheduler par `millis()`, z�
 | `src/wifi_manager.h/.cpp` | Connexion/reconnexion WiFi non-bloquante. |
 | `src/config_store.h/.cpp` | Stockage NVS (`Preferences`) : clé API (prioritaire sur `config.h`). |
 | `src/pins.h` | Attribution des GPIO (capteurs + actionneurs). |
-| `src/sensors.h/.cpp` | Lecture + filtrage (lissage glissant) des 5 capteurs. |
+| `src/sensors.h/.cpp` | Lecture + filtrage (lissage glissant) des 5 capteurs (DHT22, YL-69, LDR, MQ-135, HC-SR04). |
 | `src/actuators.h/.cpp` | Pilotage des 3 relais (pompe, ventilation, éclairage) par nom. |
+| `src/buzzer.h/.cpp` | Alertes sonores : séquences de bips non-bloquantes (buzzer actif, GPIO 5). |
 | `src/ca_cert.h` | Certificat CA du broker (TLS). |
 | `src/mqtt_publisher.h/.cpp` | Publication MQTT : mesures, alertes, états actionneurs. |
 | `src/http_commands.h/.cpp` | Workflow commandes HTTP (pull/confirm/action) + fallback mesures. |
@@ -37,10 +38,17 @@ formats JSON).
 | YL-69 (humidité sol) | **34** | analog ADC | |
 | LDR (luminosité) | **36** | analog ADC1 | entrée pure |
 | MQ-135 (CO2) | **35** | analog ADC | **ADC-only** (jamais en sortie) |
-| Niveau d'eau | **32** | analog ADC | |
+| HC-SR04 TRIG | **32** | sortie | impulsion 10 µs |
+| HC-SR04 ECHO | **33** | entrée | **diviseur 5V→3.3V obligatoire** |
 | Pompe (relais) | **26** | sortie | logique active HIGH |
 | Ventilation (relais) | **27** | sortie | |
 | Éclairage (relais) | **25** | sortie | |
+| Buzzer actif | **5** | sortie | alertes (bip liaison + seuils) |
+
+> **HC-SR04** : capteur placé à 200 mm du fond du récipient (émetteur/récepteur
+> vers le bas). Hauteur max d'eau = 180 mm = 100 %. Formule :
+> `pct = (200 − distance_mm) / 180 × 100` clampé [0, 100]. ECHO en 5 V :
+> **diviseur résistif obligatoire** (1 kΩ/1 kΩ ou 1 kΩ/2 kΩ) avant GPIO 33.
 
 ---
 
@@ -106,12 +114,15 @@ conformément au plan `preparation_IOT.md`) :
 
 1. **Upload** et vérification du démarrage (logs série `=== SAI ESP32 firmware ===`).
 2. **Capteurs** : comparer les lectures série aux valeurs réelles (luminosité,
-   humidité sol, CO2, niveau d'eau, température).
+   humidité sol, CO2, niveau d'eau HC-SR04, température). Niveau : vider le
+   récipient → ~0 %, remplir à 90 mm → ~50 %, à 180 mm → ~100 %.
 3. **Actionneurs** : commander pompe/ventilation/eclairage et vérifier les relais.
-4. **MQTT** : vérifier la publication des mesures sur le broker (`mosquitto_sub`).
-5. **Workflow commandes** : émettre une commande (web/CLI) et vérifier le cycle
+4. **Buzzer** : couper le WiFi → 3 bips longs ; déclencher un seuil (sol < 30 %,
+   temp > 40 °C ou CO2 > 900) → 1 bip court.
+5. **MQTT** : vérifier la publication des mesures sur le broker (`mosquitto_sub`).
+6. **Workflow commandes** : émettre une commande (web/CLI) et vérifier le cycle
    `recue → action → executee` en BD.
-6. **Automatisation + liaison** : déclencher un seuil, couper le WiFi, vérifier
+7. **Automatisation + liaison** : déclencher un seuil, couper le WiFi, vérifier
    l'alerte.
 
 > Prérequis : broker Mosquitto (TLS 8883) + backend démarrés, WiFi configuré,
