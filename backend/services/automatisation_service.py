@@ -167,7 +167,7 @@ def evaluer_parcelle(db: Session, parcelle_id: int) -> dict:
                 # Logger l'activation automatique
                 from services.historique_service import enregistrer
                 enregistrer(
-                    db, "activation", "actionneur", actionneur.id, 0,
+                    db, "activation", "actionneur", actionneur.id, None,
                     f"Auto: {seuil.type_mesure} {direction} | Mesure: {mesure.valeur}{seuil.unite}",
                 )
 

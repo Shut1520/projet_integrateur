@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import { ActionneursSkeleton } from '../components/ui/ActionneursSkeleton';
 import { ActionneurSummaryBar } from '../components/ui/ActionneurSummaryBar';
+import { subscribeActionneurs } from '../services/mqtt';
 import {
   Zap,
   Plus,
@@ -87,6 +88,7 @@ export const Actionneurs = () => {
   const [gpio, setGpio] = useState('');
   const [idParcelle, setIdParcelle] = useState('');
   const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null });
+  const [pendingActId, setPendingActId] = useState(null);
 
   // Modal detail
   const [detailAct, setDetailAct] = useState(null);
@@ -118,9 +120,26 @@ export const Actionneurs = () => {
     loadData();
   }, []);
 
+  // Temps réel MQTT : met à jour l'état d'un actionneur quand l'ESP32 publie sa
+  // nouvelle commande (sai/<parcelle>/actionneurs/<nom>).
+  useEffect(() => {
+    const unsub = subscribeActionneurs(({ payload }) => {
+      if (!payload || typeof payload !== 'object') return;
+      const nomRecu = (payload.nom || payload.actionneur || '').toString().toLowerCase();
+      const etatRecu = payload.etat || (payload.commande === 'on' ? 'actif' : payload.commande === 'off' ? 'inactif' : null);
+      if (!nomRecu || !etatRecu) return;
+      setActionneurs((prev) =>
+        prev.map((act) => (act.nom.toLowerCase() === nomRecu ? { ...act, etat: etatRecu } : act))
+      );
+    });
+    return () => unsub();
+  }, []);
+
   const handleToggle = async (act) => {
+    if (pendingActId === act.id) return;
     const nextEtat = act.etat === 'actif' ? 'inactif' : 'actif';
     const nextAction = nextEtat === 'actif' ? 'on' : 'off';
+    setPendingActId(act.id);
     try {
       await apiService.updateActionneur(act.id, { etat: nextEtat });
       await apiService.commanderActionneur(act.id, nextAction);
@@ -136,6 +155,8 @@ export const Actionneurs = () => {
         title: 'Echec de la commande',
         message: err.response?.data?.detail || 'Erreur lors de l\'envoi.',
       });
+    } finally {
+      setPendingActId(null);
     }
   };
 
@@ -416,7 +437,12 @@ export const Actionneurs = () => {
                     <div className="flex items-center gap-2 pt-3 border-t border-[#E0E0E0] dark:border-[#30363D]">
                       <button
                         onClick={(e) => { e.stopPropagation(); handleToggle(act); }}
+                        disabled={pendingActId === act.id}
                         className={`btn-press flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold rounded-lg ${
+                          pendingActId === act.id
+                            ? 'opacity-50 cursor-wait'
+                            : ''
+                        } ${
                           isOn
                             ? 'text-[#E53935] hover:bg-[#E53935]/10'
                             : 'text-[#2E7D32] hover:bg-[#2E7D32]/10'

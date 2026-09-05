@@ -29,7 +29,7 @@ class HistoriqueAction(Base):
     details = Column(Text, nullable=True)
     """Description de l'action (ex: 'Nom: A -> B')"""
 
-    id_utilisateur = Column(Integer, ForeignKey("utilisateurs.id"), nullable=False)
+    id_utilisateur = Column(Integer, ForeignKey("utilisateurs.id"), nullable=True)
     """Utilisateur ayant effectue l'action"""
 
     created_at = Column(DateTime, default=func.now())

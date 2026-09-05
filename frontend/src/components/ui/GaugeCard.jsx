@@ -64,7 +64,7 @@ export const GaugeCard = ({
 
       <div className="flex items-baseline gap-1 mb-1">
         <span className="text-2xl font-black text-[#1A1A1A] dark:text-white tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
-          {value}
+          {typeof value === 'number' ? value.toFixed(1) : value}
         </span>
         <span className="text-xs font-semibold text-[#5A5A5A] dark:text-[#8B949E]">
           {unit}

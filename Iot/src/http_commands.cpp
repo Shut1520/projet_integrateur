@@ -85,6 +85,8 @@ static int requete_http(const String& method, const String& chemin,
 
   WiFiClient client;
   HTTPClient http;
+  http.setConnectTimeout(3000);
+  http.setTimeout(3000);
   http.begin(client, (String(base_url()) + chemin).c_str());
   http.addHeader("X-API-Key", config_store_cle_api().c_str());
   if (body != nullptr) {
@@ -109,6 +111,8 @@ static bool pull_et_demarrer() {
 
   WiFiClient client;
   HTTPClient http;
+  http.setConnectTimeout(3000);
+  http.setTimeout(3000);
   http.begin(client, (String(base_url()) + "/commandes/attente").c_str());
   http.addHeader("X-API-Key", config_store_cle_api().c_str());
   int code = http.GET();
@@ -157,6 +161,8 @@ static void creer_action() {
 
   WiFiClient client;
   HTTPClient http;
+  http.setConnectTimeout(3000);
+  http.setTimeout(3000);
   http.begin(client, (String(base_url()) + "/actions").c_str());
   http.addHeader("X-API-Key", config_store_cle_api().c_str());
   http.addHeader("Content-Type", "application/json");
@@ -259,6 +265,8 @@ void http_load_mapping_capteurs() {
 
   WiFiClient client;
   HTTPClient http;
+  http.setConnectTimeout(3000);
+  http.setTimeout(3000);
   // Encoder les espaces (%20) dans le nom de parcelle pour eviter un 400 HTTP.
   String parcelle = PARCELLE;
   parcelle.replace(" ", "%20");
