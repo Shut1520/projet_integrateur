@@ -79,15 +79,29 @@ def _publisher_client():
     injoignable), on reinitialise pour retenter au prochain appel.
     """
     global _PUB_CLIENT
-    if _PUB_CLIENT is None:
-        client = mqtt.Client(
-            callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
-            client_id="sai_backend_publisher",
-        )
-        _configurer_client(client)
+    if _PUB_CLIENT is not None:
+        if _PUB_CLIENT.is_connected():
+            return _PUB_CLIENT
+        # Client existant deconnecte — cleanup avant reconnexion.
+        try:
+            _PUB_CLIENT.loop_stop()
+            _PUB_CLIENT.disconnect()
+        except Exception:
+            pass
+        _PUB_CLIENT = None
+
+    client = mqtt.Client(
+        callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
+        client_id="sai_backend_publisher",
+    )
+    _configurer_client(client)
+    try:
         client.connect(MQTT_BROKER, MQTT_PORT, keepalive=30)
-        client.loop_start()
-        _PUB_CLIENT = client
+    except Exception as e:
+        print(f"[mqtt] Publisher connect echoue: {e}")
+        return None
+    client.loop_start()
+    _PUB_CLIENT = client
     return _PUB_CLIENT
 
 
@@ -107,6 +121,11 @@ def publier_alerte(alerte, db) -> bool:
         parcelle = db.get(Parcelle, alerte.id_parcelle)
         nom = parcelle.nom if parcelle else f"parcelle-{alerte.id_parcelle}"
 
+        client = _publisher_client()
+        if client is None:
+            print("[mqtt] Alerte impossible: publisher non connecte")
+            return False
+
         payload = {
             "id": alerte.id,
             "type_alerte": alerte.type_alerte,
@@ -120,7 +139,7 @@ def publier_alerte(alerte, db) -> bool:
             "parcelle": nom,
             "date_debut": alerte.date_debut.isoformat() if alerte.date_debut else None,
         }
-        _publisher_client().publish(
+        client.publish(
             f"sai/{nom}/alertes",
             json.dumps(payload, ensure_ascii=False),
             qos=1,
@@ -128,6 +147,50 @@ def publier_alerte(alerte, db) -> bool:
         return True
     except Exception as e:
         print(f"[mqtt] Publication alerte impossible: {e}")
+        return False
+
+
+def publier_commande_notification(commande, db) -> bool:
+    """Publie une micro-notif sur MQTT `sai/<parcelle>/commandes/notif` (best effort).
+
+    Declenche un pull immediat de l'ESP32 pour reduire la latence commandes.
+    L'echec ne doit jamais faire echouer la creation de la commande :
+    on journalise et on retourne False.
+    """
+    if os.getenv("SAI_MQTT_DISABLED", "") in ("1", "true", "True", "yes"):
+        return False
+
+    try:
+        from models.parcelle import Parcelle
+        from models.actionneur import Actionneur
+
+        actionneur = db.get(Actionneur, commande.id_actionneur)
+        if not actionneur:
+            return False
+
+        parcelle = db.get(Parcelle, actionneur.id_parcelle)
+        nom = parcelle.nom if parcelle else f"parcelle-{actionneur.id_parcelle}"
+
+        client = _publisher_client()
+        if client is None:
+            print("[mqtt] Notif commande impossible: publisher non connecte")
+            return False
+
+        payload = {
+            "id": commande.id,
+            "id_actionneur": commande.id_actionneur,
+            "type_action": commande.type_action,
+            "parcelle": nom,
+        }
+        client.publish(
+            f"sai/{nom}/commandes/notif",
+            json.dumps(payload, ensure_ascii=False),
+            qos=1,
+        )
+        print(f"[mqtt] Notif commande #{commande.id} -> sai/{nom}/commandes/notif")
+        return True
+    except Exception as e:
+        print(f"[mqtt] Publication notif commande impossible: {e}")
         return False
 
 

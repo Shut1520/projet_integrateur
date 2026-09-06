@@ -31,8 +31,8 @@ pratique pour déboguer).
 
 | Utilisateur | Rôle | Portée ACL |
 |-------------|------|------------|
-| `sai_backend` | subscriber backend + publisher alertes | read `sai/#`, write `sai/+/actionneurs/#`, write `sai/+/alertes` |
-| `sai_esp32` | publisher ESP32 | write `sai/+/capteurs/#`, write `sai/+/alertes`, read `sai/+/commandes` |
+| `sai_backend` | subscriber backend + publisher alertes/notif | read `sai/#`, write `sai/+/actionneurs/#`, write `sai/+/alertes`, write `sai/+/commandes/notif` |
+| `sai_esp32` | publisher ESP32 | write `sai/+/capteurs/#`, write `sai/+/alertes`, read `sai/+/commandes`, read `sai/+/commandes/notif` |
 | `sai_frontend` | lecture temps réel frontend (9001) | read `sai/#` |
 
 ## Prérequis (une seule fois)

@@ -62,6 +62,7 @@ L'ESP32 s'authentifie par une **clé API** (table `tokens`, format `sk_sai_<hex>
 | `sai/<parcelle>/capteurs/<sous-type>` | ESP32 → broker | Données capteurs |
 | `sai/<parcelle>/actionneurs/<nom>` | (statut actionneur) | État actionneur |
 | `sai/<parcelle>/alertes` | (alertes) | Événements d'alerte |
+| `sai/<parcelle>/commandes/notif` | Backend → ESP32 | Micro-notification de commande (trigger pull immédiat) |
 
 `<parcelle>` = nom/identifiant de la parcelle (ex. `serre-a`), `<sous-type>` = type de mesure.
 
@@ -118,7 +119,9 @@ Réponse `200` — tableau des commandes **`envoyee`** (les plus anciennes d'abo
 ]
 ```
 
-> L'ESP32 doit **interroger cet endpoint périodiquement** (par ex. toutes les 2–5 s) et exécuter chaque commande sortie.
+> L'ESP32 doit **interroger cet endpoint périodiquement** (par ex. toutes les 1–2 s).
+> En complément, le backend publie une micro-notification sur `sai/<parcelle>/commandes/notif`
+> dès qu'une commande est créée — l'ESP32 y souscrit et force un pull immédiat (latence ~100-400 ms).
 
 ### 4.2 Confirmer la réception
 

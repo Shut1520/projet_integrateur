@@ -98,7 +98,9 @@ pio device monitor --baud 115200
   les `INTERVALLE_MESURES` (JSON multi-capteurs, timestamp ISO 8601 si NTP sync).
 - **Commandes** : `GET /api/commandes/attente` toutes les `INTERVALLE_COMMANDES` ;
   chaque commande est confirmée `recue`, son action créée, l'actionneur piloté,
-  puis marquée `executee` (ou `echouee`).
+  puis marquée `executee` (ou `echouee`). Le backend publie une micro-notification
+  sur `sai/<parcelle>/commandes/notif` à la création d'une commande ; l'ESP32 y
+  souscrit et force un pull immédiat (latence ~100-400 ms au lieu de ~1 s).
 - **Fallback mesures** : si WiFi up mais MQTT down, `POST /api/mesures` par capteur
   mappé (meilleur effort).
 - **Automatisation** : évaluation des seuils locaux toutes les 10 s ; l'actionneur

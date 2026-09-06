@@ -17,6 +17,9 @@ static PubSubClient mqtt_client(secure_client);
 
 static const char* DEVICE_ID = "esp32_01";
 
+// Callback MQTT : reagit aux notifications de commande (pull immediat).
+static void mqtt_callback(char* topic, byte* payload, unsigned int length);
+
 // Timers non-bloquants.
 static unsigned long derniereTentative = 0;
 static unsigned long derniereMesure   = 0;
@@ -45,7 +48,21 @@ void mqtt_begin() {
   secure_client.setCACert(CA_CERT);
   secure_client.setInsecure(); // TODO: retirer apres test — bypass verification hostname
   mqtt_client.setServer(BROKER_HOST, BROKER_PORT);
+  mqtt_client.setKeepAlive(30);  // tolere les micro-blocages HTTP sans drop
   mqtt_client.setBufferSize(1024); // payload multi-mesures + JSON
+  mqtt_client.setCallback(mqtt_callback);
+}
+
+// ─── Callback MQTT : notif commandes → pull immediat ───
+static void mqtt_callback(char* topic, byte* payload, unsigned int length) {
+  // On ne lit pas le payload (juste le trigger pull).
+  String t(topic);
+  String expected = "sai/" + String(PARCELLE) + "/commandes/notif";
+  if (t == expected) {
+    Serial.println("[mqtt] Notif commande recue => pull immediat");
+    extern void http_commands_pull_maintenant();
+    http_commands_pull_maintenant();
+  }
 }
 
 void mqtt_publish_measures() {
@@ -129,6 +146,10 @@ void mqtt_loop() {
     secure_client.stop();
     if (mqtt_client.connect("sai_esp32_firmware", BROKER_USER, BROKER_PASS)) {
       Serial.println("[mqtt] Connecte au broker TLS");
+      // Souscrit aux notifications de commande (pull immediat).
+      String notifTopic = "sai/" + String(PARCELLE) + "/commandes/notif";
+      mqtt_client.subscribe(notifTopic.c_str());
+      Serial.printf("[mqtt] Souscrit a %s\n", notifTopic.c_str());
       // Publie l'etat courant une fois connecte.
       mqtt_publish_measures();
     } else {

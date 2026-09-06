@@ -23,3 +23,7 @@ agentCode_images.md
 AGENTS.md
 preparation_IO.md
 flux_communication.md
+# Backend runtime logs
+backend/server.log
+backend/server_err.log
+

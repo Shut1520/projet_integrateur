@@ -117,11 +117,19 @@ def demarrer_automatisation():
     if os.getenv("SAI_MQTT_DISABLED", "") in ("1", "true", "True", "yes"):
         print("[mqtt] Subscriber desactive (SAI_MQTT_DISABLED)")
     else:
-        from services.mqtt_service import _boucle_subscriber
+        from services.mqtt_service import _boucle_subscriber, _publisher_client
 
         mqtt_thread = threading.Thread(target=_boucle_subscriber, daemon=True)
         mqtt_thread.start()
         print("[mqtt] Subscriber demarre")
+
+        # Pre-chauffer le publisher : evite un connect() bloquant (30s) au
+        # 1er appel de publier_commande_notification ou publier_alerte.
+        try:
+            _publisher_client()
+            print("[mqtt] Publisher pre-chauffe")
+        except Exception as e:
+            print(f"[mqtt] Echec pre-chauffage publisher: {e}")
 
 
 # ─── Point d'entree pour l'execution directe ───

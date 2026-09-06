@@ -141,8 +141,10 @@ export const Actionneurs = () => {
     const nextAction = nextEtat === 'actif' ? 'on' : 'off';
     setPendingActId(act.id);
     try {
-      await apiService.updateActionneur(act.id, { etat: nextEtat });
-      await apiService.commanderActionneur(act.id, nextAction);
+      await Promise.all([
+        apiService.updateActionneur(act.id, { etat: nextEtat }),
+        apiService.commanderActionneur(act.id, nextAction),
+      ]);
       addToast({
         type: 'success',
         title: 'Commande envoyee',

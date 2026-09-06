@@ -70,6 +70,14 @@ def creer_commande(
         )
     db.commit()
     db.refresh(commande)
+
+    # Notification MQTT push pour latence minimale (trigger pull ESP32)
+    try:
+        from services.mqtt_service import publier_commande_notification
+        publier_commande_notification(commande, db)
+    except Exception:
+        pass  # best effort
+
     return commande
 
 
