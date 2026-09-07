@@ -17,6 +17,9 @@
 // Initialise le client HTTP. A appeler une fois au setup.
 void http_commands_begin();
 
+// Force un pull immediat au prochain passage IDLE (utilise par MQTT notif).
+void http_commands_pull_maintenant();
+
 // Charge au boot le mapping type_mesure -> id_capteur depuis le backend
 // (GET /api/capteurs/iot?parcelle=<nom>). A appeler quand le WiFi est up.
 void http_load_mapping_capteurs();

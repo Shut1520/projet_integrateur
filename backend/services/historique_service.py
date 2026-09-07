@@ -15,7 +15,7 @@ def enregistrer(
     type_action: str,
     entite: str,
     entite_id: int,
-    id_utilisateur: int,
+    id_utilisateur: int | None,
     details: str | None = None,
 ) -> HistoriqueAction:
     """

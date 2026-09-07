@@ -15,7 +15,7 @@ from models.token import Token
 from schemas.commande import CommandeCreate, CommandeUpdate, CommandeResponse
 from auth import get_utilisateur_connecte, get_client_iot, get_client_cle_api
 from services.commande_service import creer_commande, mettre_a_jour_statut
-from config import RATE_LIMIT_ECRITURES
+from config import RATE_LIMIT_ECRITURES, RATE_LIMIT_PULL
 from services.rate_limit import limiter
 
 router = APIRouter(prefix="/api/commandes", tags=["Commandes"])
@@ -39,7 +39,7 @@ def lister_commandes(
 
 
 @router.get("/attente", response_model=list[CommandeResponse])
-@limiter.limit(RATE_LIMIT_ECRITURES)
+@limiter.limit(RATE_LIMIT_PULL)
 def commandes_en_attente(
     request: Request,
     db: Session = Depends(get_db),

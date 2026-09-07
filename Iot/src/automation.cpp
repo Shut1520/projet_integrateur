@@ -5,6 +5,7 @@
 #include "config.h"
 #include "sensors.h"
 #include "actuators.h"
+#include "buzzer.h"
 #include "wifi_manager.h"
 #include "mqtt_publisher.h"
 
@@ -17,8 +18,9 @@ static const unsigned long INTERVALLE_ALERTE_LIAISON = 30000; // 30 s
 
 // Politique "priorite local > distant" : quand un seuil est actif, on force
 // l'actionneur ON ; l'etat est relache (mise a OFF) lorsque le seuil redevient
-// sous la valeur. La ventilation est partagee (temp + CO2) : elle n'est coupee
-// que quand les DEUX seuils sont sous la normale.
+// sous la valeur avec hysteresis (deadband) pour eviter les oscillations.
+// La ventilation est partagee (temp + CO2) : elle n'est coupee que quand les
+// DEUX seuils sont sous la normale.
 static void appliquer_seuil_arrosage() {
   const SensorReadings& s = sensors_get_current();
   if (isnan(s.humidite_sol)) return;
@@ -28,9 +30,11 @@ static void appliquer_seuil_arrosage() {
       Serial.printf("[auto] sol=%d%% < %d => pompe ON\n", (int)s.humidite_sol, SEUIL_SOL_SEC);
       set_actionneur("pompe", true);
       mqtt_publish_actuator_state("pompe", true);
+      buzzer_beep(1, 200);
     }
-  } else if (actif) {
-    Serial.printf("[auto] sol=%d%% >= %d => pompe OFF\n", (int)s.humidite_sol, SEUIL_SOL_SEC);
+  } else if (actif && s.humidite_sol >= SEUIL_SOL_REACTIV) {
+    // Hysteresis : ne coupe que quand on depasse la valeur de reactivation
+    Serial.printf("[auto] sol=%d%% >= %d => pompe OFF\n", (int)s.humidite_sol, SEUIL_SOL_REACTIV);
     set_actionneur("pompe", false);
     mqtt_publish_actuator_state("pompe", false);
   }
@@ -40,8 +44,11 @@ static void appliquer_seuil_ventilation() {
   const SensorReadings& s = sensors_get_current();
   if (isnan(s.temperature)) return;
   if (s.temperature > SEUIL_TEMP_HAUTE) {
-    Serial.printf("[auto] T=%.1f > %d => ventilation ON\n", s.temperature, SEUIL_TEMP_HAUTE);
-    set_actionneur("ventilation", true);
+    if (!actionneur_actif("ventilation")) {
+      Serial.printf("[auto] T=%.1f > %d => ventilation ON\n", s.temperature, SEUIL_TEMP_HAUTE);
+      set_actionneur("ventilation", true);
+      buzzer_beep(1, 200);
+    }
   }
 }
 
@@ -49,23 +56,45 @@ static void appliquer_seuil_co2() {
   const SensorReadings& s = sensors_get_current();
   if (isnan(s.co2)) return;
   if (s.co2 > SEUIL_CO2_HAUT) {
-    Serial.printf("[auto] CO2=%.0f > %d => ventilation ON (surventilation)\n", s.co2, SEUIL_CO2_HAUT);
-    set_actionneur("ventilation", true);
+    if (!actionneur_actif("ventilation")) {
+      Serial.printf("[auto] CO2=%.0f > %d => ventilation ON (surventilation)\n", s.co2, SEUIL_CO2_HAUT);
+      set_actionneur("ventilation", true);
+      buzzer_beep(1, 200);
+    }
   }
 }
 
 // Coupe la ventilation uniquement si les DEUX seuils (temp ET co2) sont sous
-// la normale, car l'actionneur est partage. Les NaN sont respects : pas de
-// desactivation si une lecture est inconnue.
+// la normale avec hysteresis, car l'actionneur est partage. Les NaN sont
+// respectes : pas de desactivation si une lecture est inconnue.
 static void desactiver_ventilation() {
   const SensorReadings& s = sensors_get_current();
-  bool tempOK  = isnan(s.temperature) || s.temperature <= SEUIL_TEMP_HAUTE;
-  bool co2OK   = isnan(s.co2)        || s.co2        <= SEUIL_CO2_HAUT;
+  bool tempOK  = isnan(s.temperature) || s.temperature <= SEUIL_TEMP_REACTIV;
+  bool co2OK   = isnan(s.co2)        || s.co2        <= SEUIL_CO2_REACTIV;
   bool inactif = !actionneur_actif("ventilation");
   if (tempOK && co2OK && !inactif) {
     Serial.println("[auto] T et CO2 sous seuils => ventilation OFF");
     set_actionneur("ventilation", false);
     mqtt_publish_actuator_state("ventilation", false);
+  }
+}
+
+// Seuil eclairage : luminosite basse => ON, haute => OFF (hysteresis).
+static void appliquer_seuil_eclairage() {
+  const SensorReadings& s = sensors_get_current();
+  if (isnan(s.luminosite)) return;
+  bool actif = actionneur_actif("eclairage");
+  if (s.luminosite < SEUIL_LUM_BAS) {
+    if (!actif) {
+      Serial.printf("[auto] lum=%d%% < %d => eclairage ON\n", (int)s.luminosite, SEUIL_LUM_BAS);
+      set_actionneur("eclairage", true);
+      mqtt_publish_actuator_state("eclairage", true);
+      buzzer_beep(1, 200);
+    }
+  } else if (actif && s.luminosite >= SEUIL_LUM_HAUT) {
+    Serial.printf("[auto] lum=%d%% >= %d => eclairage OFF\n", (int)s.luminosite, SEUIL_LUM_HAUT);
+    set_actionneur("eclairage", false);
+    mqtt_publish_actuator_state("eclairage", false);
   }
 }
 
@@ -78,6 +107,7 @@ static void verifier_liaison(unsigned long maintenant) {
   if (!ok) {
     Serial.println("[auto] liaison perdue (wifi ou mqtt)");
     mqtt_publish_alert("liaison", "Perte de liaison ESP32 (WiFi ou MQTT)", -1.0f, 0.0f);
+    buzzer_beep(3, 500); // 3 bips longs pour perte liaison
   }
 }
 

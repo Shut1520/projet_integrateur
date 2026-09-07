@@ -17,9 +17,10 @@ static bool ntp_ok = false;
 
 void wifi_begin() {
   WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false);  // desactive modem-sleep : latence TX/RX minimale (~30 mA)
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   derniereTentative = millis();
-  Serial.printf("[wifi] Connexion a '%s'...\n", WIFI_SSID);
+  Serial.printf("[wifi] Connexion a '%s' (sleep=false)...\n", WIFI_SSID);
 }
 
 // Tente de (re)connecter si deconnecte et si l'intervalle est ecoule.

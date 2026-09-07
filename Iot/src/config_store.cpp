@@ -13,6 +13,12 @@ static Preferences preferences;
 
 void config_store_begin() {
   preferences.begin(NVS_NAMESPACE, false);
+  // Provisionner la cle API en NVS si absente (evite le warning "cle_api NOT_FOUND").
+  String existante = preferences.getString(NVS_CLE_API, "");
+  if (existante.length() == 0 && API_KEY[0] != '\0') {
+    preferences.putString(NVS_CLE_API, API_KEY);
+    Serial.println("[config] Cle API provisionnee en NVS depuis config.h");
+  }
 }
 
 String config_store_cle_api() {

@@ -22,6 +22,9 @@ RATE_LIMIT_DEFAULT = os.getenv("RATE_LIMIT_DEFAULT", "120/minute")
 RATE_LIMIT_MESURES = os.getenv("RATE_LIMIT_MESURES", "60/minute")
 # Limite pour les routes d'ecriture sensibles (commandes, tokens, login...).
 RATE_LIMIT_ECRITURES = os.getenv("RATE_LIMIT_ECRITURES", "20/minute")
+# Limite specifique pour le pull ESP32 (GET /commandes/attente).
+# Le firmware interroge toutes les 2 s = 30/min ; 60/min laisse de la marge.
+RATE_LIMIT_PULL = os.getenv("RATE_LIMIT_PULL", "60/minute")
 
 # ─── PostgreSQL ───
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://sai_user:sai_password@localhost:5432/sai_db")

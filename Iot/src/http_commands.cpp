@@ -66,6 +66,7 @@ static enum EtatCmd {
 static unsigned long derniereTentativePull = 0;
 static unsigned long derniereFallback = 0;
 static bool mapping_charge = false;
+static bool pull_immediat = false;
 
 // Commande courante.
 static int  cmd_id            = -1;
@@ -85,6 +86,8 @@ static int requete_http(const String& method, const String& chemin,
 
   WiFiClient client;
   HTTPClient http;
+  http.setConnectTimeout(1200);
+  http.setTimeout(1200);
   http.begin(client, (String(base_url()) + chemin).c_str());
   http.addHeader("X-API-Key", config_store_cle_api().c_str());
   if (body != nullptr) {
@@ -109,6 +112,8 @@ static bool pull_et_demarrer() {
 
   WiFiClient client;
   HTTPClient http;
+  http.setConnectTimeout(1200);
+  http.setTimeout(1200);
   http.begin(client, (String(base_url()) + "/commandes/attente").c_str());
   http.addHeader("X-API-Key", config_store_cle_api().c_str());
   int code = http.GET();
@@ -157,6 +162,8 @@ static void creer_action() {
 
   WiFiClient client;
   HTTPClient http;
+  http.setConnectTimeout(1200);
+  http.setTimeout(1200);
   http.begin(client, (String(base_url()) + "/actions").c_str());
   http.addHeader("X-API-Key", config_store_cle_api().c_str());
   http.addHeader("Content-Type", "application/json");
@@ -259,6 +266,8 @@ void http_load_mapping_capteurs() {
 
   WiFiClient client;
   HTTPClient http;
+  http.setConnectTimeout(3000);
+  http.setTimeout(3000);
   // Encoder les espaces (%20) dans le nom de parcelle pour eviter un 400 HTTP.
   String parcelle = PARCELLE;
   parcelle.replace(" ", "%20");
@@ -299,6 +308,7 @@ void http_commands_begin() {
   derniereFallback = 0;
   cmd_id_action = -1;
   mapping_charge = false;
+  pull_immediat = false;
 }
 
 void http_set_mapping_actionneur(int id_actionneur, const String& nom) {
@@ -309,6 +319,10 @@ void http_set_mapping_actionneur(int id_actionneur, const String& nom) {
       return;
     }
   }
+}
+
+void http_commands_pull_maintenant() {
+  pull_immediat = true;
 }
 
 void http_commands_loop() {
@@ -330,7 +344,8 @@ void http_commands_loop() {
   // Machine a etats du workflow commandes (pull periodic + une commande a la fois).
   switch (etat) {
     case IDLE:
-      if (maintenant - derniereTentativePull >= INTERVALLE_COMMANDES) {
+      if (pull_immediat || maintenant - derniereTentativePull >= INTERVALLE_COMMANDES) {
+        pull_immediat = false;
         derniereTentativePull = maintenant;
         pull_et_demarrer(); // peut passer etat a A_CONFIRMER, sinon reste IDLE
       }

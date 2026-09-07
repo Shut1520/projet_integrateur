@@ -12,6 +12,7 @@
 #include "config_store.h"
 #include "sensors.h"
 #include "actuators.h"
+#include "buzzer.h"
 #include "mqtt_publisher.h"
 #include "http_commands.h"
 #include "automation.h"
@@ -28,6 +29,7 @@ void setup() {
 
   sensors_begin();
   actuators_begin();
+  buzzer_begin();
   wifi_begin();
   mqtt_begin();
   http_commands_begin();
@@ -41,4 +43,5 @@ void loop() {
   mqtt_loop();
   http_commands_loop();
   automation_loop();
+  buzzer_loop();
 }

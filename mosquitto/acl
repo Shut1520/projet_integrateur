@@ -15,15 +15,17 @@
 #   sai/<parcelle>/alertes           (alertes)
 #   sai/<parcelle>/commandes         (commandes vers ESP32)
 
-# ─── Backend (subscriber + publisher) : lit tout, ecrit actionneurs + alertes ───
+# ─── Backend (subscriber + publisher) : lit tout, ecrit actionneurs + alertes + notif commandes ───
 user sai_backend
 topic read sai/#
 topic write sai/+/actionneurs/#
 topic write sai/+/alertes
+topic write sai/+/commandes/notif
 
-# ─── ESP32 (publisher) : ecrit mesures + alertes, lit commandes ───
+# ─── ESP32 (publisher) : ecrit mesures + alertes, lit commandes + notif ───
 user sai_esp32
 topic read sai/+/commandes
+topic read sai/+/commandes/notif
 topic write sai/+/capteurs/#
 topic write sai/+/actionneurs/#
 topic write sai/+/alertes
