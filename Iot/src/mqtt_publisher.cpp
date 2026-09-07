@@ -5,6 +5,7 @@
 #include "config.h"
 #include "ca_cert.h"
 #include "wifi_manager.h"
+#include "http_commands.h"
 
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
@@ -14,8 +15,6 @@
 // ─── Configuration ───
 static WiFiClientSecure secure_client;
 static PubSubClient mqtt_client(secure_client);
-
-static const char* DEVICE_ID = "esp32_01";
 
 // Callback MQTT : reagit aux notifications de commande (pull immediat).
 static void mqtt_callback(char* topic, byte* payload, unsigned int length);
@@ -45,8 +44,9 @@ static const char* timestamp_iso() {
 }
 
 void mqtt_begin() {
-  secure_client.setCACert(CA_CERT);
-  secure_client.setInsecure(); // TODO: retirer apres test — bypass verification hostname
+  // DEBUG temporaire : bypass verification cert pour diagnostic mbedTLS -9984
+  secure_client.setInsecure();
+  // secure_client.setCACert(CA_CERT);
   mqtt_client.setServer(BROKER_HOST, BROKER_PORT);
   mqtt_client.setKeepAlive(30);  // tolere les micro-blocages HTTP sans drop
   mqtt_client.setBufferSize(1024); // payload multi-mesures + JSON
@@ -60,7 +60,6 @@ static void mqtt_callback(char* topic, byte* payload, unsigned int length) {
   String expected = "sai/" + String(PARCELLE) + "/commandes/notif";
   if (t == expected) {
     Serial.println("[mqtt] Notif commande recue => pull immediat");
-    extern void http_commands_pull_maintenant();
     http_commands_pull_maintenant();
   }
 }

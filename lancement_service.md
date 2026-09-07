@@ -127,14 +127,31 @@ Start-Service -Name "Mosquitto"
 powershell -ExecutionPolicy Bypass -File mosquitto\scripts\start_broker.ps1
 ```
 
-Le broker demarre en avant-plan sur :
+**Alternative directe** (si le script pose probleme) :
+```powershell
+& "C:\Program Files\mosquitto\mosquitto.exe" -c "B:\...\projet_integrateur\mosquitto\mosquitto.conf" -d
+```
+
+Le broker demarre en arriere-plan (mode daemon `-d`) sur :
 - **Port 8883** (MQTT/TLS) -> ESP32 / backend
 - **Port 9001** (WebSocket) -> frontend web (temps reel)
 
 Verifier que le broker ecoute :
 ```powershell
-netstat -ano | Select-String "8883|9001"
+Get-NetTCPConnection -State Listen | Where-Object { $_.LocalPort -in 8883,9001 }
 ```
+
+#### Diagnostic erreur `start_broker.ps1` (corrigee le 2026-09-06)
+
+Le script affichait :
+```
+Jeton inattendu " " dans l'expression ou l'instruction
+Le terminateur " est manquant dans la chaine
+```
+
+**Cause** : le fichier contenait des octets UTF-8 corrompus sur la ligne 24. Le caractere `—` (em-dash, U+2014) avait ete **double-encode** en UTF-8 : au lieu de `E2 80 94` (3 octets), le fichier contenait `C3 A2 E2 80 9D` (5 octets, = `â` + `"` droit U+201D). Le parser PowerShell ne trouvait plus le `"` fermant de la chaine `Write-Host "..."` et declenchait l'erreur.
+
+**Fix** : reecriture du fichier en ASCII pur (remplacement de `—` par des tirets simples, suppression des caracteres non-ASCII). Le script fonctionne a present.
 
 ### 3.2 Demarrer le backend FastAPI
 
