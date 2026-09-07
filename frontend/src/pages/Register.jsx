@@ -8,7 +8,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
-import { Mail, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, ArrowRight, ArrowLeft } from 'lucide-react';
 import logoClair from '../assets/SAI_logo/logo_welcome_claire.png';
 import logoSombre from '../assets/SAI_logo/logo_welcome_sombre.png';
 
@@ -72,6 +72,10 @@ export const Register = () => {
       <div className="w-full max-w-md bg-white dark:bg-[#161B22] border border-[#E0E0E0] dark:border-[#30363D] rounded-3xl p-8 shadow-xl"
         style={{ animation: 'card-enter 400ms var(--ease-out)' }}
       >
+        <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#2E7D32] dark:hover:text-[#66BB6A] transition-colors mb-6">
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Retour à l'accueil
+        </Link>
         <div className="text-center mb-3">
             <img
               src={theme === 'dark' ? logoSombre : logoClair}
