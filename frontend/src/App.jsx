@@ -22,6 +22,7 @@ const UsersPage = React.lazy(() => import('./pages/Users').then(m => ({ default:
 const Capteurs = React.lazy(() => import('./pages/Capteurs').then(m => ({ default: m.Capteurs })));
 const Profile = React.lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
 const Alertes = React.lazy(() => import('./pages/Alertes').then(m => ({ default: m.Alertes })));
+const Landing = React.lazy(() => import('./pages/Landing'));
 const NotFound = React.lazy(() => import('./pages/NotFound').then(m => ({ default: m.NotFound })));
 
 /** Indicateur de chargement affiché pendant le lazy load d'une page */
@@ -48,6 +49,25 @@ const ProtectedRoute = ({ children }) => {
   // Redirection vers la page de connexion si non authentifié
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+};
+
+/**
+ * Route publique : redirige vers /dashboard si l'utilisateur est déjà connecté.
+ * Utilisé pour la landing page, /login, /register.
+ */
+const GuestRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[var(--color-surface)] dark:bg-[#0D1117] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#2E7D32] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
   }
   return <>{children}</>;
 };
@@ -82,9 +102,12 @@ export default function App() {
           <BrowserRouter>
             <Suspense fallback={<PageLoader />}>
               <Routes>
-              {/* Public Auth Routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+              {/* Public Routes */}
+              <Route path="/" element={<GuestRoute><Landing /></GuestRoute>} />
+
+              {/* Auth Routes */}
+              <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
+              <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
 
               {/* Protected App Routes */}
               <Route
@@ -94,7 +117,6 @@ export default function App() {
                   </ProtectedRoute>
                 }
               >
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/history" element={<History />} />
                 <Route path="/parcelles" element={<Parcelles />} />

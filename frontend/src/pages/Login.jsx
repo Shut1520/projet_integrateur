@@ -8,7 +8,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
-import { Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, ArrowRight, ArrowLeft } from 'lucide-react';
 import logoClair from '../assets/SAI_logo/logo_welcome_claire.png';
 import logoSombre from '../assets/SAI_logo/logo_welcome_sombre.png';
 
@@ -66,6 +66,10 @@ export const Login = () => {
         style={{ animation: 'card-enter 400ms var(--ease-out)' }}
       >
         {/* Brand Header */}
+          <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5A5A5A] dark:text-[#8B949E] hover:text-[#2E7D32] dark:hover:text-[#66BB6A] transition-colors mb-6">
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Retour à l'accueil
+          </Link>
           <div className="text-center mb-8">
             <img
               src={theme === 'dark' ? logoSombre : logoClair}
