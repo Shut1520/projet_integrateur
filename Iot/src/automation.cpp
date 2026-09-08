@@ -8,9 +8,15 @@
 #include "buzzer.h"
 #include "wifi_manager.h"
 #include "mqtt_publisher.h"
+#include "http_commands.h"
 
 // Intervalle d'evaluation des seuils locaux.
 static const unsigned long INTERVALLE_AUTO = 10000; // 10 s
+
+// Cooldown apres une commande backend : l'automatisation locale est suspendue
+// pendant 60s pour laisser le backend etre l'autorite unique.
+static const unsigned long COOLDOWN_APRES_COMMANDE = 60000; // 60 s
+static unsigned long derniereCommandeBackend = 0;
 
 static unsigned long derniereEval = 0;
 static unsigned long derniereAlerteLiaison = 0;
@@ -30,6 +36,7 @@ static void appliquer_seuil_arrosage() {
       Serial.printf("[auto] sol=%d%% < %d => pompe ON\n", (int)s.humidite_sol, SEUIL_SOL_SEC);
       set_actionneur("pompe", true);
       mqtt_publish_actuator_state("pompe", true);
+      http_update_actuator_state("pompe", true);
       buzzer_beep(1, 200);
     }
   } else if (actif && s.humidite_sol >= SEUIL_SOL_REACTIV) {
@@ -37,6 +44,7 @@ static void appliquer_seuil_arrosage() {
     Serial.printf("[auto] sol=%d%% >= %d => pompe OFF\n", (int)s.humidite_sol, SEUIL_SOL_REACTIV);
     set_actionneur("pompe", false);
     mqtt_publish_actuator_state("pompe", false);
+    http_update_actuator_state("pompe", false);
   }
 }
 
@@ -47,6 +55,7 @@ static void appliquer_seuil_ventilation() {
     if (!actionneur_actif("ventilation")) {
       Serial.printf("[auto] T=%.1f > %d => ventilation ON\n", s.temperature, SEUIL_TEMP_HAUTE);
       set_actionneur("ventilation", true);
+      http_update_actuator_state("ventilation", true);
       buzzer_beep(1, 200);
     }
   }
@@ -59,6 +68,7 @@ static void appliquer_seuil_co2() {
     if (!actionneur_actif("ventilation")) {
       Serial.printf("[auto] CO2=%.0f > %d => ventilation ON (surventilation)\n", s.co2, SEUIL_CO2_HAUT);
       set_actionneur("ventilation", true);
+      http_update_actuator_state("ventilation", true);
       buzzer_beep(1, 200);
     }
   }
@@ -76,6 +86,7 @@ static void desactiver_ventilation() {
     Serial.println("[auto] T et CO2 sous seuils => ventilation OFF");
     set_actionneur("ventilation", false);
     mqtt_publish_actuator_state("ventilation", false);
+    http_update_actuator_state("ventilation", false);
   }
 }
 
@@ -89,12 +100,14 @@ static void appliquer_seuil_eclairage() {
       Serial.printf("[auto] lum=%d%% < %d => eclairage ON\n", (int)s.luminosite, SEUIL_LUM_BAS);
       set_actionneur("eclairage", true);
       mqtt_publish_actuator_state("eclairage", true);
+      http_update_actuator_state("eclairage", true);
       buzzer_beep(1, 200);
     }
   } else if (actif && s.luminosite >= SEUIL_LUM_HAUT) {
     Serial.printf("[auto] lum=%d%% >= %d => eclairage OFF\n", (int)s.luminosite, SEUIL_LUM_HAUT);
     set_actionneur("eclairage", false);
     mqtt_publish_actuator_state("eclairage", false);
+    http_update_actuator_state("eclairage", false);
   }
 }
 
@@ -114,10 +127,23 @@ static void verifier_liaison(unsigned long maintenant) {
 void automation_begin() {
   derniereEval = 0;
   derniereAlerteLiaison = 0;
+  derniereCommandeBackend = 0;
+}
+
+void automation_commande_recue() {
+  derniereCommandeBackend = millis();
+  Serial.println("[auto] commande backend recue => cooldown 60s");
 }
 
 void automation_loop() {
   unsigned long maintenant = millis();
+
+  // Cooldown : pas d'automatisation locale 60s apres une commande backend.
+  if (maintenant - derniereCommandeBackend < COOLDOWN_APRES_COMMANDE) {
+    verifier_liaison(maintenant);
+    yield();
+    return;
+  }
 
   if (maintenant - derniereEval >= INTERVALLE_AUTO) {
     derniereEval = maintenant;

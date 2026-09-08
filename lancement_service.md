@@ -90,34 +90,53 @@ Editer `include/config.h` et remplir :
 ```c
 #define WIFI_SSID            "VOTRE_RESEAU_WIFI"
 #define WIFI_PASSWORD        "VOTRE_MOT_DE_PASSE"
-#define BROKER_HOST          "192.168.1.10"    // IP du PC hote
+#define BROKER_HOST          "192.168.1.10"    // IP du PC hote (hotspot)
 #define BROKER_PORT          8883
 #define BROKER_USER          "sai_esp32"
 #define BROKER_PASS          "sai_esp32_pass"
 #define API_BASE             "http://192.168.1.10:8000/api"
 #define API_KEY              "sk_sai_...copier_ici..."
 #define PARCELLE             "Serre A"
+#define DEVICE_ID            "esp32_01"
 ```
 
 > **Note** : La cle API peut aussi etre stockee en NVS (flash) sans reflash
 > via `config_store_set_cle_api()` dans le firmware.
 
+> **Important** : `BROKER_HOST` et `API_BASE` doivent pointer vers l'IP
+> du hotspot de la machine (ex: `172.20.10.2`). Verifier avec `ipconfig`
+> avant chaque demarrage. Si l'IP change, reflasher l'ESP32.
+
 ---
 
 ## 3. Ordre de demarrage normal
 
-### 3.0 Arrêter le service Windows Mosquitto (si actif)
+> **Avant de demarrer** : lire les erreurs ci-dessous. Ce sont les pieges
+> les plus frequents, documentes lors des sessions de test.
 
-Le service Windows Mosquitto utilise le port 1883. Il peut creer des conflits.
-Arreter-le avant de demarrer le broker SAI :
+### 3.A Erreurs a eviter (CRITIQUE)
+
+| # | Erreur | Symptome | Cause | Fix |
+|---|--------|----------|-------|-----|
+| **1** | **Backend sans `--host 0.0.0.0`** | Commandes ESP32 bloquees a `envoyee` ; `GET /api/commandes/attente` refuse | `uvicorn main:app` (sans `--host`) lie sur `127.0.0.1:8000` uniquement. L'ESP32 (172.20.10.3) ne peut pas joindre `172.20.10.2:8000`. | Utiliser `python -m uvicorn main:app --host 0.0.0.0 --port 8000` OU `python main.py` (deja configure avec `host="0.0.0.0"`) |
+| **2** | **Python 3.14 pour les tests** | `AttributeError: module 'sqlalchemy' has no attribute '__firstlineno__'` | Python 3.14 incompatible avec SQLAlchemy <2.0.25 | Utiliser le venv backend (Python 3.12) : `C:\Users\gilwa\AppData\Local\Programs\Python\Python312\python.exe` |
+| **3** | **Deux uvicorn en meme temps** | `Address already in use :8000` OU commandes traitees par le mauvais process | Deux terminaux backend avec `--reload` = 2 process | Fermer tous les terminaux backend avant de relancer. `Stop-Process -Name python -Force` si necessaire |
+| **4** | **Broker arrete avant le backend** | Subscriber MQTT reconnexion en boucle (backoff 2-60s) | Le broker n'ecoute pas encore sur 8883 | Demarrer le broker (3.1) **avant** le backend (3.2) |
+| **5** | **Simulateur avec mauvais user MQTT** | `PUBACK rc135` (autorisation refusee) | Simulateur connecte en `sai_backend` au lieu de `sai_esp32` | Utiliser `--user sai_esp32 --pass sai_esp32_pass` |
+| **6** | **`stop_broker.ps1` tue le service Windows** | Service Windows Mosquitto (1883) arrete | `stop_broker.ps1` fait `Get-Process -Name mosquitto` et tue tout | Preferer **Ctrl+C** dans le terminal du broker (au lieu de `stop_broker.ps1`) |
+| **7** | **IP hotspot differente** | ESP32 ne repond plus, timeout HTTP | `config.h` contient l'IP du hotspot (172.20.10.2). Si le hotspot change, l'ESP32 ne peut plus joindre le backend. | Verifier l'IP du hotspot avant chaque demarrage (`ipconfig`) et reflasher si necessaire |
+
+### 3.0 Verifier PostgreSQL (port 5432)
+
+PostgreSQL doit ecouter sur le port 5432 **avant** de lancer le backend.
 
 ```powershell
-Stop-Service -Name "Mosquitto"
+Get-NetTCPConnection -LocalPort 5432 -State Listen -ErrorAction SilentlyContinue
 ```
 
-Pour le reactiver apres (optionnel) :
+Si rien ne s'affiche, demarrer le service :
 ```powershell
-Start-Service -Name "Mosquitto"
+Start-Service -Name "postgresql-x64-18"
 ```
 
 ### 3.1 Demarrer le broker Mosquitto (SAI)
@@ -127,18 +146,28 @@ Start-Service -Name "Mosquitto"
 powershell -ExecutionPolicy Bypass -File mosquitto\scripts\start_broker.ps1
 ```
 
-**Alternative directe** (si le script pose probleme) :
-```powershell
-& "C:\Program Files\mosquitto\mosquitto.exe" -c "B:\...\projet_integrateur\mosquitto\mosquitto.conf" -d
-```
-
-Le broker demarre en arriere-plan (mode daemon `-d`) sur :
+Le broker demarre en **avant-plan** (Ctrl+C pour arreter) sur :
 - **Port 8883** (MQTT/TLS) -> ESP32 / backend
 - **Port 9001** (WebSocket) -> frontend web (temps reel)
 
 Verifier que le broker ecoute :
 ```powershell
 Get-NetTCPConnection -State Listen | Where-Object { $_.LocalPort -in 8883,9001 }
+```
+
+> **Attention** : `stop_broker.ps1` tue **tous** les processus `mosquitto.exe`,
+> y compris le service Windows (port 1883). Apres arret du broker SAI,
+> le service Windows se relance automatiquement si ses dependencies le necessitent.
+> Pour eviter ce conflit, preferer **Ctrl+C** dans le terminal du broker
+> (au lieu de `stop_broker.ps1`).
+
+#### Service Windows Mosquitto (port 1883)
+
+Le service Windows Mosquitto ecoute sur le port **1883** (config par defaut).
+**Ce port n'est PAS utilise par SAI** (notre config utilise 8883 + 9001).
+Le service peut rester actif sans conflit. Si besoin de l'arreter :
+```powershell
+Stop-Service -Name "Mosquitto"
 ```
 
 #### Diagnostic erreur `start_broker.ps1` (corrigee le 2026-09-06)
@@ -159,12 +188,26 @@ Le terminateur " est manquant dans la chaine
 ```powershell
 cd backend
 .\venv\Scripts\Activate.ps1
-uvicorn main:app --reload
+python -m uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
+> **CRITIQUE** : `--host 0.0.0.0` est **obligatoire**. Sans cette option,
+> uvicorn lie sur `127.0.0.1` uniquement et l'ESP32 (sur le hotspot 172.20.10.x)
+> ne peut plus joindre le backend → commandes bloquees a `envoyee`.
+> Voir erreur #1 dans la section **3.A Erreurs a eviter**.
+
+> **Alternative** : `python main.py` (egalement configure avec `host="0.0.0.0"`).
+> Ne pas utiliser `--reload` en presentation (crée 2 process = conflit port).
+
 Le backend demarre sur :
-- **http://localhost:8000** (API REST)
+- **http://0.0.0.0:8000** (API REST, accessible depuis le reseau local)
 - **http://localhost:8000/docs** (Swagger UI)
+
+Verifier que le backend ecoute :
+```powershell
+Get-NetTCPConnection -LocalPort 8000 -State Listen
+```
+Doit afficher `0.0.0.0:8000 LISTENING` (et NON `127.0.0.1:8000`).
 
 Au demarrage, le backend lance automatiquement :
 - Le **subscriber MQTT** (thread daemon) -> ecoute `sai/+/capteurs/#`
@@ -194,8 +237,11 @@ Si vous n'avez pas de vrai ESP32, utiliser le simulateur :
 ```powershell
 cd backend
 .\venv\Scripts\Activate.ps1
-python scripts/mqtt_simulateur.py --parcelle "Serre A" --interval 5
+python scripts/mqtt_simulateur.py --parcelle "Serre A" --interval 5 --user sai_esp32 --pass sai_esp32_pass
 ```
+
+> **Attention** : utiliser `--user sai_esp32` (pas `sai_backend`).
+> `sai_backend` n'a pas le droit de publier sur `sai/+/capteurs/#` -> `PUBACK rc135`.
 
 Le simulateur publie des mesures MQTT toutes les 5 secondes sur :
 - `sai/Serre A/capteurs/telemetrie`
@@ -278,20 +324,42 @@ Start-Process "http://localhost:8000/docs"
 
 Ouvrir http://localhost:3000 dans le navigateur.
 
+### 5.5 Verification E2E (commande ESP32)
+
+Verifie que la chaine complete fonctionne : Backend -> MQTT -> ESP32 -> actionneur.
+
+1. Ouvrir Swagger UI : http://localhost:8000/docs
+2. Creer une commande : `POST /api/commandes` avec `{"id_actionneur": 37, "type_action": "on"}`
+3. Verifier le statut : `GET /api/commandes/attente` avec cle API
+   - Si la reponse contient la commande avec `statut: "envoyee"` -> **OK**
+   - Si `401` ou `403` -> revoir la cle API (section 2.3)
+4. Sur le moniteur serie ESP32, verifier :
+   - `[http] cmd#XXX recue (rc=200)` -> le firmware recoit la commande
+   - `[actuators] eclairage ON` -> l'actionneur s'active
+5. Verifier dans Swagger : `GET /api/commandes` -> la commande passe a `executee`
+
+> **Si la commande reste a `envoyee`** : le backend est probablement lie
+> a `127.0.0.1` (erreur #1). Relancer avec `--host 0.0.0.0`.
+
 ---
 
 ## 6. Depannage
 
 | Erreur | Cause | Solution |
 |--------|-------|----------|
-| `Address already in use` | Broker deja en cours d'execution | `stop_broker.ps1` d'abord, puis relancer |
-| `passwd introuvable` | Fichier passwd non genere | Relancer `setup_broker.ps1` |
-| `cert introuvable` | Certificats TLS non generes | Relancer `gen_certs.ps1` |
-| `Connection refused` (MQTT) | Broker non demarre | Demarrer le broker (3.1) |
+| **Commande reste a `envoyee`** | Backend lie sur `127.0.0.1` (pas `0.0.0.0`) | Relancer avec `--host 0.0.0.0` (voir 3.2 et erreur #1) |
+| **`PUBACK rc135`** (simulateur) | Mauvais user MQTT (`sai_backend` au lieu de `sai_esp32`) | Utiliser `--user sai_esp32 --pass sai_esp32_pass` |
+| **`AttributeError: __firstlineno__`** | Python 3.14 incompatible SQLAlchemy | Utiliser le venv backend (Python 3.12) |
+| `Address already in use` | Deux uvicorn en meme temps | `Stop-Process -Name python -Force` puis relancer |
+| `Connection refused` (MQTT) | Broker non demarre | Demarrer le broker (3.1) avant le backend |
+| `Connection refused` (8000) | Backend non demarre ou lie sur 127.0.0.1 | Verifier `0.0.0.0:8000` avec `netstat` |
 | `401 Unauthorized` (API) | Cle API invalide/expiree | Creer une nouvelle cle via Profil |
 | `500 Internal Server Error` | BD non initialisee | `python init_db.py --drop --seed` |
 | Frontend non connecte | MQTT WebSocket down | Verifier que le broker ecoute sur 9001 |
-| ESP32 non connecte | WiFi ou MQTT KO | Verifier `config.h` (SSID, password, broker) |
+| ESP32 non connecte | WiFi ou MQTT KO | Verifier `config.h` (SSID, password, broker, IP hotspot) |
+| ESP32 connecte mais pas de donnees | Broker actif mais backend arrete | Demarrer le backend (3.2) apres le broker |
+| `passwd introuvable` | Fichier passwd non genere | Relancer `setup_broker.ps1` |
+| `cert introuvable` | Certificats TLS non generes | Relancer `gen_certs.ps1` |
 
 ---
 

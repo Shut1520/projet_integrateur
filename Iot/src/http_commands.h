@@ -36,4 +36,8 @@ void http_set_mapping_actionneur(int id_actionneur, const String& nom);
 // Normalement reserve a la reconnexion MQTT ; exposee pour debug.
 void http_publish_measures_fallback();
 
+// Met a jour l'etat d'un actionneur dans la BD (PUT /api/actionneurs/{id}).
+// Appele par l'automatisation locale pour synchroniser l'etat avec le backend.
+void http_update_actuator_state(const String& nom, bool actif);
+
 #endif // HTTP_COMMANDS_H

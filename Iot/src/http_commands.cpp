@@ -14,6 +14,7 @@
 #include "sensors.h"
 #include "actuators.h"
 #include "mqtt_publisher.h"
+#include "automation.h"
 
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -86,8 +87,8 @@ static int requete_http(const String& method, const String& chemin,
 
   WiFiClient client;
   HTTPClient http;
-  http.setConnectTimeout(1200);
-  http.setTimeout(1200);
+  http.setConnectTimeout(5000);
+  http.setTimeout(5000);
   http.begin(client, (String(base_url()) + chemin).c_str());
   http.addHeader("X-API-Key", config_store_cle_api().c_str());
   if (body != nullptr) {
@@ -112,8 +113,8 @@ static bool pull_et_demarrer() {
 
   WiFiClient client;
   HTTPClient http;
-  http.setConnectTimeout(1200);
-  http.setTimeout(1200);
+  http.setConnectTimeout(5000);
+  http.setTimeout(5000);
   http.begin(client, (String(base_url()) + "/commandes/attente").c_str());
   http.addHeader("X-API-Key", config_store_cle_api().c_str());
   int code = http.GET();
@@ -140,6 +141,7 @@ static bool pull_et_demarrer() {
     }
     return false;
   }
+  Serial.printf("[http] pull echoue (rc=%d)\n", code);
   http.end();
   return false;
 }
@@ -162,8 +164,8 @@ static void creer_action() {
 
   WiFiClient client;
   HTTPClient http;
-  http.setConnectTimeout(1200);
-  http.setTimeout(1200);
+  http.setConnectTimeout(5000);
+  http.setTimeout(5000);
   http.begin(client, (String(base_url()) + "/actions").c_str());
   http.addHeader("X-API-Key", config_store_cle_api().c_str());
   http.addHeader("Content-Type", "application/json");
@@ -195,7 +197,10 @@ static void executer_actionneur() {
     return;
   }
   bool ok = set_actionneur(nom, actif);
-  if (ok) mqtt_publish_actuator_state(nom, actif);
+  if (ok) {
+    mqtt_publish_actuator_state(nom, actif);
+    automation_commande_recue(); // declenche cooldown automatisation locale
+  }
   etat = ok ? A_CLOTURE : ECHOUEE;
 }
 
@@ -360,6 +365,30 @@ void http_commands_loop() {
   }
 
   yield();
+}
+
+// ─── Sync etat actionneur avec la BD (PUT /api/actionneurs/{id}) ───
+void http_update_actuator_state(const String& nom, bool actif) {
+  if (!wifi_connected()) return;
+  if (!mapping_charge) return;
+
+  int id = -1;
+  for (int i = 0; i < NB_MAP_ACT; i++) {
+    if (nom.equalsIgnoreCase(mapping_actionneurs[i].nom)) {
+      id = mapping_actionneurs[i].id;
+      break;
+    }
+  }
+  if (id < 0) return;
+
+  JsonDocument doc;
+  doc["etat"] = actif ? "actif" : "inactif";
+  char body[48];
+  serializeJson(doc, body, sizeof(body));
+
+  int rc = requete_http("PUT", "/actionneurs/" + String(id), body);
+  Serial.printf("[http] sync %s -> %s (rc=%d)\n", nom.c_str(),
+                actif ? "actif" : "inactif", rc);
 }
 
 // ─── Helpers mapping ───

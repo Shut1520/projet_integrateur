@@ -18,4 +18,8 @@ void automation_begin();
 // A appeler a chaque loop().
 void automation_loop();
 
+// Marque qu'une commande backend vient d'etre executee.
+// Declenche un cooldown (60s) pendant lequel l'automatisation locale est suspendue.
+void automation_commande_recue();
+
 #endif // AUTOMATION_H
