@@ -69,6 +69,17 @@ static unsigned long derniereFallback = 0;
 static bool mapping_charge = false;
 static bool pull_immediat = false;
 
+// ─── File de sync actionneurs (non-bloquant) ───
+// Remplace les appels bloquants http_update_actuator_state() dans automation.cpp.
+// 1 seul PUT traite par boucle http_commands_loop() pour eviter le WDT.
+struct SyncEntry {
+  String nom;
+  bool actif;
+};
+static const int MAX_SYNC = 8;
+static SyncEntry syncQueue[MAX_SYNC];
+static int syncCount = 0;
+
 // Commande courante.
 static int  cmd_id            = -1;
 static int  cmd_id_action     = -1; // id de l'action creee (0 si inconnu)
@@ -364,6 +375,14 @@ void http_commands_loop() {
     case ECHOUEE:     marquer_final("echouee");  break;
   }
 
+  // Traitement sync actionneurs (1 par boucle, non-bloquant, apres machine a etats).
+  if (syncCount > 0 && etat == IDLE) {
+    SyncEntry e = syncQueue[0];
+    for (int i = 1; i < syncCount; i++) syncQueue[i - 1] = syncQueue[i];
+    syncCount--;
+    http_update_actuator_state(e.nom, e.actif);
+  }
+
   yield();
 }
 
@@ -389,6 +408,23 @@ void http_update_actuator_state(const String& nom, bool actif) {
   int rc = requete_http("PUT", "/actionneurs/" + String(id), body);
   Serial.printf("[http] sync %s -> %s (rc=%d)\n", nom.c_str(),
                 actif ? "actif" : "inactif", rc);
+}
+
+// ─── File de sync (non-bloquant) ───
+void http_queue_actuator_sync(const String& nom, bool actif) {
+  // Si une entry pour ce nom existe deja, on la remplace (derniere valeur gagne)
+  for (int i = 0; i < syncCount; i++) {
+    if (syncQueue[i].nom == nom) {
+      syncQueue[i].actif = actif;
+      return;
+    }
+  }
+  // Sinon ajouter si place
+  if (syncCount < MAX_SYNC) {
+    syncQueue[syncCount].nom = nom;
+    syncQueue[syncCount].actif = actif;
+    syncCount++;
+  }
 }
 
 // ─── Helpers mapping ───
