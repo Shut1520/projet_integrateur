@@ -4,18 +4,18 @@ Cli/
 ├── auth.py              # Gère la connexion (stocke le token JWT localement)
 ├── config.json          # Fichier qui stocke le token et l'URL du serveur
 ├── commands/
-│   ├── capteurs.py      # "python cli.py capteurs"
-│   ├── actionneurs.py   # "python cli.py actionneurs"
-│   ├── mesures.py       # "python cli.py mesures"
-│   ├── commandes.py     # "python cli.py commander"
-│   ├── alertes.py       # "python cli.py alertes"
-│   └── seuils.py        # "python cli.py seuils"
+│   ├── capteurs.py      # "python main.py capteurs"
+│   ├── actionneurs.py   # "python main.py actionneurs"
+│   ├── mesures.py       # "python main.py mesures"
+│   ├── commandes.py     # "python main.py commander"
+│   ├── alertes.py       # "python main.py alertes"
+│   └── seuils.py        # "python main.py seuils"
 └── requirements.txt     # Dépendances (requests)
 
 
 
 ┌─────────────────────────────────────────────────────┐
-│  Terminal : python cli.py capteurs                   │
+│  Terminal : python main.py capteurs                   │
 └──────────────────────┬──────────────────────────────┘
                        │
                        ▼

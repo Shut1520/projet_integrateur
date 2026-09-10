@@ -51,6 +51,24 @@ def creer_commande(
             detail=f"source='{source}' necessite un id_utilisateur",
         )
 
+    # SAFETY : bloquer activation pompe si citerne vide (< 5%)
+    if type_action == "on" and actionneur.nom == "pompe":
+        from models.mesure import Mesure
+        from models.capteur import Capteur
+        capteur_eau = db.query(Capteur).filter(
+            Capteur.id_parcelle == actionneur.id_parcelle,
+            Capteur.nom == "niveau_eau",
+        ).first()
+        if capteur_eau:
+            derniere = db.query(Mesure).filter(
+                Mesure.id_capteur == capteur_eau.id
+            ).order_by(Mesure.timestamp.desc()).first()
+            if derniere and derniere.valeur < 5:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Citerne vide ({derniere.valeur}%) ! Remplissez la citerne avant d'activer la pompe.",
+                )
+
     commande = Commande(
         type_action=type_action,
         valeur_parametre=valeur_parametre,
