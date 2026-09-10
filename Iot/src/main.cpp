@@ -38,10 +38,10 @@ void setup() {
 
 void loop() {
   // Scheduler non-bloquant : chaque fonction s'auto-gere par millis().
-  wifi_loop();
-  sensors_loop();
-  mqtt_loop();
-  http_commands_loop();
-  automation_loop();
-  buzzer_loop();
+  wifi_loop();          yield();
+  sensors_loop();       yield();
+  mqtt_loop();          yield();
+  http_commands_loop(); yield();
+  automation_loop();    yield();
+  buzzer_loop();        yield();
 }

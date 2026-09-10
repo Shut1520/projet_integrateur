@@ -62,8 +62,8 @@ def _verifier_reservoir(api: APIClient, actionneur: dict, oui: bool) -> bool:
         print("       Poursuite quand meme. Utilisez --oui pour confirmer explicitement.")
         return True
     print(f"[INFO] Niveau reservoir : {niveau} {unite}")
-    if float(niveau) < 15.0:
-        print(f"[WARN] Niveau reservoir bas ({niveau} {unite} < 15%).")
+    if float(niveau) < 5.0:
+        print(f"[WARN] Niveau reservoir bas ({niveau} {unite} < 5%).")
         if oui:
             print("       --oui fourni, irrigation forcee.")
             return True

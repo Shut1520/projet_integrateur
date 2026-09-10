@@ -15,6 +15,7 @@
 #include "actuators.h"
 #include "mqtt_publisher.h"
 #include "automation.h"
+#include "buzzer.h"
 
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -66,6 +67,8 @@ static enum EtatCmd {
 
 static unsigned long derniereTentativePull = 0;
 static unsigned long derniereFallback = 0;
+static unsigned long pullBackoff = 0; // backoff exponentiel sur echec pull (ms)
+static const unsigned long PULL_BACKOFF_MAX = 30000; // plafond 30s
 static bool mapping_charge = false;
 static bool pull_immediat = false;
 
@@ -207,6 +210,20 @@ static void executer_actionneur() {
     etat = ECHOUEE;
     return;
   }
+  // SAFETY : bloquer activation pompe si citerne vide
+  if (actif && strcmp(nom, "pompe") == 0) {
+    const SensorReadings& s = sensors_get_current();
+    if (!isnan(s.niveau_eau) && s.niveau_eau < SEUIL_CITERNE_VIDE) {
+      Serial.printf("[http] cmd#%d REJETEE : citerne vide (%.0f%%)\n",
+                    cmd_id, s.niveau_eau);
+      mqtt_publish_alert("citerne_vide",
+        "Tentative activation pompe avec citerne vide !",
+        s.niveau_eau, SEUIL_CITERNE_VIDE);
+      buzzer_beep(3, 500);
+      etat = ECHOUEE;
+      return;
+    }
+  }
   bool ok = set_actionneur(nom, actif);
   if (ok) {
     mqtt_publish_actuator_state(nom, actif);
@@ -282,8 +299,8 @@ void http_load_mapping_capteurs() {
 
   WiFiClient client;
   HTTPClient http;
-  http.setConnectTimeout(3000);
-  http.setTimeout(3000);
+  http.setConnectTimeout(5000);
+  http.setTimeout(5000);
   // Encoder les espaces (%20) dans le nom de parcelle pour eviter un 400 HTTP.
   String parcelle = PARCELLE;
   parcelle.replace(" ", "%20");
@@ -360,10 +377,16 @@ void http_commands_loop() {
   // Machine a etats du workflow commandes (pull periodic + une commande a la fois).
   switch (etat) {
     case IDLE:
-      if (pull_immediat || maintenant - derniereTentativePull >= INTERVALLE_COMMANDES) {
+      if (pull_immediat || maintenant - derniereTentativePull >= INTERVALLE_COMMANDES + pullBackoff) {
         pull_immediat = false;
         derniereTentativePull = maintenant;
-        pull_et_demarrer(); // peut passer etat a A_CONFIRMER, sinon reste IDLE
+        if (pull_et_demarrer()) {
+          pullBackoff = 0; // succes : reset backoff
+        } else {
+          // echec : backoff exponentiel (2s, 4s, 8s, 16s, 30s max)
+          pullBackoff = min(pullBackoff > 0 ? pullBackoff * 2 : 2000UL, PULL_BACKOFF_MAX);
+          Serial.printf("[http] pull backoff %lus\n", pullBackoff / 1000);
+        }
       }
       break;
 

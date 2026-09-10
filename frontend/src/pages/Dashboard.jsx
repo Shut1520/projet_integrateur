@@ -398,16 +398,19 @@ export const Dashboard = () => {
     const nextAction = nextEtat === 'actif' ? 'on' : 'off';
     setPendingActId(act.id);
     try {
-      await apiService.updateActionneur(act.id, { etat: nextEtat });
       await apiService.commanderActionneur(act.id, nextAction);
       addToast({
         type: 'success',
-        title: 'Actionneur mis à jour',
-        message: `${act.nom} → ${nextEtat.toUpperCase()}`,
+        title: 'Commande envoyée',
+        message: `${act.nom} → ${nextAction.toUpperCase()}`,
       });
       await loadData();
     } catch (err) {
-      addToast({ type: 'error', title: 'Erreur', message: 'Impossible de commander cet actionneur' });
+      addToast({
+        type: 'error',
+        title: 'Echec de la commande',
+        message: err.response?.data?.detail || 'Impossible de commander cet actionneur',
+      });
     } finally {
       setPendingActId(null);
     }

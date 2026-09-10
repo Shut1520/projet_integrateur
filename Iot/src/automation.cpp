@@ -30,6 +30,10 @@ static const unsigned long INTERVALLE_ALERTE_LIAISON = 30000; // 30 s
 static void appliquer_seuil_arrosage() {
   const SensorReadings& s = sensors_get_current();
   if (isnan(s.humidite_sol)) return;
+
+  // SAFETY : ne pas activer la pompe si citerne vide
+  if (!isnan(s.niveau_eau) && s.niveau_eau < SEUIL_CITERNE_REACTIV) return;
+
   bool actif = actionneur_actif("pompe");
   if (s.humidite_sol < SEUIL_SOL_SEC) {
     if (!actif) {
@@ -124,6 +128,28 @@ static void verifier_liaison(unsigned long maintenant) {
   }
 }
 
+// Protection citerne : coupe la pompe si niveau eau < seuil, rallume si >= seuil.
+// Appelee en PREMIER dans automation_loop() (priorite safety).
+static void verifier_citerne() {
+  const SensorReadings& s = sensors_get_current();
+  if (isnan(s.niveau_eau)) return; // capteur pas disponible
+
+  bool pompeActive = actionneur_actif("pompe");
+
+  if (pompeActive && s.niveau_eau < SEUIL_CITERNE_VIDE) {
+    // CITERNE VIDE : couper la pompe + alerte critique
+    Serial.printf("[auto] CITERNE VIDE : niveau=%.0f%% < %d => pompe OFF\n",
+                  s.niveau_eau, SEUIL_CITERNE_VIDE);
+    set_actionneur("pompe", false);
+    mqtt_publish_actuator_state("pompe", false);
+    http_queue_actuator_sync("pompe", false);
+    mqtt_publish_alert("citerne_vide",
+      "Citerne vide ! Niveau eau trop bas. Pompe arretee.",
+      s.niveau_eau, SEUIL_CITERNE_VIDE);
+    buzzer_beep(5, 500); // 5 bips longs = alerte critique
+  }
+}
+
 void automation_begin() {
   derniereEval = 0;
   derniereAlerteLiaison = 0;
@@ -147,7 +173,8 @@ void automation_loop() {
 
   if (maintenant - derniereEval >= INTERVALLE_AUTO) {
     derniereEval = maintenant;
-    appliquer_seuil_arrosage();
+    verifier_citerne();         // priorite safety : couper pompe si citerne vide
+    appliquer_seuil_arrosage(); // ne rallume PAS si citerne < 10%
     appliquer_seuil_ventilation();
     appliquer_seuil_co2();
     desactiver_ventilation();
