@@ -14,6 +14,8 @@
 #include "sensors.h"
 #include "actuators.h"
 #include "mqtt_publisher.h"
+#include "automation.h"
+#include "buzzer.h"
 
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -65,8 +67,21 @@ static enum EtatCmd {
 
 static unsigned long derniereTentativePull = 0;
 static unsigned long derniereFallback = 0;
+static unsigned long pullBackoff = 0; // backoff exponentiel sur echec pull (ms)
+static const unsigned long PULL_BACKOFF_MAX = 30000; // plafond 30s
 static bool mapping_charge = false;
 static bool pull_immediat = false;
+
+// ─── File de sync actionneurs (non-bloquant) ───
+// Remplace les appels bloquants http_update_actuator_state() dans automation.cpp.
+// 1 seul PUT traite par boucle http_commands_loop() pour eviter le WDT.
+struct SyncEntry {
+  String nom;
+  bool actif;
+};
+static const int MAX_SYNC = 8;
+static SyncEntry syncQueue[MAX_SYNC];
+static int syncCount = 0;
 
 // Commande courante.
 static int  cmd_id            = -1;
@@ -86,8 +101,8 @@ static int requete_http(const String& method, const String& chemin,
 
   WiFiClient client;
   HTTPClient http;
-  http.setConnectTimeout(1200);
-  http.setTimeout(1200);
+  http.setConnectTimeout(5000);
+  http.setTimeout(5000);
   http.begin(client, (String(base_url()) + chemin).c_str());
   http.addHeader("X-API-Key", config_store_cle_api().c_str());
   if (body != nullptr) {
@@ -112,8 +127,8 @@ static bool pull_et_demarrer() {
 
   WiFiClient client;
   HTTPClient http;
-  http.setConnectTimeout(1200);
-  http.setTimeout(1200);
+  http.setConnectTimeout(5000);
+  http.setTimeout(5000);
   http.begin(client, (String(base_url()) + "/commandes/attente").c_str());
   http.addHeader("X-API-Key", config_store_cle_api().c_str());
   int code = http.GET();
@@ -140,6 +155,7 @@ static bool pull_et_demarrer() {
     }
     return false;
   }
+  Serial.printf("[http] pull echoue (rc=%d)\n", code);
   http.end();
   return false;
 }
@@ -162,8 +178,8 @@ static void creer_action() {
 
   WiFiClient client;
   HTTPClient http;
-  http.setConnectTimeout(1200);
-  http.setTimeout(1200);
+  http.setConnectTimeout(5000);
+  http.setTimeout(5000);
   http.begin(client, (String(base_url()) + "/actions").c_str());
   http.addHeader("X-API-Key", config_store_cle_api().c_str());
   http.addHeader("Content-Type", "application/json");
@@ -194,8 +210,25 @@ static void executer_actionneur() {
     etat = ECHOUEE;
     return;
   }
+  // SAFETY : bloquer activation pompe si citerne vide
+  if (actif && strcmp(nom, "pompe") == 0) {
+    const SensorReadings& s = sensors_get_current();
+    if (!isnan(s.niveau_eau) && s.niveau_eau < SEUIL_CITERNE_VIDE) {
+      Serial.printf("[http] cmd#%d REJETEE : citerne vide (%.0f%%)\n",
+                    cmd_id, s.niveau_eau);
+      mqtt_publish_alert("citerne_vide",
+        "Tentative activation pompe avec citerne vide !",
+        s.niveau_eau, SEUIL_CITERNE_VIDE);
+      buzzer_beep(3, 500);
+      etat = ECHOUEE;
+      return;
+    }
+  }
   bool ok = set_actionneur(nom, actif);
-  if (ok) mqtt_publish_actuator_state(nom, actif);
+  if (ok) {
+    mqtt_publish_actuator_state(nom, actif);
+    automation_commande_recue(); // declenche cooldown automatisation locale
+  }
   etat = ok ? A_CLOTURE : ECHOUEE;
 }
 
@@ -266,8 +299,8 @@ void http_load_mapping_capteurs() {
 
   WiFiClient client;
   HTTPClient http;
-  http.setConnectTimeout(3000);
-  http.setTimeout(3000);
+  http.setConnectTimeout(5000);
+  http.setTimeout(5000);
   // Encoder les espaces (%20) dans le nom de parcelle pour eviter un 400 HTTP.
   String parcelle = PARCELLE;
   parcelle.replace(" ", "%20");
@@ -344,10 +377,16 @@ void http_commands_loop() {
   // Machine a etats du workflow commandes (pull periodic + une commande a la fois).
   switch (etat) {
     case IDLE:
-      if (pull_immediat || maintenant - derniereTentativePull >= INTERVALLE_COMMANDES) {
+      if (pull_immediat || maintenant - derniereTentativePull >= INTERVALLE_COMMANDES + pullBackoff) {
         pull_immediat = false;
         derniereTentativePull = maintenant;
-        pull_et_demarrer(); // peut passer etat a A_CONFIRMER, sinon reste IDLE
+        if (pull_et_demarrer()) {
+          pullBackoff = 0; // succes : reset backoff
+        } else {
+          // echec : backoff exponentiel (2s, 4s, 8s, 16s, 30s max)
+          pullBackoff = min(pullBackoff > 0 ? pullBackoff * 2 : 2000UL, PULL_BACKOFF_MAX);
+          Serial.printf("[http] pull backoff %lus\n", pullBackoff / 1000);
+        }
       }
       break;
 
@@ -359,7 +398,56 @@ void http_commands_loop() {
     case ECHOUEE:     marquer_final("echouee");  break;
   }
 
+  // Traitement sync actionneurs (1 par boucle, non-bloquant, apres machine a etats).
+  if (syncCount > 0 && etat == IDLE) {
+    SyncEntry e = syncQueue[0];
+    for (int i = 1; i < syncCount; i++) syncQueue[i - 1] = syncQueue[i];
+    syncCount--;
+    http_update_actuator_state(e.nom, e.actif);
+  }
+
   yield();
+}
+
+// ─── Sync etat actionneur avec la BD (PUT /api/actionneurs/{id}) ───
+void http_update_actuator_state(const String& nom, bool actif) {
+  if (!wifi_connected()) return;
+  if (!mapping_charge) return;
+
+  int id = -1;
+  for (int i = 0; i < NB_MAP_ACT; i++) {
+    if (nom.equalsIgnoreCase(mapping_actionneurs[i].nom)) {
+      id = mapping_actionneurs[i].id;
+      break;
+    }
+  }
+  if (id < 0) return;
+
+  JsonDocument doc;
+  doc["etat"] = actif ? "actif" : "inactif";
+  char body[48];
+  serializeJson(doc, body, sizeof(body));
+
+  int rc = requete_http("PUT", "/actionneurs/" + String(id), body);
+  Serial.printf("[http] sync %s -> %s (rc=%d)\n", nom.c_str(),
+                actif ? "actif" : "inactif", rc);
+}
+
+// ─── File de sync (non-bloquant) ───
+void http_queue_actuator_sync(const String& nom, bool actif) {
+  // Si une entry pour ce nom existe deja, on la remplace (derniere valeur gagne)
+  for (int i = 0; i < syncCount; i++) {
+    if (syncQueue[i].nom == nom) {
+      syncQueue[i].actif = actif;
+      return;
+    }
+  }
+  // Sinon ajouter si place
+  if (syncCount < MAX_SYNC) {
+    syncQueue[syncCount].nom = nom;
+    syncQueue[syncCount].actif = actif;
+    syncCount++;
+  }
 }
 
 // ─── Helpers mapping ───

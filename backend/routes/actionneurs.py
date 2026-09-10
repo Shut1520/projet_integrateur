@@ -9,7 +9,7 @@ from database import get_db
 from models.actionneur import Actionneur
 from models.utilisateur import Utilisateur
 from schemas.actionneur import ActionneurCreate, ActionneurUpdate, ActionneurResponse
-from auth import get_utilisateur_connecte
+from auth import get_utilisateur_connecte, get_client_iot
 from services.historique_service import enregistrer
 
 router = APIRouter(prefix="/api/actionneurs", tags=["Actionneurs"])
@@ -63,19 +63,21 @@ def modifier_actionneur(
     id: int,
     data: ActionneurUpdate,
     db: Session = Depends(get_db),
-    utilisateur: Utilisateur = Depends(get_utilisateur_connecte),
+    client=Depends(get_client_iot),
 ):
-    """Met a jour un actionneur existant."""
+    """Met a jour un actionneur existant. Accepte JWT ou cle API (ESP32)."""
     actionneur = _get_ou_404(db, id)
     champs_modifies = data.model_dump(exclude_unset=True)
     ancien_etat = actionneur.etat
     for champ, valeur in champs_modifies.items():
         setattr(actionneur, champ, valeur)
+    # id_utilisateur = None si client est un Token (cle API ESP32)
+    utilisateur_id = client.id if hasattr(client, 'id') else None
     details = "; ".join(f"{k}: {v}" for k, v in champs_modifies.items()) if champs_modifies else None
-    enregistrer(db, "modification", "actionneur", actionneur.id, utilisateur.id, details)
+    enregistrer(db, "modification", "actionneur", actionneur.id, utilisateur_id, details)
     if "etat" in champs_modifies and ancien_etat != actionneur.etat:
         type_act = "activation" if actionneur.etat == "actif" else "desactivation"
-        enregistrer(db, type_act, "actionneur", actionneur.id, utilisateur.id, f"{ancien_etat} -> {actionneur.etat}")
+        enregistrer(db, type_act, "actionneur", actionneur.id, utilisateur_id, f"{ancien_etat} -> {actionneur.etat}")
     db.commit()
     db.refresh(actionneur)
     return actionneur

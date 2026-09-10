@@ -67,13 +67,13 @@ Avant d'utiliser le CLI, assurez-vous que le serveur FastAPI est démarré sur l
 La connexion est **obligatoire** avant toute utilisation des fonctionnalités du CLI.
 
 ```bash
-python cli.py login --email <email> --password <mot_de_passe>
+python main.py login --email <email> --password <mot_de_passe>
 ```
 
 **Exemple :**
 
 ```bash
-python cli.py login --email admin@sai.com --password admin123
+python main.py login --email admin@sai.com --password admin123
 ```
 
 **Ce qui se passe :**
@@ -98,13 +98,13 @@ Connexion en cours...
 Pour vérifier si vous êtes connecté et obtenir les informations de votre session :
 
 ```bash
-python cli.py status
+python main.py status
 ```
 
 Avec vérification du token auprès du serveur :
 
 ```bash
-python cli.py status --check
+python main.py status --check
 ```
 
 **Ce qui se passe :**
@@ -127,7 +127,7 @@ python cli.py status --check
 
 ```
 [--] Non connecte
-     Lancez : python cli.py login
+     Lancez : python main.py login
 ```
 
 ---
@@ -137,7 +137,7 @@ python cli.py status --check
 Affiche la liste de tous les capteurs enregistrés dans le système.
 
 ```bash
-python cli.py capteurs
+python main.py capteurs
 ```
 
 **Ce qui se passe :**
@@ -164,7 +164,7 @@ ID   Nom          GPIO  Etat        Parcelle   Protocole
 Affiche les dernières mesures enregistrées par un capteur donné.
 
 ```bash
-python cli.py mesures <id_capteur> [--nb <nombre>]
+python main.py mesures <id_capteur> [--nb <nombre>]
 ```
 
 **Paramètres :**
@@ -174,9 +174,9 @@ python cli.py mesures <id_capteur> [--nb <nombre>]
 **Exemples :**
 
 ```bash
-python cli.py mesures 1          # 10 dernières mesures du capteur #1
-python cli.py mesures 1 --nb 5   # 5 dernières mesures du capteur #1
-python cli.py mesures 3 --nb 20  # 20 dernières mesures du capteur #3
+python main.py mesures 1          # 10 dernières mesures du capteur #1
+python main.py mesures 1 --nb 5   # 5 dernières mesures du capteur #1
+python main.py mesures 3 --nb 20  # 20 dernières mesures du capteur #3
 ```
 
 **Ce qui se passe :**
@@ -205,7 +205,7 @@ ID     Valeur       Unite    Source       Date
 Affiche la liste de tous les actionneurs enregistrés dans le système.
 
 ```bash
-python cli.py actionneurs
+python main.py actionneurs
 ```
 
 **Ce qui se passe :**
@@ -231,7 +231,7 @@ ID   Nom            GPIO  Etat        Parcelle
 Envoie un ordre (on/off) à un actionneur spécifique.
 
 ```bash
-python cli.py commander <id_actionneur> --action on|off [--duree <secondes>] [--oui]
+python main.py commander <id_actionneur> --action on|off [--duree <secondes>] [--oui]
 ```
 
 **Paramètres :**
@@ -243,11 +243,11 @@ python cli.py commander <id_actionneur> --action on|off [--duree <secondes>] [--
 **Exemples :**
 
 ```bash
-python cli.py commander 1 --action on              # Allumer l'actionneur #1
-python cli.py commander 1 --action off             # Éteindre l'actionneur #1
-python cli.py commander 1 --action on --duree 60   # Allumer pendant 60 secondes
-python cli.py commander 1 --action on --duree 60 --oui   # Sans confirmation
-python cli.py commander 2 --action on              # Allumer l'actionneur #2
+python main.py commander 1 --action on              # Allumer l'actionneur #1
+python main.py commander 1 --action off             # Éteindre l'actionneur #1
+python main.py commander 1 --action on --duree 60   # Allumer pendant 60 secondes
+python main.py commander 1 --action on --duree 60 --oui   # Sans confirmation
+python main.py commander 2 --action on              # Allumer l'actionneur #2
 ```
 
 **Vérifications automatiques (CDC 6.2.1 / 6.3) :**
@@ -275,7 +275,7 @@ Toutes les exécutions sont **journalisées** dans `cli.log` (CDC 6.3).
 Lance une irrigation en vérifiant d'abord le niveau du réservoir (CDC 6.2.1 / F05).
 
 ```bash
-python cli.py batch arrosage --actionneur <id> [--duree <secondes>] [--parcelle <id>] [--oui]
+python main.py batch arrosage --actionneur <id> [--duree <secondes>] [--parcelle <id>] [--oui]
 ```
 
 **Paramètres :**
@@ -304,13 +304,13 @@ python cli.py batch arrosage --actionneur <id> [--duree <secondes>] [--parcelle 
 Lance la ventilation après confirmation de l'action (CDC 6.2.2 / F05).
 
 ```bash
-python cli.py batch ventilation --actionneur <id> [--duree <secondes>] [--oui]
+python main.py batch ventilation --actionneur <id> [--duree <secondes>] [--oui]
 ```
 
 **Exemple :**
 
 ```bash
-python cli.py batch ventilation --actionneur 2 --duree 120 --oui
+python main.py batch ventilation --actionneur 2 --duree 120 --oui
 ```
 
 ---
@@ -320,7 +320,7 @@ python cli.py batch ventilation --actionneur 2 --duree 120 --oui
 Affiche les 20 dernières commandes envoyées dans le système.
 
 ```bash
-python cli.py commandes
+python main.py commandes
 ```
 
 **Ce qui se passe :**
@@ -348,7 +348,7 @@ ID   Type         Source   Statut        Actionneur  Date
 ### 9.1. Lister les alertes
 
 ```bash
-python cli.py alertes
+python main.py alertes
 ```
 
 Par défaut, affiche toutes les alertes.
@@ -356,11 +356,11 @@ Par défaut, affiche toutes les alertes.
 **Filtres optionnels :**
 
 ```bash
-python cli.py alertes --etat active            # Uniquement les alertes actives
-python cli.py alertes --etat reconnue          # Uniquement les alertes reconnues
-python cli.py alertes --etat resolue           # Uniquement les alertes résolues
-python cli.py alertes --parcelle 1             # Uniquement les alertes de la parcelle #1
-python cli.py alertes --etat active --parcelle 2  # Combinaison de filtres
+python main.py alertes --etat active            # Uniquement les alertes actives
+python main.py alertes --etat reconnue          # Uniquement les alertes reconnues
+python main.py alertes --etat resolue           # Uniquement les alertes résolues
+python main.py alertes --parcelle 1             # Uniquement les alertes de la parcelle #1
+python main.py alertes --etat active --parcelle 2  # Combinaison de filtres
 ```
 
 **Sortie attendue :**
@@ -382,13 +382,13 @@ ID   Type                 Severite   Etat         Parcelle  Date
 Marque une alerte comme « reconnue » (vous en avez pris connaissance).
 
 ```bash
-python cli.py alertes reconnaitre <id_alerte>
+python main.py alertes reconnaitre <id_alerte>
 ```
 
 **Exemple :**
 
 ```bash
-python cli.py alertes reconnaitre 5
+python main.py alertes reconnaitre 5
 ```
 
 **Sortie attendue :**
@@ -402,13 +402,13 @@ python cli.py alertes reconnaitre 5
 Marque une alerte comme « résolue » (le problème est traité).
 
 ```bash
-python cli.py alertes resoudre <id_alerte>
+python main.py alertes resoudre <id_alerte>
 ```
 
 **Exemple :**
 
 ```bash
-python cli.py alertes resoudre 5
+python main.py alertes resoudre 5
 ```
 
 **Sortie attendue :**
@@ -426,13 +426,13 @@ Les seuils définissent les plages de valeurs acceptées pour chaque type de mes
 ### 10.1. Lister les seuils configurés
 
 ```bash
-python cli.py seuils
+python main.py seuils
 ```
 
 **Filtre optionnel par parcelle :**
 
 ```bash
-python cli.py seuils --parcelle 1    # Seuils de la parcelle #1
+python main.py seuils --parcelle 1    # Seuils de la parcelle #1
 ```
 
 **Sortie attendue :**
@@ -451,7 +451,7 @@ ID   Type             Min        Max        Unite    Parcelle
 ### 10.2. Configurer un nouveau seuil
 
 ```bash
-python cli.py seuils configurer --type <type_mesure> --min <valeur_min> --max <valeur_max> --unite <unite> --parcelle <id_parcelle>
+python main.py seuils configurer --type <type_mesure> --min <valeur_min> --max <valeur_max> --unite <unite> --parcelle <id_parcelle>
 ```
 
 **Paramètres (tous obligatoires) :**
@@ -464,7 +464,7 @@ python cli.py seuils configurer --type <type_mesure> --min <valeur_min> --max <v
 **Exemple :**
 
 ```bash
-python cli.py seuils configurer --type humidite_sol --min 30 --max 80 --unite % --parcelle 1
+python main.py seuils configurer --type humidite_sol --min 30 --max 80 --unite % --parcelle 1
 ```
 
 **Ce qui se passe :**
@@ -487,7 +487,7 @@ python cli.py seuils configurer --type humidite_sol --min 30 --max 80 --unite % 
 Affiche une vue d'ensemble du système avec les statistiques principales.
 
 ```bash
-python cli.py statut
+python main.py statut
 ```
 
 **Ce qui se passe :**
@@ -520,7 +520,7 @@ Le CLI peut s'authentifier auprès des **endpoints IoT** (équivalent ESP32) gr�
 ### 13.1. Enregistrer une clé API
 
 ```bash
-python cli.py apikey sk_sai_5f8a2c1b9d3e4f0a...
+python main.py apikey sk_sai_5f8a2c1b9d3e4f0a...
 ```
 
 **Ce qui se passe :**
@@ -530,7 +530,7 @@ python cli.py apikey sk_sai_5f8a2c1b9d3e4f0a...
 ### 13.2. Effacer la clé API
 
 ```bash
-python cli.py apikey --effacer
+python main.py apikey --effacer
 ```
 
 > La clé API **n'est jamais affichée en clair** : `status` n'affiche que le préfixe (`sk_sai_...` initiales).
@@ -542,7 +542,7 @@ python cli.py apikey --effacer
 Déconnecte l'utilisateur et supprime le token de session.
 
 ```bash
-python cli.py logout
+python main.py logout
 ```
 
 **Ce qui se passe :**
@@ -564,12 +564,12 @@ python cli.py logout
 | Erreur | Cause | Solution |
 |--------|-------|----------|
 | `[ERR] Impossible de se connecter a http://localhost:8000` | Le serveur API n'est pas lancé ou l'URL est incorrecte | Vérifiez que le serveur FastAPI est démarré. Vérifiez `config.json`. |
-| `[ERR] 401 Non autorise` | Token expiré ou invalide | Reconnectez-vous avec `python cli.py login`. |
+| `[ERR] 401 Non autorise` | Token expiré ou invalide | Reconnectez-vous avec `python main.py login`. |
 | `[ERR] 404 : Ressource introuvable` | ID inexistant (capteur, actionneur, alerte...) | Vérifiez l'ID avec les commandes de listing (`capteurs`, `actionneurs`, etc.). |
 | `[ERR] 422 : Donnees invalides` | Paramètres manquants ou format incorrect | Vérifiez les arguments de la commande. |
 | `[ERR] Reponse invalide du serveur` | Le serveur n'a pas retourné de token | Vérifiez vos identifiants (email/mot de passe). |
 | `Aucun capteur trouve` / `Aucun actionneur trouve` | Aucun équipement enregistré dans la base | Ajoutez des capteurs/actionneurs via l'API ou l'interface web. |
-| `[WARN] Token invalide ou expire` (lors de `status`) | La session a expiré | Reconnectez-vous avec `python cli.py login`. |
+| `[WARN] Token invalide ou expire` (lors de `status`) | La session a expiré | Reconnectez-vous avec `python main.py login`. |
 
 ---
 

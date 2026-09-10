@@ -18,6 +18,7 @@ from models.mesure import Mesure
 from models.capteur import Capteur
 from models.alerte import Alerte
 from models.actionneur import Actionneur
+from models.commande import Commande
 
 
 # ─── Types de mesure → capteurs associes ───
@@ -132,6 +133,19 @@ def _creer_alerte(
     return alerte
 
 
+def _commande_en_attente(db: Session, id_actionneur: int) -> bool:
+    """Verifie si une commande 'envoyee' ou 'recue' est deja en attente pour cet actionneur."""
+    return (
+        db.query(Commande)
+        .filter(
+            Commande.id_actionneur == id_actionneur,
+            Commande.statut.in_(["envoyee", "recue"]),
+        )
+        .first()
+        is not None
+    )
+
+
 def evaluer_parcelle(db: Session, parcelle_id: int) -> dict:
     """
     Evaluede tous les seuils d'une parcelle et prend des actions.
@@ -201,7 +215,8 @@ def evaluer_parcelle(db: Session, parcelle_id: int) -> dict:
                 resultats["details"].append(f"Alerte {type_alerte} deja active, skip")
 
             # Activer l'actionneur via une commande (cohérence flux web/cli)
-            if actionneur and actionneur.etat == "inactif":
+            # Eviter les doublons : ne pas creer si une commande est deja en attente
+            if actionneur and actionneur.etat == "inactif" and not _commande_en_attente(db, actionneur.id):
                 from services.commande_service import creer_commande
                 try:
                     creer_commande(
@@ -228,7 +243,8 @@ def evaluer_parcelle(db: Session, parcelle_id: int) -> dict:
                 resultats["details"].append(f"{resolues} alerte(s) resolue(s) pour {seuil.type_mesure}")
 
             # Desactiver l'actionneur si actif
-            if actionneur and actionneur.etat == "actif":
+            # Eviter les doublons : ne pas creer si une commande est deja en attente
+            if actionneur and actionneur.etat == "actif" and not _commande_en_attente(db, actionneur.id):
                 from services.commande_service import creer_commande
                 try:
                     creer_commande(

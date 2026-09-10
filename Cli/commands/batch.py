@@ -17,7 +17,7 @@ import sys
 from client import APIClient
 from logs import journal
 
-SEUIL_NIVEAU_EAU = 15.0   # %  (capteur niveau_eau) en dessous duquel on bloque
+SEUIL_NIVEAU_EAU = 5.0    # %  (capteur niveau_eau) en dessous duquel on bloque
 SEUIL_TEMPERATURE = 40.0  # °C au-dessus duquel la ventilation est recommandee
 
 

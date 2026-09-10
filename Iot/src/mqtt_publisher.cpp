@@ -25,6 +25,9 @@ static unsigned long derniereMesure   = 0;
 static unsigned long derniereAlerte   = 0;
 static unsigned long compteurAlerte   = 0;
 
+// Flag : subscribe differe pour eviter le conflit ISR WiFi ↔ GPIO.
+static bool need_subscribe = false;
+
 static String topic(const char* type) {
   return "sai/" + String(PARCELLE) + "/" + type;
 }
@@ -47,6 +50,7 @@ void mqtt_begin() {
   // DEBUG temporaire : bypass verification cert pour diagnostic mbedTLS -9984
   secure_client.setInsecure();
   // secure_client.setCACert(CA_CERT);
+  secure_client.setTimeout(2000);  // timeout TLS reduit pour eviter le watchdog
   mqtt_client.setServer(BROKER_HOST, BROKER_PORT);
   mqtt_client.setKeepAlive(30);  // tolere les micro-blocages HTTP sans drop
   mqtt_client.setBufferSize(1024); // payload multi-mesures + JSON
@@ -133,7 +137,17 @@ bool mqtt_connected() {
 void mqtt_loop() {
   // Pas de WiFi : on attend (la reconnexion WiFi est dans wifi_loop()).
   if (!wifi_connected()) {
+    need_subscribe = false;
     return;
+  }
+
+  // Subscribe differe : se fait a l'iteration suivant la connexion
+  // pour eviter un conflit ISR WiFi ↔ GPIO (interrupt watchdog timeout).
+  if (need_subscribe && mqtt_client.connected()) {
+    need_subscribe = false;
+    String notifTopic = "sai/" + String(PARCELLE) + "/commandes/notif";
+    mqtt_client.subscribe(notifTopic.c_str());
+    Serial.printf("[mqtt] Souscrit a %s\n", notifTopic.c_str());
   }
 
   // (Re)connexion au broker, non-bloquante (retente a intervalle).
@@ -145,10 +159,8 @@ void mqtt_loop() {
     secure_client.stop();
     if (mqtt_client.connect("sai_esp32_firmware", BROKER_USER, BROKER_PASS)) {
       Serial.println("[mqtt] Connecte au broker TLS");
-      // Souscrit aux notifications de commande (pull immediat).
-      String notifTopic = "sai/" + String(PARCELLE) + "/commandes/notif";
-      mqtt_client.subscribe(notifTopic.c_str());
-      Serial.printf("[mqtt] Souscrit a %s\n", notifTopic.c_str());
+      // Subscribe reporte a l'iteration suivante (flag).
+      need_subscribe = true;
       // Publie l'etat courant une fois connecte.
       mqtt_publish_measures();
     } else {

@@ -43,9 +43,12 @@ subjectKeyIdentifier = hash
 
 # --- [2/5] CA racine avec extensions ---
 Write-Host "[2/5] CA racine..."
+$prevEAP = $ErrorActionPreference
+$ErrorActionPreference = "SilentlyContinue"
 & $openssl req -x509 -newkey rsa:2048 -nodes `
     -keyout $caKey -out $caCrt -days 3650 `
     -config $caCnf 2>$null | Out-Null
+$ErrorActionPreference = $prevEAP
 if (-not (Test-Path -LiteralPath $caCrt)) { throw "Echec generation CA" }
 
 # --- [3/5] Cle + CSR serveur ---
@@ -57,9 +60,12 @@ $localIP = (Get-NetIPAddress -AddressFamily IPv4 |
 if (-not $localIP) { $localIP = "172.20.10.2" }
 
 Write-Host "   IP detectee : $localIP"
+$prevEAP = $ErrorActionPreference
+$ErrorActionPreference = "SilentlyContinue"
 & $openssl req -newkey rsa:2048 -nodes `
     -keyout $srvKey -out $srvCsr `
     -subj "/CN=$localIP" 2>$null | Out-Null
+$ErrorActionPreference = $prevEAP
 if (-not (Test-Path -LiteralPath $srvCsr)) { throw "Echec generation CSR" }
 
 # --- [4/5] Extensions SAN (IP locale + localhost) ---
@@ -71,9 +77,12 @@ extendedKeyUsage = serverAuth
 
 # --- [5/5] Signature du certificat serveur par la CA ---
 Write-Host "[5/5] Signature du certificat serveur par la CA..."
+$prevEAP = $ErrorActionPreference
+$ErrorActionPreference = "SilentlyContinue"
 & $openssl x509 -req -in $srvCsr -CA $caCrt -CAkey $caKey `
     -CAcreateserial -out $srvCrt -days 825 `
     -extfile $srvExt 2>$null | Out-Null
+$ErrorActionPreference = $prevEAP
 if (-not (Test-Path -LiteralPath $srvCrt)) { throw "Echec signature certificat" }
 
 # Nettoyage intermediaires

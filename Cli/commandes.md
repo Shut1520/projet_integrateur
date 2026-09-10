@@ -26,7 +26,7 @@ Toutes les commandes disponibles dans l'interface en ligne de commande du Systè
 Authentifie l'utilisateur auprès de l'API et sauvegarde le token JWT.
 
 ```bash
-python cli.py login --email <email> --password <mot_de_passe>
+python main.py login --email <email> --password <mot_de_passe>
 ```
 
 | Paramètre | Obligatoire | Description |
@@ -37,7 +37,7 @@ python cli.py login --email <email> --password <mot_de_passe>
 **Exemple :**
 
 ```bash
-python cli.py login --email admin@sai.com --password admin123
+python main.py login --email admin@sai.com --password admin123
 ```
 
 ---
@@ -47,7 +47,7 @@ python cli.py login --email admin@sai.com --password admin123
 Déconnecte l'utilisateur et supprime le token de session.
 
 ```bash
-python cli.py logout
+python main.py logout
 ```
 
 Aucun paramètre.
@@ -59,7 +59,7 @@ Aucun paramètre.
 Affiche l'état de la connexion actuelle (token JWT **et** clé API si configurée).
 
 ```bash
-python cli.py status [--check]
+python main.py status [--check]
 ```
 
 | Paramètre | Obligatoire | Description |
@@ -69,8 +69,8 @@ python cli.py status [--check]
 **Exemples :**
 
 ```bash
-python cli.py status            # Vérification locale
-python cli.py status --check    # Vérification auprès du serveur
+python main.py status            # Vérification locale
+python main.py status --check    # Vérification auprès du serveur
 ```
 
 **Sortie avec clé API configurée :**
@@ -91,8 +91,8 @@ python cli.py status --check    # Vérification auprès du serveur
 Enregistre ou efface la **clé API** (`sk_sai_...`, table `tokens`) utilisée par le CLI pour s'authentifier auprès des endpoints IoT (équivalent ESP32).
 
 ```bash
-python cli.py apikey <sk_sai_...>     # Enregistrer la clé API
-python cli.py apikey --effacer        # Effacer la clé API
+python main.py apikey <sk_sai_...>     # Enregistrer la clé API
+python main.py apikey --effacer        # Effacer la clé API
 ```
 
 | Paramètre | Obligatoire | Description |
@@ -103,8 +103,8 @@ python cli.py apikey --effacer        # Effacer la clé API
 **Exemples :**
 
 ```bash
-python cli.py apikey sk_sai_5f8a2c1b9d3e4f0a
-python cli.py apikey --effacer
+python main.py apikey sk_sai_5f8a2c1b9d3e4f0a
+python main.py apikey --effacer
 ```
 
 > La clé est conservée dans `config.json` et envoyée dans l'en-tête `X-API-Key`. Elle est **masquée** dans la sortie de `status` (préfixe seul affiché).
@@ -118,7 +118,7 @@ python cli.py apikey --effacer
 Liste tous les capteurs enregistrés dans le système.
 
 ```bash
-python cli.py capteurs
+python main.py capteurs
 ```
 
 Aucun paramètre.
@@ -134,7 +134,7 @@ Aucun paramètre.
 Affiche les dernières mesures d'un capteur spécifique.
 
 ```bash
-python cli.py mesures <id_capteur> [--nb <nombre>]
+python main.py mesures <id_capteur> [--nb <nombre>]
 ```
 
 | Paramètre | Obligatoire | Description | Défaut |
@@ -145,9 +145,9 @@ python cli.py mesures <id_capteur> [--nb <nombre>]
 **Exemples :**
 
 ```bash
-python cli.py mesures 1              # 10 dernières mesures du capteur #1
-python cli.py mesures 1 --nb 5       # 5 dernières mesures
-python cli.py mesures 3 --nb 20      # 20 dernières mesures du capteur #3
+python main.py mesures 1              # 10 dernières mesures du capteur #1
+python main.py mesures 1 --nb 5       # 5 dernières mesures
+python main.py mesures 3 --nb 20      # 20 dernières mesures du capteur #3
 ```
 
 **Colonnes affichées :** ID, Valeur, Unité, Source, Date
@@ -161,7 +161,7 @@ python cli.py mesures 3 --nb 20      # 20 dernières mesures du capteur #3
 Liste tous les actionneurs enregistrés dans le système.
 
 ```bash
-python cli.py actionneurs
+python main.py actionneurs
 ```
 
 Aucun paramètre.
@@ -177,7 +177,7 @@ Aucun paramètre.
 Envoie un ordre (on/off) à un actionneur.
 
 ```bash
-python cli.py commander <id_actionneur> --action <on|off> [--duree <secondes>] [--oui]
+python main.py commander <id_actionneur> --action <on|off> [--duree <secondes>] [--oui]
 ```
 
 | Paramètre | Obligatoire | Description | Défaut |
@@ -190,12 +190,12 @@ python cli.py commander <id_actionneur> --action <on|off> [--duree <secondes>] [
 **Exemples :**
 
 ```bash
-python cli.py commander 1 --action on              # Allumer l'actionneur #1
-python cli.py commander 1 --action off             # Éteindre l'actionneur #1
-python cli.py commander 1 --action on --duree 60   # Allumer pendant 60 secondes
-python cli.py commander 2 --action on              # Allumer l'actionneur #2
-python cli.py commander 2 --action off --duree 120 # Éteindre après 120 secondes
-python cli.py commander 1 --action on --duree 60 --oui  # Sans confirmation
+python main.py commander 1 --action on              # Allumer l'actionneur #1
+python main.py commander 1 --action off             # Éteindre l'actionneur #1
+python main.py commander 1 --action on --duree 60   # Allumer pendant 60 secondes
+python main.py commander 2 --action on              # Allumer l'actionneur #2
+python main.py commander 2 --action off --duree 120 # Éteindre après 120 secondes
+python main.py commander 1 --action on --duree 60 --oui  # Sans confirmation
 ```
 
 **Vérifications automatiques (CDC 6.2.1 / 6.3) :**
@@ -223,7 +223,7 @@ python cli.py commander 1 --action on --duree 60 --oui  # Sans confirmation
 Lance une irrigation (pompe) après vérification du niveau du réservoir (CDC 6.2.1 / F05).
 
 ```bash
-python cli.py batch arrosage --actionneur <id> [--duree <secondes>] [--parcelle <id>] [--oui]
+python main.py batch arrosage --actionneur <id> [--duree <secondes>] [--parcelle <id>] [--oui]
 ```
 
 | Paramètre | Obligatoire | Description | Défaut |
@@ -238,9 +238,9 @@ python cli.py batch arrosage --actionneur <id> [--duree <secondes>] [--parcelle 
 **Exemples :**
 
 ```bash
-python cli.py batch arrosage --actionneur 1 --duree 60
-python cli.py batch arrosage --actionneur 1 --duree 60 --parcelle 1
-python cli.py batch arrosage --actionneur 1 --duree 60 --oui
+python main.py batch arrosage --actionneur 1 --duree 60
+python main.py batch arrosage --actionneur 1 --duree 60 --parcelle 1
+python main.py batch arrosage --actionneur 1 --duree 60 --oui
 ```
 
 ---
@@ -250,7 +250,7 @@ python cli.py batch arrosage --actionneur 1 --duree 60 --oui
 Lance la ventilation après confirmation de l'action (CDC 6.2.2 / F05).
 
 ```bash
-python cli.py batch ventilation --actionneur <id> [--duree <secondes>] [--oui]
+python main.py batch ventilation --actionneur <id> [--duree <secondes>] [--oui]
 ```
 
 | Paramètre | Obligatoire | Description | Défaut |
@@ -262,7 +262,7 @@ python cli.py batch ventilation --actionneur <id> [--duree <secondes>] [--oui]
 **Exemple :**
 
 ```bash
-python cli.py batch ventilation --actionneur 2 --duree 120 --oui
+python main.py batch ventilation --actionneur 2 --duree 120 --oui
 ```
 
 > Les deux actions batch sont **journalisées** dans `cli.log` (CDC 6.3) : lancement, blocage, annulation, échec.
@@ -276,7 +276,7 @@ python cli.py batch ventilation --actionneur 2 --duree 120 --oui
 Affiche les 20 dernières commandes envoyées dans le système.
 
 ```bash
-python cli.py commandes
+python main.py commandes
 ```
 
 Aucun paramètre.
@@ -292,7 +292,7 @@ Aucun paramètre.
 Affiche les alertes avec des filtres optionnels.
 
 ```bash
-python cli.py alertes [--etat <etat>] [--parcelle <id>]
+python main.py alertes [--etat <etat>] [--parcelle <id>]
 ```
 
 | Paramètre | Obligatoire | Description |
@@ -303,11 +303,11 @@ python cli.py alertes [--etat <etat>] [--parcelle <id>]
 **Exemples :**
 
 ```bash
-python cli.py alertes                            # Toutes les alertes
-python cli.py alertes --etat active              # Uniquement les actives
-python cli.py alertes --etat reconnue            # Uniquement les reconnues
-python cli.py alertes --parcelle 1               # Alertes de la parcelle #1
-python cli.py alertes --etat active --parcelle 2 # Combinaison de filtres
+python main.py alertes                            # Toutes les alertes
+python main.py alertes --etat active              # Uniquement les actives
+python main.py alertes --etat reconnue            # Uniquement les reconnues
+python main.py alertes --parcelle 1               # Alertes de la parcelle #1
+python main.py alertes --etat active --parcelle 2 # Combinaison de filtres
 ```
 
 **Colonnes affichées :** ID, Type, Sévérité, État, Parcelle, Date
@@ -319,7 +319,7 @@ python cli.py alertes --etat active --parcelle 2 # Combinaison de filtres
 Marque une alerte comme « reconnue » (prise en connaissance).
 
 ```bash
-python cli.py alertes reconnaitre <id_alerte>
+python main.py alertes reconnaitre <id_alerte>
 ```
 
 | Paramètre | Obligatoire | Description |
@@ -329,7 +329,7 @@ python cli.py alertes reconnaitre <id_alerte>
 **Exemple :**
 
 ```bash
-python cli.py alertes reconnaitre 5
+python main.py alertes reconnaitre 5
 ```
 
 ---
@@ -339,7 +339,7 @@ python cli.py alertes reconnaitre 5
 Marque une alerte comme « résolue » (problème traité).
 
 ```bash
-python cli.py alertes resoudre <id_alerte>
+python main.py alertes resoudre <id_alerte>
 ```
 
 | Paramètre | Obligatoire | Description |
@@ -349,7 +349,7 @@ python cli.py alertes resoudre <id_alerte>
 **Exemple :**
 
 ```bash
-python cli.py alertes resoudre 5
+python main.py alertes resoudre 5
 ```
 
 ---
@@ -361,7 +361,7 @@ python cli.py alertes resoudre 5
 Affiche les seuils d'automatisation configurés.
 
 ```bash
-python cli.py seuils [--parcelle <id>]
+python main.py seuils [--parcelle <id>]
 ```
 
 | Paramètre | Obligatoire | Description |
@@ -371,8 +371,8 @@ python cli.py seuils [--parcelle <id>]
 **Exemples :**
 
 ```bash
-python cli.py seuils                # Tous les seuils
-python cli.py seuils --parcelle 1   # Seuils de la parcelle #1
+python main.py seuils                # Tous les seuils
+python main.py seuils --parcelle 1   # Seuils de la parcelle #1
 ```
 
 **Colonnes affichées :** ID, Type, Min, Max, Unité, Parcelle
@@ -384,7 +384,7 @@ python cli.py seuils --parcelle 1   # Seuils de la parcelle #1
 Crée ou met à jour un seuil d'automatisation pour une parcelle.
 
 ```bash
-python cli.py seuils configurer --type <type> --min <min> --max <max> --unite <unite> --parcelle <id>
+python main.py seuils configurer --type <type> --min <min> --max <max> --unite <unite> --parcelle <id>
 ```
 
 | Paramètre | Obligatoire | Description |
@@ -398,7 +398,7 @@ python cli.py seuils configurer --type <type> --min <min> --max <max> --unite <u
 **Exemple :**
 
 ```bash
-python cli.py seuils configurer --type humidite_sol --min 30 --max 80 --unite % --parcelle 1
+python main.py seuils configurer --type humidite_sol --min 30 --max 80 --unite % --parcelle 1
 ```
 
 ---
@@ -410,7 +410,7 @@ python cli.py seuils configurer --type humidite_sol --min 30 --max 80 --unite % 
 Affiche une vue d'ensemble du système (parcelles, capteurs, actionneurs, alertes actives).
 
 ```bash
-python cli.py statut
+python main.py statut
 ```
 
 Aucun paramètre.
