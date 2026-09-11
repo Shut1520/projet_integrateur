@@ -69,6 +69,8 @@ static unsigned long derniereTentativePull = 0;
 static unsigned long derniereFallback = 0;
 static unsigned long pullBackoff = 0; // backoff exponentiel sur echec pull (ms)
 static const unsigned long PULL_BACKOFF_MAX = 30000; // plafond 30s
+static int retryFinal = 0; // compteur retry marquer_final (max 3)
+static const int RETRY_FINAL_MAX = 3;
 static bool mapping_charge = false;
 static bool pull_immediat = false;
 
@@ -147,6 +149,7 @@ static bool pull_et_demarrer() {
         cmd_id_actionneur = c["id_actionneur"].as<int>();
         cmd_nom_actionneur = c["nom_actionneur"].as<const char*>();
         cmd_id_action     = -1;
+        retryFinal        = 0;
         Serial.printf("[http] commande tiree : id=%d actionneur=%d action=%s\n",
                       cmd_id, cmd_id_actionneur, cmd_type_action.c_str());
         etat = A_CONFIRMER;
@@ -250,7 +253,18 @@ static void marquer_final(const char* statut) {
   serializeJson(doc, body, sizeof(body));
   int rc = requete_http("PUT", "/commandes/" + String(cmd_id), body);
   Serial.printf("[http] cmd#%d -> %s (rc=%d)\n", cmd_id, statut, rc);
-  etat = IDLE;
+  if (rc == 200) {
+    retryFinal = 0;
+    etat = IDLE;
+  } else if (retryFinal < RETRY_FINAL_MAX) {
+    retryFinal++;
+    Serial.printf("[http] cmd#%d retry final %d/%d\n", cmd_id, retryFinal, RETRY_FINAL_MAX);
+    // reste dans l'etat courant (A_EXECUTE ou ECHOUEE) pour retry
+  } else {
+    Serial.printf("[http] cmd#%d abandon apres %d retries\n", cmd_id, RETRY_FINAL_MAX);
+    retryFinal = 0;
+    etat = IDLE;
+  }
 }
 
 // ─── Fallback mesures HTTP (POST /api/mesures par capteur mappe) ───
@@ -282,8 +296,8 @@ void http_publish_measures_fallback() {
 
     int rc = requete_http("POST", "/mesures", body);
     if (rc != 201) {
-      Serial.printf("[http] fallback %s rc=%d, arrete\n", mesures[i].type, rc);
-      return;
+      Serial.printf("[http] fallback %s rc=%d, suite\n", mesures[i].type, rc);
+      continue; // passe au capteur suivant au lieu d'arreter
     }
     Serial.printf("[http] fallback %s ok\n", mesures[i].type);
   }

@@ -50,7 +50,7 @@ void mqtt_begin() {
   // DEBUG temporaire : bypass verification cert pour diagnostic mbedTLS -9984
   secure_client.setInsecure();
   // secure_client.setCACert(CA_CERT);
-  secure_client.setTimeout(2000);  // timeout TLS reduit pour eviter le watchdog
+  secure_client.setTimeout(4000);  // timeout TLS : 4s suffisent pour hotspot iPhone, reste sous watchdog 5s
   mqtt_client.setServer(BROKER_HOST, BROKER_PORT);
   mqtt_client.setKeepAlive(30);  // tolere les micro-blocages HTTP sans drop
   mqtt_client.setBufferSize(1024); // payload multi-mesures + JSON
